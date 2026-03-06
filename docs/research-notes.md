@@ -6,10 +6,9 @@
 
 | Tool | What it does | Relevant? |
 |------|-------------|-----------|
-| [promptfoo](https://github.com/promptfoo/promptfoo) | YAML-driven prompt A/B testing; native Claude support; token cost tracking per run + aggregate; LLM-as-judge with 0-1 score + reason; custom Python providers | **Use this as experiment runner** |
-| [DeepEval](https://deepeval.com) | Python-native quality eval; `TaskCompletion`, `StepEfficiency`, `ToolCorrectness` for agentic work; pytest integration; 0-1 score + reason on every metric | **Use this for quality evaluation** |
-| [Braintrust AutoEvals](https://github.com/braintrustdata/autoevals) | Lighter LLM-as-judge; `Factuality`, `ClosedQA`, etc.; 0-1 score + rationale | Fallback to DeepEval |
-| [Langfuse](https://langfuse.com) | Open-source observability; token cost tracking per request; prompt versioning | Candidate for token tracking layer |
+| [promptfoo](https://github.com/promptfoo/promptfoo) | YAML-driven prompt A/B testing; native Claude support; token cost tracking per run + aggregate; LLM-as-judge with 0-1 score + reason | Reference for evaluation patterns; not used directly |
+| [Caylent simple-eval](https://github.com/caylent/simple-eval) | DeepEval + Bedrock LLM-as-judge comparison framework; 7 evaluation attributes | Reference for quality rubric design |
+| [Langfuse](https://langfuse.com) | Open-source observability; token cost tracking per request; prompt versioning | Not used; we track tokens natively via Claude JSON output |
 | [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) | CLAUDE.md template sharing community | Good for loadout bundle examples |
 
 ### What does NOT exist (our opportunity)
@@ -44,19 +43,15 @@ Caylent has shipped DeepEval in multiple client projects:
 - Use anonymized production data to generate test cases
 - CloudWatch GenAI Observability for trace collection → test case generation
 
-### Internal GitHub repos (not yet accessed — GitHub not connected to EVO)
+### Internal GitHub repos (accessed via `gh` CLI)
 
-The following repos are noted for future investigation:
-- `agentcore-evaluations-poc` — Bedrock AgentCore Evaluations PoC with Strands agent
-- `caylent-evals` — evals datasets
-- `simple-eval` — evaluation tools
-- `llm-eval` — LLM evaluation framework
-- `benchllm` — Python package to run benchmark tests for LLMs on Bedrock
-- `BenchLLM-Stress-Test` — stress testing for LLMs
-- `model-benchmark` — model benchmarking tools
-
-**TODO**: Connect GitHub to EVO (`identity_connect provider=github features=[repos]`)
-and review these repos before implementing.
+| Repo | What it is | Relevance |
+|------|-----------|-----------|
+| `caylent/simple-eval` | DeepEval + Bedrock LLM-as-judge comparison | Quality rubric patterns |
+| `caylent/caylent-evals` | Synthetic eval datasets for `caylent-iq` | Eval dataset structure |
+| `caylent/agentcore-evaluations-poc` | Bedrock AgentCore Evaluations (TypeScript/CDK) | Different stack, low relevance |
+| `caylent/llm-stt-benchmark` | Speech-to-text model benchmarking | Low relevance |
+| `caylent/stt-model-benchmark` | STT model benchmarking | Low relevance |
 
 ### Internal documents to review
 
@@ -64,7 +59,6 @@ and review these repos before implementing.
 - [Testing AI Systems Whitepaper](https://notion.so/caylent/1f2f1572580f8001b8d6c292555aa4f5) (Ryan Gross, June 2025)
 - [7Signal GenAI Assessment](https://drive.google.com/file/d/15niKRG0iGSmyUk6giiV-PKBePfgp-x6P/view)
 - [CloudZero Pricing Agent Performance Analysis](https://drive.google.com/file/d/1sE9VuiQz7RB-hCJ2YE1Z44_rHbS2-7uP/view)
-- [CloudZero Benchmark Agent Documentation](https://drive.google.com/file/d/1YpLtTPVmq5oQckUxDuDpPAKGJWYnSpQn/view)
 
 ---
 
@@ -92,30 +86,16 @@ Randall is doing informal empirical model evaluation — not yet systematic. Key
 - Found model had memorized benchmark set (changing coefficients returned original answers)
 - This is exactly the "benchmarks can lie" problem token_miser needs to guard against
 
-**On LLM testing methodology** (Sep 2023, #data):
-Randall asked the team to create guidance around LLM testing. Metrics he wanted tracked:
-- Accuracy, Recall, Precision
-- Human Eval
-- Performance (tokens/second)
-- Context, Repetitiveness
-- TopK/TopP/Temperature changes
-- Single-shot vs few-shot performance
-- Safety
-
 **Battleground tool**: `battleground.caylent.com` — internal tool for real-time
-model comparison (at least speed/price; "not the intelligence part"). Referenced as a
-place Randall shows off prompt-flow and prompt catalogue demos.
+model comparison (at least speed/price; "not the intelligence part").
 
 **Key implication for token_miser**:
 Randall is already thinking about this problem but doing it manually/informally.
-token_miser could be something Caylent uses internally to inform their model guidance
-to customers — not just a personal tool. Worth a conversation.
+token_miser could be something Caylent uses internally — worth a conversation.
 
 ---
 
 ## Industry Benchmark Frameworks (for reference)
-
-These are academic/research-grade benchmarks that could seed token_miser's benchmark suite:
 
 - **τ-Bench (TAU-Bench)** — stateful evaluation for agents interacting with APIs
 - **AgentBench** — 8 environments: OS, databases, web shopping, etc.
@@ -131,23 +111,22 @@ None of these measure Claude Code configuration-level token efficiency. That's t
 
 | Layer | Choice | Rationale |
 |-------|--------|-----------|
-| Experiment runner | promptfoo | Mature, native Claude, token tracking, LLM-as-judge, swappable |
-| Quality evaluation | DeepEval | Agentic metrics, pytest integration, proven internally at Caylent |
-| Experiment isolation | Docker | Clean env per run, loadout mounted at container start |
-| Token tracking storage | SQLite | Already used by promptfoo; simple, portable |
-| Config management | loadout (separate project) | See `/home/rujohnson/code/personal/loadout/` |
-| Language | Python | Consistent with Caylent practice; DeepEval is Python-native |
+| Language | Go | Consistent with ralphael (same author); subprocess orchestration, CLI tools |
+| Experiment runner | Custom (internal/executor) | Config-level comparison, not prompt comparison; simpler than promptfoo |
+| Quality evaluation | LLM-as-judge via Anthropic Go SDK | Per-dimension 0-1 scores, same pattern as Caylent's simple-eval |
+| Experiment isolation | HOME override (temp dirs) | Simpler than Docker; Claude reads `$HOME/.claude/` |
+| Token tracking | Claude `--output-format json` | Native; no external observability needed |
+| Storage | SQLite via `modernc.org/sqlite` | Pure Go, no cgo, portable |
+| Config management | loadout (external tool) | Applies config bundles to experiment environments |
 
 ---
 
 ## Open Questions
 
-1. **GitHub not connected**: Need to review internal Caylent eval repos before
-   implementing. See list above.
-2. **Randall conversation**: Worth asking Randall directly if he'd use/contribute to
+1. **Randall conversation**: Worth asking Randall directly if he'd use/contribute to
    token_miser. His overnight model testing is exactly what this automates.
-3. **promptfoo multi-turn**: For synthetic workloads that need stateful multi-turn
-   (Claude responding to its own previous outputs), need a custom Python provider.
-   Verify this is feasible before committing to promptfoo.
-4. **Claude Code non-interactive mode**: Experiments need to drive `claude` CLI without
-   a TTY. Confirm `claude --print` or equivalent works for experiment automation.
+2. **Multi-session experiments**: Future task type measuring context compaction recovery —
+   designed but deferred to post-MVP.
+3. **Claude Code non-interactive mode**: Confirmed working via ralphael's runner.go
+   pattern: `--print --dangerously-skip-permissions --output-format json`, strip
+   `CLAUDECODE` from env, prompt via stdin.
