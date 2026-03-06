@@ -1,0 +1,29 @@
+id: synth-001
+name: scaffold-loadout-package
+repo: /home/rujohnson/code/personal/loadout
+starting_commit: 1cc7fdf
+prompt: |
+  Read docs/design-notes.md. Scaffold this project as a Python package:
+  pyproject.toml with hatchling build backend, a loadout CLI entry point
+  using argparse with subcommands (validate, apply, restore, capture, status),
+  stub modules for each command that raise NotImplementedError, and a test
+  file that verifies help output and subcommand availability.
+success_criteria:
+  - type: file_exists
+    paths:
+      - pyproject.toml
+      - tests/test_scaffold.py
+  - type: command_exits_zero
+    command: "pip install -e . && python -m loadout --help"
+  - type: output_contains
+    command: "python -m loadout --help"
+    contains: [validate, apply, restore, capture, status]
+quality_rubric:
+  - dimension: structure
+    prompt: "Does the package use proper Python layout with hatchling build backend?"
+  - dimension: cli_completeness
+    prompt: "Are all 5 subcommands (validate, apply, restore, capture, status) present and reachable?"
+  - dimension: tdd_readiness
+    prompt: "Do stubs raise NotImplementedError and do the tests provide meaningful coverage?"
+  - dimension: code_quality
+    prompt: "Is the code idiomatic without over-engineering or excessive comments?"
