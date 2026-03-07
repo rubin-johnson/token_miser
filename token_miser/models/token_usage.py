@@ -8,7 +8,7 @@ class TokenUsage:
     _id_counter = 1
     _instances = {}
 
-    def __init__(self, project, tokens_input, tokens_output, cost, model, timestamp):
+    def __init__(self, project, tokens_input=None, tokens_output=None, cost=None, model=None, timestamp=None, complexity=None, **kwargs):
         """Initialize token usage.
         
         Args:
@@ -18,16 +18,26 @@ class TokenUsage:
             cost: Cost in USD
             model: Model name
             timestamp: Datetime of the usage
+            complexity: Complexity level (e.g., 'low', 'high')
+            **kwargs: Additional keyword arguments for compatibility
         """
+        # Handle backward compatibility with old parameter names
+        # Support both tokens_input and input_tokens naming
         self.id = TokenUsage._id_counter
         TokenUsage._id_counter += 1
         self.project = project
-        self.tokens_input = tokens_input
-        self.tokens_output = tokens_output
-        self.cost = cost
+        self.tokens_input = tokens_input if tokens_input is not None else kwargs.get('input_tokens', 0)
+        self.tokens_output = tokens_output if tokens_output is not None else kwargs.get('output_tokens', 0)
+        self.cost = cost if cost is not None else kwargs.get('cost_usd', 0.0)
         self.model = model
-        self.timestamp = timestamp
+        self.timestamp = timestamp or datetime.utcnow()
+        self.complexity = complexity
         TokenUsage._instances[self.id] = self
+        
+        # Add aliases for backward compatibility
+        self.input_tokens = self.tokens_input
+        self.output_tokens = self.tokens_output
+        self.cost_usd = self.cost
 
     @property
     def total_tokens(self):
@@ -46,7 +56,7 @@ class TokenUsage:
 class TokenUsageManager:
     """Manager for TokenUsage objects (mimics Django ORM)."""
 
-    def create(self, project, tokens_input, tokens_output, cost, model, timestamp):
+    def create(self, project=None, tokens_input=None, tokens_output=None, cost=None, model=None, timestamp=None, complexity=None, **kwargs):
         """Create a new token usage record.
         
         Args:
@@ -56,11 +66,22 @@ class TokenUsageManager:
             cost: Cost in USD
             model: Model name
             timestamp: Datetime of the usage
+            complexity: Complexity level
+            **kwargs: Additional keyword arguments for compatibility
             
         Returns:
             The created TokenUsage instance
         """
-        return TokenUsage(project, tokens_input, tokens_output, cost, model, timestamp)
+        return TokenUsage(
+            project=project,
+            tokens_input=tokens_input,
+            tokens_output=tokens_output,
+            cost=cost,
+            model=model,
+            timestamp=timestamp,
+            complexity=complexity,
+            **kwargs
+        )
 
     def get(self, id):
         """Get token usage by ID.
@@ -110,9 +131,18 @@ class Objects:
     """Module-level manager for token usage."""
 
     @staticmethod
-    def create(project, tokens_input, tokens_output, cost, model, timestamp):
+    def create(project=None, tokens_input=None, tokens_output=None, cost=None, model=None, timestamp=None, complexity=None, **kwargs):
         """Create a new token usage record."""
-        return TokenUsage(project, tokens_input, tokens_output, cost, model, timestamp)
+        return TokenUsage(
+            project=project,
+            tokens_input=tokens_input,
+            tokens_output=tokens_output,
+            cost=cost,
+            model=model,
+            timestamp=timestamp,
+            complexity=complexity,
+            **kwargs
+        )
 
     @staticmethod
     def get(id):

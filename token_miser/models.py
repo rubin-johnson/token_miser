@@ -54,13 +54,26 @@ class TokenUsage:
         output_tokens: int = 0,
         timestamp: Optional[datetime] = None,
         cost_usd: float = 0.0,
+        tokens_input: Optional[int] = None,
+        tokens_output: Optional[int] = None,
+        cost: Optional[float] = None,
+        model: Optional[str] = None,
+        complexity: Optional[str] = None,
     ):
         self.project = project
-        self.input_tokens = input_tokens
-        self.output_tokens = output_tokens
+        # Support both naming conventions
+        self.input_tokens = tokens_input if tokens_input is not None else input_tokens
+        self.output_tokens = tokens_output if tokens_output is not None else output_tokens
         self.timestamp = timestamp or datetime.utcnow()
-        self.cost_usd = cost_usd
+        self.cost_usd = cost if cost is not None else cost_usd
+        self.model = model
+        self.complexity = complexity
         self.id = None
+        
+        # Aliases for backward compatibility
+        self.tokens_input = self.input_tokens
+        self.tokens_output = self.output_tokens
+        self.cost = self.cost_usd
     
     @property
     def total_tokens(self) -> int:
