@@ -2,6 +2,7 @@
 import pytest
 from datetime import datetime, timedelta
 from unittest.mock import Mock
+from token_miser.models import Project, TokenUsage
 
 
 class MockDBObjectsManager:
