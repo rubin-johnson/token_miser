@@ -1,7 +1,7 @@
 """Pytest configuration and fixtures."""
 import pytest
 from datetime import datetime, timedelta
-from token_miser.models import Project, TokenUsage, BudgetLimit, BudgetAlert
+from token_miser.models import Project, TokenUsage, BudgetLimit, BudgetAlert, AnomalyAlert
 
 
 @pytest.fixture
@@ -16,6 +16,8 @@ def db():
     BudgetLimit._id_counter = 1
     BudgetAlert._instances = {}
     BudgetAlert._id_counter = 1
+    AnomalyAlert._instances = {}
+    AnomalyAlert._id_counter = 1
     
     yield None
     
@@ -28,3 +30,5 @@ def db():
     BudgetLimit._id_counter = 1
     BudgetAlert._instances = {}
     BudgetAlert._id_counter = 1
+    AnomalyAlert._instances = {}
+    AnomalyAlert._id_counter = 1
