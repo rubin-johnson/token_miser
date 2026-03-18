@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,15 +12,22 @@ import (
 
 // Run represents a single experimental run stored in the database
 type Run struct {
-	ID            int64     `json:"id"`
-	TaskName      string    `json:"task_name"`
-	ArmName       string    `json:"arm_name"`
-	PromptTokens  int       `json:"prompt_tokens"`
-	OutputTokens  int       `json:"output_tokens"`
-	TotalTokens   int       `json:"total_tokens"`
-	Cost          float64   `json:"cost"`
-	QualityScores string    `json:"quality_scores"` // JSON string
-	Timestamp     time.Time `json:"timestamp"`
+	ID               int64     `json:"id"`
+	TaskID           string    `json:"task_id"`
+	Arm              string    `json:"arm"`
+	LoadoutName      string    `json:"loadout_name"`
+	Model            string    `json:"model"`
+	StartedAt        time.Time `json:"started_at"`
+	WallSeconds      float64   `json:"wall_seconds"`
+	InputTokens      int       `json:"input_tokens"`
+	OutputTokens     int       `json:"output_tokens"`
+	CacheReadTokens  int       `json:"cache_read_tokens"`
+	CacheWriteTokens int       `json:"cache_write_tokens"`
+	TotalCostUSD     float64   `json:"total_cost_usd"`
+	ExitCode         int       `json:"exit_code"`
+	CriteriaPass     int       `json:"criteria_pass"`
+	CriteriaTotal    int       `json:"criteria_total"`
+	QualityScores    string    `json:"quality_scores"`
 }
 
 // DB wraps the SQLite database connection
@@ -58,14 +64,21 @@ func (db *DB) createTables() error {
 	query := `
 	CREATE TABLE IF NOT EXISTS runs (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		task_name TEXT NOT NULL,
-		arm_name TEXT NOT NULL,
-		prompt_tokens INTEGER NOT NULL,
-		output_tokens INTEGER NOT NULL,
-		total_tokens INTEGER NOT NULL,
-		cost REAL NOT NULL,
-		quality_scores TEXT NOT NULL,
-		timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+		task_id TEXT NOT NULL,
+		arm TEXT NOT NULL,
+		loadout_name TEXT NOT NULL DEFAULT '',
+		model TEXT NOT NULL DEFAULT '',
+		started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		wall_seconds REAL NOT NULL DEFAULT 0,
+		input_tokens INTEGER NOT NULL DEFAULT 0,
+		output_tokens INTEGER NOT NULL DEFAULT 0,
+		cache_read_tokens INTEGER NOT NULL DEFAULT 0,
+		cache_write_tokens INTEGER NOT NULL DEFAULT 0,
+		total_cost_usd REAL NOT NULL DEFAULT 0,
+		exit_code INTEGER NOT NULL DEFAULT 0,
+		criteria_pass INTEGER NOT NULL DEFAULT 0,
+		criteria_total INTEGER NOT NULL DEFAULT 0,
+		quality_scores TEXT NOT NULL DEFAULT ''
 	);
 	`
 
@@ -74,19 +87,19 @@ func (db *DB) createTables() error {
 }
 
 // StoreRun inserts a run into the database and returns its ID
-func (db *DB) StoreRun(taskName, armName string, promptTokens, outputTokens, totalTokens int, cost float64, qualityScores map[string]interface{}) (int64, error) {
-	// Convert quality scores to JSON string
-	qualityJSON, err := json.Marshal(qualityScores)
-	if err != nil {
-		return 0, fmt.Errorf("failed to marshal quality scores: %w", err)
-	}
-
+func (db *DB) StoreRun(run *Run) (int64, error) {
 	query := `
-	INSERT INTO runs (task_name, arm_name, prompt_tokens, output_tokens, total_tokens, cost, quality_scores, timestamp)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	INSERT INTO runs (task_id, arm, loadout_name, model, started_at, wall_seconds,
+		input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
+		total_cost_usd, exit_code, criteria_pass, criteria_total, quality_scores)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
-	result, err := db.conn.Exec(query, taskName, armName, promptTokens, outputTokens, totalTokens, cost, string(qualityJSON), time.Now())
+	result, err := db.conn.Exec(query,
+		run.TaskID, run.Arm, run.LoadoutName, run.Model, time.Now(),
+		run.WallSeconds, run.InputTokens, run.OutputTokens,
+		run.CacheReadTokens, run.CacheWriteTokens, run.TotalCostUSD,
+		run.ExitCode, run.CriteriaPass, run.CriteriaTotal, run.QualityScores)
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert run: %w", err)
 	}
@@ -99,16 +112,22 @@ func (db *DB) StoreRun(taskName, armName string, promptTokens, outputTokens, tot
 	return id, nil
 }
 
-// GetRuns retrieves runs from the database, optionally filtered by task name
-func (db *DB) GetRuns(taskName string) ([]Run, error) {
+// GetRuns retrieves runs from the database, optionally filtered by task ID
+func (db *DB) GetRuns(taskID string) ([]Run, error) {
 	var query string
 	var args []interface{}
 
-	if taskName == "" {
-		query = "SELECT id, task_name, arm_name, prompt_tokens, output_tokens, total_tokens, cost, quality_scores, timestamp FROM runs ORDER BY timestamp DESC"
+	if taskID == "" {
+		query = `SELECT id, task_id, arm, loadout_name, model, started_at, wall_seconds,
+			input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
+			total_cost_usd, exit_code, criteria_pass, criteria_total, quality_scores
+			FROM runs ORDER BY started_at DESC`
 	} else {
-		query = "SELECT id, task_name, arm_name, prompt_tokens, output_tokens, total_tokens, cost, quality_scores, timestamp FROM runs WHERE task_name = ? ORDER BY timestamp DESC"
-		args = append(args, taskName)
+		query = `SELECT id, task_id, arm, loadout_name, model, started_at, wall_seconds,
+			input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
+			total_cost_usd, exit_code, criteria_pass, criteria_total, quality_scores
+			FROM runs WHERE task_id = ? ORDER BY started_at DESC`
+		args = append(args, taskID)
 	}
 
 	rows, err := db.conn.Query(query, args...)
@@ -120,7 +139,10 @@ func (db *DB) GetRuns(taskName string) ([]Run, error) {
 	var runs []Run
 	for rows.Next() {
 		var run Run
-		err := rows.Scan(&run.ID, &run.TaskName, &run.ArmName, &run.PromptTokens, &run.OutputTokens, &run.TotalTokens, &run.Cost, &run.QualityScores, &run.Timestamp)
+		err := rows.Scan(&run.ID, &run.TaskID, &run.Arm, &run.LoadoutName, &run.Model,
+			&run.StartedAt, &run.WallSeconds, &run.InputTokens, &run.OutputTokens,
+			&run.CacheReadTokens, &run.CacheWriteTokens, &run.TotalCostUSD,
+			&run.ExitCode, &run.CriteriaPass, &run.CriteriaTotal, &run.QualityScores)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan run: %w", err)
 		}

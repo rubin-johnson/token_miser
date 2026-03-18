@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/anthropics/loadout/internal/arm"
-	"github.com/anthropics/loadout/internal/task"
+	"github.com/rubin-johnson/token_miser/internal/arm"
+	"github.com/rubin-johnson/token_miser/internal/task"
 )
 
 // Commander interface for executing shell commands
@@ -29,55 +29,45 @@ func (c *DefaultCommander) RunWithOutput(command string, args ...string) (string
 	panic("not implemented")
 }
 
-// Environment represents an isolated experiment environment
-type Environment struct {
-	HomeDir   string
-	Commander Commander
+// EnvironmentContext represents an isolated experiment environment
+type EnvironmentContext struct {
+	HomeDir      string
+	WorkspaceDir string
+	Commander    Commander
 }
 
 // SetupEnv creates temp dir, clones repo, checks out commit
-func SetupEnv(t *task.Task, a *arm.Arm, commander Commander) (*Environment, error) {
+func SetupEnv(t *task.Task, a *arm.Arm, commander Commander) (*EnvironmentContext, error) {
 	// Create temporary directory as HOME
 	homeDir, err := os.MkdirTemp("", "experiment-*")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp dir: %w", err)
 	}
 
-	env := &Environment{
-		HomeDir:   homeDir,
-		Commander: commander,
+	repoPath := filepath.Join(homeDir, "workspace")
+
+	env := &EnvironmentContext{
+		HomeDir:      homeDir,
+		WorkspaceDir: repoPath,
+		Commander:    commander,
 	}
 
 	// Clone repo with --shared for speed
-	repoPath := filepath.Join(homeDir, "workspace")
-	err = commander.Run("git", "clone", "--shared", t.RepoURL, repoPath)
+	err = commander.Run("git", "clone", "--shared", t.Repo, repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to clone repo: %w", err)
 	}
 
-	// Change to repo directory and checkout starting commit
-	oldDir, err := os.Getwd()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get current dir: %w", err)
-	}
-	defer os.Chdir(oldDir)
-
-	err = os.Chdir(repoPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to change to repo dir: %w", err)
-	}
-
-	err = commander.Run("git", "checkout", t.StartingCommit)
+	// Checkout starting commit using -C to avoid os.Chdir
+	err = commander.Run("git", "-C", repoPath, "checkout", t.StartingCommit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to checkout commit: %w", err)
 	}
 
 	// For treatment arm, apply loadout
-	if a.Type == arm.TypeTreatment {
+	if a.LoadoutPath != "" {
 		claudeDir := filepath.Join(homeDir, ".claude")
-		// TODO: Get loadout bundle from task or arm configuration
-		loadoutBundle := "default-bundle.tar.gz" // placeholder
-		err = commander.Run("loadout", "apply", "--target", claudeDir, "--yes", loadoutBundle)
+		err = commander.Run("loadout", "apply", "--target", claudeDir, "--yes", a.LoadoutPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to apply loadout: %w", err)
 		}
@@ -87,7 +77,7 @@ func SetupEnv(t *task.Task, a *arm.Arm, commander Commander) (*Environment, erro
 }
 
 // TeardownEnv removes the entire temp dir
-func (e *Environment) TeardownEnv() error {
+func (e *EnvironmentContext) TeardownEnv() error {
 	if e.HomeDir == "" {
 		return nil
 	}

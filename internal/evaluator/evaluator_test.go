@@ -8,7 +8,7 @@ import (
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
 
-	"github.com/anthropics/claude-tokenizer-go/internal/task"
+	"github.com/rubin-johnson/token_miser/internal/task"
 )
 
 // Mock implementations
@@ -32,20 +32,11 @@ func (m *mockMessagesService) New(ctx context.Context, body anthropic.MessageNew
 	return m.response, nil
 }
 
-// Mock content that implements GetText() method
-type mockContent struct {
-	text string
-}
-
-func (m *mockContent) GetText() string {
-	return m.text
-}
-
 // Helper function to create mock response
 func createMockResponse(text string) *anthropic.Message {
 	return &anthropic.Message{
-		Content: []interface{}{
-			&mockContent{text: text},
+		Content: []anthropic.ContentBlockUnion{
+			{Type: "text", Text: text},
 		},
 	}
 }
@@ -86,8 +77,8 @@ func TestScoreQuality(t *testing.T) {
 				}
 			]`,
 			dimensions: []task.RubricDimension{
-				{Name: "accuracy", Description: "How accurate is the response"},
-				{Name: "clarity", Description: "How clear is the response"},
+				{Dimension: "accuracy", Prompt: "How accurate is the response"},
+				{Dimension: "clarity", Prompt: "How clear is the response"},
 			},
 			wantErr:    false,
 			wantScores: 2,
@@ -95,7 +86,7 @@ func TestScoreQuality(t *testing.T) {
 		{
 			name:       "invalid JSON response",
 			response:   "invalid json",
-			dimensions: []task.RubricDimension{{Name: "test", Description: "test"}},
+			dimensions: []task.RubricDimension{{Dimension: "test", Prompt: "test"}},
 			wantErr:    true,
 		},
 		{
@@ -107,7 +98,7 @@ func TestScoreQuality(t *testing.T) {
 					"reason": "Test reason"
 				}
 			]`,
-			dimensions: []task.RubricDimension{{Name: "test", Description: "test"}},
+			dimensions: []task.RubricDimension{{Dimension: "test", Prompt: "test"}},
 			wantErr:    true,
 		},
 		{
@@ -119,7 +110,7 @@ func TestScoreQuality(t *testing.T) {
 					"reason": ""
 				}
 			]`,
-			dimensions: []task.RubricDimension{{Name: "test", Description: "test"}},
+			dimensions: []task.RubricDimension{{Dimension: "test", Prompt: "test"}},
 			wantErr:    true,
 		},
 	}
@@ -188,8 +179,8 @@ func TestCollectWorkspaceFiles(t *testing.T) {
 func TestBuildJudgePrompt(t *testing.T) {
 	evaluator := &Evaluator{}
 	dimensions := []task.RubricDimension{
-		{Name: "accuracy", Description: "How accurate is the response"},
-		{Name: "clarity", Description: "How clear is the response"},
+		{Dimension: "accuracy", Prompt: "How accurate is the response"},
+		{Dimension: "clarity", Prompt: "How clear is the response"},
 	}
 
 	prompt := evaluator.buildJudgePrompt("test input", "test output", dimensions, "test context")
@@ -224,7 +215,7 @@ func TestScoreQualityPromptConstruction(t *testing.T) {
 	}
 
 	evaluator := &Evaluator{client: mockClient}
-	dimensions := []task.RubricDimension{{Name: "test", Description: "test dimension"}}
+	dimensions := []task.RubricDimension{{Dimension: "test", Prompt: "test dimension"}}
 
 	_, err := evaluator.ScoreQuality(context.Background(), "input", "output", dimensions)
 	if err != nil {
@@ -264,7 +255,7 @@ func TestScoreQualityJSONParsing(t *testing.T) {
 			}
 
 			evaluator := &Evaluator{client: mockClient}
-			dimensions := []task.RubricDimension{{Name: "test", Description: "test"}}
+			dimensions := []task.RubricDimension{{Dimension: "test", Prompt: "test"}}
 
 			_, err := evaluator.ScoreQuality(context.Background(), "input", "output", dimensions)
 

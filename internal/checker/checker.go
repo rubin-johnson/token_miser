@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/anthropics/claude-3-5-sonnet-20241022-experiments/internal/environment"
-	"github.com/anthropics/claude-3-5-sonnet-20241022-experiments/internal/task"
+	"github.com/rubin-johnson/token_miser/internal/environment"
+	"github.com/rubin-johnson/token_miser/internal/task"
 )
 
 // CheckResult represents the result of checking a criterion
@@ -31,11 +31,11 @@ func New(env *environment.EnvironmentContext) *Checker {
 func (c *Checker) CheckCriterion(criterion task.Criterion) CheckResult {
 	switch criterion.Type {
 	case "file_exists":
-		return c.checkFileExists(criterion.FilePaths)
+		return c.checkFileExists(criterion.Paths)
 	case "command_exits_zero":
 		return c.checkCommandExitsZero(criterion.Command)
 	case "output_contains":
-		return c.checkOutputContains(criterion.Command, criterion.OutputContains)
+		return c.checkOutputContains(criterion.Command, criterion.Contains)
 	default:
 		return CheckResult{
 			Passed: false,

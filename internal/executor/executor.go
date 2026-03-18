@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/claudecode/internal/environment"
 )
 
 // ExecutorResult represents the result of running Claude CLI

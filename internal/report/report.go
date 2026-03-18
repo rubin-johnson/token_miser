@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/rubin-johnson/token_miser/internal/db"
+	_ "modernc.org/sqlite"
 )
 
 type ArmStats struct {
@@ -21,10 +22,33 @@ type ArmStats struct {
 }
 
 func Compare(taskID string, database *sql.DB) (string, error) {
-	runs, err := db.GetRuns(database, taskID)
-	if err != nil {
-		return "", fmt.Errorf("get runs: %w", err)
+	var query string
+	var args []interface{}
+	if taskID == "" {
+		query = `SELECT task_id, arm, wall_seconds, input_tokens, output_tokens, total_cost_usd, criteria_pass, criteria_total, quality_scores FROM runs ORDER BY started_at DESC`
+	} else {
+		query = `SELECT task_id, arm, wall_seconds, input_tokens, output_tokens, total_cost_usd, criteria_pass, criteria_total, quality_scores FROM runs WHERE task_id = ? ORDER BY started_at DESC`
+		args = append(args, taskID)
 	}
+
+	rows, err := database.Query(query, args...)
+	if err != nil {
+		return "", fmt.Errorf("query runs: %w", err)
+	}
+	defer rows.Close()
+
+	var runs []*db.Run
+	for rows.Next() {
+		var r db.Run
+		if err := rows.Scan(&r.TaskID, &r.Arm, &r.WallSeconds, &r.InputTokens, &r.OutputTokens, &r.TotalCostUSD, &r.CriteriaPass, &r.CriteriaTotal, &r.QualityScores); err != nil {
+			return "", fmt.Errorf("scan run: %w", err)
+		}
+		runs = append(runs, &r)
+	}
+	if err := rows.Err(); err != nil {
+		return "", fmt.Errorf("iterate runs: %w", err)
+	}
+
 	if len(runs) == 0 {
 		return fmt.Sprintf("No runs found for task %q", taskID), nil
 	}

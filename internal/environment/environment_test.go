@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anthropics/loadout/internal/arm"
-	"github.com/anthropics/loadout/internal/task"
+	"github.com/rubin-johnson/token_miser/internal/arm"
+	"github.com/rubin-johnson/token_miser/internal/task"
 )
 
 // MockCommander for testing
@@ -42,11 +42,12 @@ func (m *MockCommander) RunWithOutput(command string, args ...string) (string, e
 func TestSetupEnv_VanillaArm(t *testing.T) {
 	mock := &MockCommander{}
 	task := &task.Task{
-		RepoURL:        "https://github.com/example/repo.git",
+		Repo:           "https://github.com/example/repo.git",
 		StartingCommit: "abc123",
 	}
 	arm := &arm.Arm{
-		Type: arm.Vanilla,
+		Name:        "vanilla",
+		LoadoutPath: "",
 	}
 
 	env, err := SetupEnv(task, arm, mock)
@@ -66,11 +67,11 @@ func TestSetupEnv_VanillaArm(t *testing.T) {
 	// Verify correct commands were called
 	expectedCommands := [][]string{
 		{"git", "clone", "--shared", "https://github.com/example/repo.git", filepath.Join(env.HomeDir, "workspace")},
-		{"git", "checkout", "abc123"},
+		{"git", "-C", filepath.Join(env.HomeDir, "workspace"), "checkout", "abc123"},
 	}
 
 	if len(mock.Commands) != len(expectedCommands) {
-		t.Fatalf("Expected %d commands, got %d", len(expectedCommands), len(mock.Commands))
+		t.Fatalf("Expected %d commands, got %d: %v", len(expectedCommands), len(mock.Commands), mock.Commands)
 	}
 
 	for i, expected := range expectedCommands {
@@ -89,11 +90,12 @@ func TestSetupEnv_VanillaArm(t *testing.T) {
 func TestSetupEnv_TreatmentArm(t *testing.T) {
 	mock := &MockCommander{}
 	task := &task.Task{
-		RepoURL:        "https://github.com/example/repo.git",
+		Repo:           "https://github.com/example/repo.git",
 		StartingCommit: "abc123",
 	}
 	arm := &arm.Arm{
-		Type: arm.TypeTreatment,
+		Name:        "treatment",
+		LoadoutPath: "/some/loadout/bundle",
 	}
 
 	env, err := SetupEnv(task, arm, mock)
@@ -110,8 +112,8 @@ func TestSetupEnv_TreatmentArm(t *testing.T) {
 	// Verify correct commands were called including loadout
 	expectedCommands := [][]string{
 		{"git", "clone", "--shared", "https://github.com/example/repo.git", filepath.Join(env.HomeDir, "workspace")},
-		{"git", "checkout", "abc123"},
-		{"loadout", "apply", "--target", filepath.Join(env.HomeDir, ".claude"), "--yes", "default-bundle.tar.gz"},
+		{"git", "-C", filepath.Join(env.HomeDir, "workspace"), "checkout", "abc123"},
+		{"loadout", "apply", "--target", filepath.Join(env.HomeDir, ".claude"), "--yes", "/some/loadout/bundle"},
 	}
 
 	if len(mock.Commands) != len(expectedCommands) {
@@ -134,11 +136,12 @@ func TestSetupEnv_TreatmentArm(t *testing.T) {
 func TestTeardownEnv(t *testing.T) {
 	mock := &MockCommander{}
 	task := &task.Task{
-		RepoURL:        "https://github.com/example/repo.git",
+		Repo:           "https://github.com/example/repo.git",
 		StartingCommit: "abc123",
 	}
 	arm := &arm.Arm{
-		Type: arm.Vanilla,
+		Name:        "vanilla",
+		LoadoutPath: "",
 	}
 
 	env, err := SetupEnv(task, arm, mock)

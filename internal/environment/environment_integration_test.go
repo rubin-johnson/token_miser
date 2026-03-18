@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/anthropics/loadout/internal/arm"
-	"github.com/anthropics/loadout/internal/task"
+	"github.com/rubin-johnson/token_miser/internal/arm"
+	"github.com/rubin-johnson/token_miser/internal/task"
 )
 
 // RealCommander implements Commander using os/exec
@@ -35,11 +35,12 @@ func TestSetupEnv_Integration(t *testing.T) {
 
 	commander := &RealCommander{}
 	task := &task.Task{
-		RepoURL:        "https://github.com/anthropics/loadout.git",
+		Repo:           "https://github.com/rubin-johnson/loadout.git",
 		StartingCommit: "fd88685",
 	}
 	arm := &arm.Arm{
-		Type: arm.TypeVanilla,
+		Name:        "vanilla",
+		LoadoutPath: "",
 	}
 
 	env, err := SetupEnv(task, arm, commander)

@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/anthropics/claude-3-5-sonnet-20241022-experiments/internal/environment"
-	"github.com/anthropics/claude-3-5-sonnet-20241022-experiments/internal/task"
+	"github.com/rubin-johnson/token_miser/internal/environment"
+	"github.com/rubin-johnson/token_miser/internal/task"
 )
 
 func TestChecker_CheckFileExists(t *testing.T) {
@@ -26,8 +26,8 @@ func TestChecker_CheckFileExists(t *testing.T) {
 
 	// Test existing file
 	criterion := task.Criterion{
-		Type:      "file_exists",
-		FilePaths: []string{"test.txt"},
+		Type:  "file_exists",
+		Paths: []string{"test.txt"},
 	}
 	result := checker.CheckCriterion(criterion)
 	if !result.Passed {
@@ -36,8 +36,8 @@ func TestChecker_CheckFileExists(t *testing.T) {
 
 	// Test missing file
 	criterion = task.Criterion{
-		Type:      "file_exists",
-		FilePaths: []string{"missing.txt"},
+		Type:  "file_exists",
+		Paths: []string{"missing.txt"},
 	}
 	result = checker.CheckCriterion(criterion)
 	if result.Passed {
@@ -49,8 +49,8 @@ func TestChecker_CheckFileExists(t *testing.T) {
 
 	// Test multiple files with some missing
 	criterion = task.Criterion{
-		Type:      "file_exists",
-		FilePaths: []string{"test.txt", "missing1.txt", "missing2.txt"},
+		Type:  "file_exists",
+		Paths: []string{"test.txt", "missing1.txt", "missing2.txt"},
 	}
 	result = checker.CheckCriterion(criterion)
 	if result.Passed {
@@ -115,7 +115,7 @@ func TestChecker_CheckOutputContains(t *testing.T) {
 	criterion := task.Criterion{
 		Type:           "output_contains",
 		Command:        "echo 'hello world test'",
-		OutputContains: []string{"hello", "world"},
+		Contains: []string{"hello", "world"},
 	}
 	result := checker.CheckCriterion(criterion)
 	if !result.Passed {
@@ -126,7 +126,7 @@ func TestChecker_CheckOutputContains(t *testing.T) {
 	criterion = task.Criterion{
 		Type:           "output_contains",
 		Command:        "echo 'hello world'",
-		OutputContains: []string{"hello", "missing", "also_missing"},
+		Contains: []string{"hello", "missing", "also_missing"},
 	}
 	result = checker.CheckCriterion(criterion)
 	if result.Passed {
@@ -140,7 +140,7 @@ func TestChecker_CheckOutputContains(t *testing.T) {
 	criterion = task.Criterion{
 		Type:           "output_contains",
 		Command:        "exit 1",
-		OutputContains: []string{"anything"},
+		Contains: []string{"anything"},
 	}
 	result = checker.CheckCriterion(criterion)
 	if result.Passed {
@@ -165,7 +165,7 @@ func TestChecker_CheckAllCriteria(t *testing.T) {
 	criteria := []task.Criterion{
 		{
 			Type:      "file_exists",
-			FilePaths: []string{"test.txt"},
+			Paths: []string{"test.txt"},
 		},
 		{
 			Type:    "command_exits_zero",
@@ -173,7 +173,7 @@ func TestChecker_CheckAllCriteria(t *testing.T) {
 		},
 		{
 			Type:      "file_exists",
-			FilePaths: []string{"missing.txt"},
+			Paths: []string{"missing.txt"},
 		},
 	}
 

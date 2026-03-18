@@ -11,17 +11,26 @@ import (
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
 
-	"github.com/anthropics/claude-tokenizer-go/internal/task"
+	"github.com/rubin-johnson/token_miser/internal/task"
 )
+
+// MessagesService defines the interface for message operations
+type MessagesService interface {
+	New(ctx context.Context, body anthropic.MessageNewParams, opts ...option.RequestOption) (*anthropic.Message, error)
+}
 
 // AnthropicClient defines the interface for Anthropic API calls
 type AnthropicClient interface {
 	Messages() MessagesService
 }
 
-// MessagesService defines the interface for message operations
-type MessagesService interface {
-	New(ctx context.Context, body anthropic.MessageNewParams, opts ...option.RequestOption) (*anthropic.Message, error)
+// realClientAdapter wraps anthropic.Client to implement AnthropicClient
+type realClientAdapter struct {
+	client anthropic.Client
+}
+
+func (a *realClientAdapter) Messages() MessagesService {
+	return &a.client.Messages
 }
 
 // DimensionScore represents a score for a single rubric dimension
@@ -40,7 +49,7 @@ type Evaluator struct {
 func NewEvaluator(apiKey string) *Evaluator {
 	client := anthropic.NewClient(option.WithAPIKey(apiKey))
 	return &Evaluator{
-		client: client,
+		client: &realClientAdapter{client: client},
 	}
 }
 
@@ -57,13 +66,10 @@ func (e *Evaluator) ScoreQuality(ctx context.Context, input, output string, dime
 
 	// Call Haiku model
 	resp, err := e.client.Messages().New(ctx, anthropic.MessageNewParams{
-		Model:     anthropic.ModelClaude3Haiku20240307,
-		MaxTokens: anthropic.Int(2000),
+		Model:     anthropic.ModelClaude_3_Haiku_20240307,
+		MaxTokens: 2000,
 		Messages: []anthropic.MessageParam{
-			{
-				Role:    anthropic.RoleUser,
-				Content: anthropic.String(prompt),
-			},
+			anthropic.NewUserMessage(anthropic.NewTextBlock(prompt)),
 		},
 	})
 	if err != nil {
@@ -101,12 +107,9 @@ func (e *Evaluator) extractTextContent(resp *anthropic.Message) (string, error) 
 		return "", fmt.Errorf("empty response from Anthropic API")
 	}
 
-	// Try to extract text content - this is a simplified approach
-	// In a real implementation, we'd need to handle the actual SDK types properly
 	for _, content := range resp.Content {
-		// For testing purposes, we'll use a simple interface approach
-		if textGetter, ok := content.(interface{ GetText() string }); ok {
-			return textGetter.GetText(), nil
+		if content.Type == "text" {
+			return content.Text, nil
 		}
 	}
 
@@ -177,7 +180,7 @@ func (e *Evaluator) buildJudgePrompt(input, output string, dimensions []task.Rub
 
 	prompt.WriteString("Please score the output on the following dimensions (0.0-1.0 scale):\n")
 	for _, dim := range dimensions {
-		prompt.WriteString(fmt.Sprintf("- %s: %s\n", dim.Name, dim.Description))
+		prompt.WriteString(fmt.Sprintf("- %s: %s\n", dim.Dimension, dim.Prompt))
 	}
 
 	prompt.WriteString("\nRespond with a JSON array of scores in this exact format:\n")

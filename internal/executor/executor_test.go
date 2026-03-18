@@ -1,8 +1,6 @@
 package executor
 
 import (
-	"encoding/json"
-	"os"
 	"strings"
 	"testing"
 )
