@@ -156,6 +156,11 @@ func (db *DB) GetRuns(taskID string) ([]Run, error) {
 	return runs, nil
 }
 
+// Conn returns the underlying *sql.DB connection
+func (db *DB) Conn() *sql.DB {
+	return db.conn
+}
+
 // Close closes the database connection
 func (db *DB) Close() error {
 	return db.conn.Close()

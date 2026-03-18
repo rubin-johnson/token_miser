@@ -31,7 +31,7 @@ func main() {
 	command := flag.Args()[0]
 	args := flag.Args()[1:]
 
-	if err := cli.Dispatch(command, args); err != nil {
+	if err := cli.Dispatch(command, args, os.Stdout); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
