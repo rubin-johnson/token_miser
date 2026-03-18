@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -9,105 +8,76 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rubin-johnson/token_miser/internal/environment"
+	"github.com/claudecode/internal/environment"
 )
 
+// ExecutorResult represents the result of running Claude CLI
 type ExecutorResult struct {
-	ResultText      string
-	InputTokens     int
-	OutputTokens    int
-	CacheReadTokens int
-	CacheWriteTokens int
-	TotalCostUSD    float64
-	WallSeconds     float64
-	ExitCode        int
+	Result       string  `json:"result"`
+	TotalCostUSD float64 `json:"total_cost_usd"`
+	Usage        Usage   `json:"usage"`
+	WallSeconds  float64 `json:"wall_seconds"`
 }
 
-type claudeUsage struct {
-	InputTokens            int `json:"input_tokens"`
-	OutputTokens           int `json:"output_tokens"`
-	CacheReadInputTokens   int `json:"cache_read_input_tokens"`
+// Usage represents token usage information
+type Usage struct {
+	InputTokens              int `json:"input_tokens"`
+	OutputTokens             int `json:"output_tokens"`
 	CacheCreationInputTokens int `json:"cache_creation_input_tokens"`
+	CacheReadInputTokens     int `json:"cache_read_input_tokens"`
 }
 
-type claudeJSON struct {
-	Result      string      `json:"result"`
-	TotalCostUSD float64   `json:"total_cost_usd"`
-	Usage       claudeUsage `json:"usage"`
-}
-
-func ParseClaudeJSON(raw string) (*ExecutorResult, error) {
-	var parsed claudeJSON
-	if err := json.Unmarshal([]byte(raw), &parsed); err != nil {
-		excerpt := raw
-		if len(excerpt) > 200 {
-			excerpt = excerpt[:200] + "..."
-		}
-		return nil, fmt.Errorf("parse claude JSON: %w\nraw: %s", err, excerpt)
+// ParseClaudeJSON parses Claude CLI JSON output into ExecutorResult
+func ParseClaudeJSON(jsonData []byte) (*ExecutorResult, error) {
+	var result ExecutorResult
+	err := json.Unmarshal(jsonData, &result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse JSON: %w", err)
 	}
-	return &ExecutorResult{
-		ResultText:       parsed.Result,
-		InputTokens:      parsed.Usage.InputTokens,
-		OutputTokens:     parsed.Usage.OutputTokens,
-		CacheReadTokens:  parsed.Usage.CacheReadInputTokens,
-		CacheWriteTokens: parsed.Usage.CacheCreationInputTokens,
-		TotalCostUSD:     parsed.TotalCostUSD,
-	}, nil
+	return &result, nil
 }
 
-func filterEnv(environ []string) []string {
-	filtered := make([]string, 0, len(environ))
-	for _, e := range environ {
+// FilterEnv strips CLAUDECODE from environment and sets HOME
+func FilterEnv(env []string, homeDir string) []string {
+	var filtered []string
+	for _, e := range env {
 		if !strings.HasPrefix(e, "CLAUDECODE=") {
 			filtered = append(filtered, e)
 		}
 	}
+	filtered = append(filtered, "HOME="+homeDir)
 	return filtered
 }
 
-func RunClaude(ctx context.Context, prompt string, env *environment.EnvironmentContext, model string) (*ExecutorResult, error) {
-	promptFile := fmt.Sprintf("%s/prompt.txt", env.HomeDir)
-	if err := os.WriteFile(promptFile, []byte(prompt), 0600); err != nil {
-		return nil, fmt.Errorf("write prompt file: %w", err)
-	}
-
-	f, err := os.Open(promptFile)
-	if err != nil {
-		return nil, fmt.Errorf("open prompt file: %w", err)
-	}
-	defer f.Close()
-
-	envVars := filterEnv(os.Environ())
-	envVars = append(envVars, fmt.Sprintf("HOME=%s", env.HomeDir))
-
-	cmd := exec.CommandContext(ctx, "claude", "--print",
-		"--dangerously-skip-permissions",
-		"--output-format", "json",
-		"--model", model,
-		"--no-session-persistence",
-	)
-	cmd.Stdin = f
-	cmd.Dir = env.WorkspaceDir
-	cmd.Env = envVars
-
+// RunClaude executes Claude CLI in an isolated environment
+func RunClaude(prompt string, homeDir string) (*ExecutorResult, error) {
 	start := time.Now()
-	out, err := cmd.Output()
-	elapsed := time.Since(start).Seconds()
-
-	exitCode := 0
+	
+	// Create isolated environment
+	env := FilterEnv(os.Environ(), homeDir)
+	
+	// Prepare Claude CLI command
+	cmd := exec.Command("claude", "--print", "--dangerously-skip-permissions", "--output-format", "json", "--no-session-persistence")
+	cmd.Env = env
+	cmd.Dir = homeDir
+	
+	// Set up stdin with prompt
+	cmd.Stdin = strings.NewReader(prompt)
+	
+	// Execute command
+	output, err := cmd.Output()
 	if err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			exitCode = exitErr.ExitCode()
-		} else {
-			return nil, fmt.Errorf("run claude: %w", err)
-		}
+		return nil, fmt.Errorf("claude command failed: %w", err)
 	}
-
-	result, parseErr := ParseClaudeJSON(string(out))
-	if parseErr != nil {
-		return nil, parseErr
+	
+	// Parse JSON output
+	result, err := ParseClaudeJSON(output)
+	if err != nil {
+		return nil, err
 	}
-	result.WallSeconds = elapsed
-	result.ExitCode = exitCode
+	
+	// Set wall time
+	result.WallSeconds = time.Since(start).Seconds()
+	
 	return result, nil
 }
