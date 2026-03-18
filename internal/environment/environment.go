@@ -3,6 +3,7 @@ package environment
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/rubin-johnson/token_miser/internal/arm"
@@ -25,13 +26,14 @@ func NewDefaultCommander() *DefaultCommander {
 }
 
 func (c *DefaultCommander) Run(command string, args []string) error {
-	// Implementation would use os/exec.Command
-	panic("not implemented")
+	cmd := exec.Command(command, args...)
+	return cmd.Run()
 }
 
 func (c *DefaultCommander) RunWithOutput(command string, args []string) (string, error) {
-	// Implementation would use os/exec.Command
-	panic("not implemented")
+	cmd := exec.Command(command, args...)
+	out, err := cmd.Output()
+	return string(out), err
 }
 
 // EnvironmentContext represents an isolated experiment environment
