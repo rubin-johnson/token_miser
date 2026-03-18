@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"text/tabwriter"
+	"time"
 
 	"github.com/rubin-johnson/token_miser/internal/db"
 	"github.com/rubin-johnson/token_miser/internal/report"
@@ -62,9 +64,43 @@ func compareCommand(args []string, out io.Writer) error {
 	return nil
 }
 
+func dbPath() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("get home dir: %w", err)
+	}
+	return filepath.Join(home, ".token_miser", "results.db"), nil
+}
+
 func historyCommand(args []string, out io.Writer) error {
-	fmt.Fprintln(out, "not implemented")
-	return fmt.Errorf("not implemented")
+	path, err := dbPath()
+	if err != nil {
+		return err
+	}
+	database, err := db.InitDB(path)
+	if err != nil {
+		return fmt.Errorf("init db: %w", err)
+	}
+	defer database.Close()
+
+	runs, err := database.GetRuns("")
+	if err != nil {
+		return fmt.Errorf("get runs: %w", err)
+	}
+
+	tw := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "ID\tTaskID\tArm\tTokens\tCost\tTimestamp")
+	for _, r := range runs {
+		fmt.Fprintf(tw, "%d\t%s\t%s\t%d\t$%.6f\t%s\n",
+			r.ID,
+			r.TaskID,
+			r.Arm,
+			r.InputTokens+r.OutputTokens,
+			r.TotalCostUSD,
+			r.StartedAt.Format(time.RFC3339),
+		)
+	}
+	return tw.Flush()
 }
 
 func tasksCommand(args []string, out io.Writer) error {
