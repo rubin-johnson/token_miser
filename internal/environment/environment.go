@@ -3,70 +3,93 @@ package environment
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 
-	"github.com/rubin-johnson/token_miser/internal/arm"
-	"github.com/rubin-johnson/token_miser/internal/task"
+	"github.com/anthropics/loadout/internal/arm"
+	"github.com/anthropics/loadout/internal/task"
 )
 
-type EnvironmentContext struct {
-	HomeDir      string
-	WorkspaceDir string
-}
-
-// Commander allows injecting fake exec behavior in tests.
+// Commander interface for executing shell commands
+// This allows mocking in tests
 type Commander interface {
-	Run(name string, args ...string) error
+	Run(command string, args ...string) error
+	RunWithOutput(command string, args ...string) (string, error)
 }
 
-type defaultCommander struct{}
+// DefaultCommander implements Commander using os/exec
+type DefaultCommander struct{}
 
-func (d *defaultCommander) Run(name string, args ...string) error {
-	cmd := exec.Command(name, args...)
-	out, err := cmd.CombinedOutput()
+func (c *DefaultCommander) Run(command string, args ...string) error {
+	// Implementation would use os/exec.Command
+	panic("not implemented")
+}
+
+func (c *DefaultCommander) RunWithOutput(command string, args ...string) (string, error) {
+	// Implementation would use os/exec.Command
+	panic("not implemented")
+}
+
+// Environment represents an isolated experiment environment
+type Environment struct {
+	HomeDir   string
+	Commander Commander
+}
+
+// SetupEnv creates temp dir, clones repo, checks out commit
+func SetupEnv(t *task.Task, a *arm.Arm, commander Commander) (*Environment, error) {
+	// Create temporary directory as HOME
+	homeDir, err := os.MkdirTemp("", "experiment-*")
 	if err != nil {
-		return fmt.Errorf("command %q failed: %w\n%s", name, err, out)
+		return nil, fmt.Errorf("failed to create temp dir: %w", err)
 	}
-	return nil
-}
 
-func SetupEnv(t *task.Task, a *arm.Arm) (*EnvironmentContext, error) {
-	return setupEnvWithCommander(t, a, &defaultCommander{})
-}
+	env := &Environment{
+		HomeDir:   homeDir,
+		Commander: commander,
+	}
 
-func setupEnvWithCommander(t *task.Task, a *arm.Arm, c Commander) (*EnvironmentContext, error) {
-	homeDir, err := os.MkdirTemp("", "token-miser-*")
+	// Clone repo with --shared for speed
+	repoPath := filepath.Join(homeDir, "workspace")
+	err = commander.Run("git", "clone", "--shared", t.RepoURL, repoPath)
 	if err != nil {
-		return nil, fmt.Errorf("create home dir: %w", err)
+		return nil, fmt.Errorf("failed to clone repo: %w", err)
 	}
 
-	workspaceDir := filepath.Join(homeDir, "workspace")
+	// Change to repo directory and checkout starting commit
+	oldDir, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get current dir: %w", err)
+	}
+	defer os.Chdir(oldDir)
 
-	if err := c.Run("git", "clone", "--shared", t.Repo, workspaceDir); err != nil {
-		_ = os.RemoveAll(homeDir)
-		return nil, fmt.Errorf("git clone: %w", err)
+	err = os.Chdir(repoPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to change to repo dir: %w", err)
 	}
 
-	if err := c.Run("git", "-C", workspaceDir, "checkout", t.StartingCommit); err != nil {
-		_ = os.RemoveAll(homeDir)
-		return nil, fmt.Errorf("git checkout: %w", err)
+	err = commander.Run("git", "checkout", t.StartingCommit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to checkout commit: %w", err)
 	}
 
-	if a.LoadoutPath != "" {
+	// For treatment arm, apply loadout
+	if a.Type == arm.TypeTreatment {
 		claudeDir := filepath.Join(homeDir, ".claude")
-		if err := c.Run("loadout", "apply", "--target", claudeDir, "--yes", a.LoadoutPath); err != nil {
-			_ = os.RemoveAll(homeDir)
-			return nil, fmt.Errorf("loadout apply: %w", err)
+		// TODO: Get loadout bundle from task or arm configuration
+		loadoutBundle := "default-bundle.tar.gz" // placeholder
+		err = commander.Run("loadout", "apply", "--target", claudeDir, "--yes", loadoutBundle)
+		if err != nil {
+			return nil, fmt.Errorf("failed to apply loadout: %w", err)
 		}
 	}
 
-	return &EnvironmentContext{HomeDir: homeDir, WorkspaceDir: workspaceDir}, nil
+	return env, nil
 }
 
-func TeardownEnv(ctx *EnvironmentContext) error {
-	if err := os.RemoveAll(ctx.HomeDir); err != nil {
-		return fmt.Errorf("remove env dir: %w", err)
+// TeardownEnv removes the entire temp dir
+func (e *Environment) TeardownEnv() error {
+	if e.HomeDir == "" {
+		return nil
 	}
-	return nil
+	return os.RemoveAll(e.HomeDir)
 }
