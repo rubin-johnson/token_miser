@@ -7,71 +7,122 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/rubin-johnson/token_miser/internal/environment"
-	"github.com/rubin-johnson/token_miser/internal/task"
+	"github.com/anthropics/claude-3-5-sonnet-20241022-experiments/internal/environment"
+	"github.com/anthropics/claude-3-5-sonnet-20241022-experiments/internal/task"
 )
 
-type CriterionResult struct {
-	Type   string
+// CheckResult represents the result of checking a criterion
+type CheckResult struct {
 	Passed bool
 	Detail string
 }
 
-func EvaluateCriteria(criteria []task.Criterion, env *environment.EnvironmentContext) []CriterionResult {
-	results := make([]CriterionResult, 0, len(criteria))
-	for _, c := range criteria {
-		results = append(results, evaluate(c, env))
+// Checker evaluates task criteria against environment context
+type Checker struct {
+	env *environment.EnvironmentContext
+}
+
+// New creates a new Checker with the given environment context
+func New(env *environment.EnvironmentContext) *Checker {
+	return &Checker{env: env}
+}
+
+// CheckCriterion evaluates a single criterion and returns the result
+func (c *Checker) CheckCriterion(criterion task.Criterion) CheckResult {
+	switch criterion.Type {
+	case "file_exists":
+		return c.checkFileExists(criterion.FilePaths)
+	case "command_exits_zero":
+		return c.checkCommandExitsZero(criterion.Command)
+	case "output_contains":
+		return c.checkOutputContains(criterion.Command, criterion.OutputContains)
+	default:
+		return CheckResult{
+			Passed: false,
+			Detail: fmt.Sprintf("unknown criterion type: %s", criterion.Type),
+		}
+	}
+}
+
+// CheckAllCriteria evaluates all criteria independently and returns results
+func (c *Checker) CheckAllCriteria(criteria []task.Criterion) []CheckResult {
+	results := make([]CheckResult, len(criteria))
+	for i, criterion := range criteria {
+		results[i] = c.CheckCriterion(criterion)
 	}
 	return results
 }
 
-func evaluate(c task.Criterion, env *environment.EnvironmentContext) CriterionResult {
-	switch c.Type {
-	case "file_exists":
-		return evaluateFileExists(c, env)
-	case "command_exits_zero":
-		return evaluateCommandExitsZero(c, env)
-	case "output_contains":
-		return evaluateOutputContains(c, env)
-	default:
-		return CriterionResult{Type: c.Type, Passed: false, Detail: fmt.Sprintf("unknown criterion type: %s", c.Type)}
-	}
-}
-
-func evaluateFileExists(c task.Criterion, env *environment.EnvironmentContext) CriterionResult {
-	for _, p := range c.Paths {
-		full := filepath.Join(env.WorkspaceDir, p)
-		if _, err := os.Stat(full); err != nil {
-			return CriterionResult{Type: c.Type, Passed: false, Detail: fmt.Sprintf("missing: %s", p)}
+func (c *Checker) checkFileExists(paths []string) CheckResult {
+	var missingPaths []string
+	
+	for _, path := range paths {
+		fullPath := filepath.Join(c.env.WorkspaceDir, path)
+		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+			missingPaths = append(missingPaths, path)
 		}
 	}
-	return CriterionResult{Type: c.Type, Passed: true, Detail: "all files exist"}
+	
+	if len(missingPaths) == 0 {
+		return CheckResult{Passed: true}
+	}
+	
+	return CheckResult{
+		Passed: false,
+		Detail: fmt.Sprintf("missing paths: %s", strings.Join(missingPaths, ", ")),
+	}
 }
 
-func evaluateCommandExitsZero(c task.Criterion, env *environment.EnvironmentContext) CriterionResult {
-	cmd := exec.Command("sh", "-c", c.Command)
-	cmd.Dir = env.WorkspaceDir
-	cmd.Env = append(os.Environ(), fmt.Sprintf("HOME=%s", env.HomeDir))
-	out, err := cmd.CombinedOutput()
+func (c *Checker) checkCommandExitsZero(command string) CheckResult {
+	cmd := exec.Command("sh", "-c", command)
+	cmd.Dir = c.env.WorkspaceDir
+	cmd.Env = append(os.Environ(), fmt.Sprintf("HOME=%s", c.env.HomeDir))
+	
+	var stderr strings.Builder
+	cmd.Stderr = &stderr
+	
+	err := cmd.Run()
 	if err != nil {
-		return CriterionResult{Type: c.Type, Passed: false, Detail: strings.TrimSpace(string(out))}
-	}
-	return CriterionResult{Type: c.Type, Passed: true, Detail: "exit 0"}
-}
-
-func evaluateOutputContains(c task.Criterion, env *environment.EnvironmentContext) CriterionResult {
-	cmd := exec.Command("sh", "-c", c.Command)
-	cmd.Dir = env.WorkspaceDir
-	cmd.Env = append(os.Environ(), fmt.Sprintf("HOME=%s", env.HomeDir))
-	out, err := cmd.Output()
-	if err != nil {
-		return CriterionResult{Type: c.Type, Passed: false, Detail: fmt.Sprintf("command failed: %v", err)}
-	}
-	stdout := string(out)
-	for _, s := range c.Contains {
-		if !strings.Contains(stdout, s) {
-			return CriterionResult{Type: c.Type, Passed: false, Detail: fmt.Sprintf("missing %q in output", s)}
+		return CheckResult{
+			Passed: false,
+			Detail: stderr.String(),
 		}
 	}
-	return CriterionResult{Type: c.Type, Passed: true, Detail: "all strings found"}
+	
+	return CheckResult{Passed: true}
+}
+
+func (c *Checker) checkOutputContains(command string, contains []string) CheckResult {
+	cmd := exec.Command("sh", "-c", command)
+	cmd.Dir = c.env.WorkspaceDir
+	cmd.Env = append(os.Environ(), fmt.Sprintf("HOME=%s", c.env.HomeDir))
+	
+	var stdout strings.Builder
+	cmd.Stdout = &stdout
+	
+	err := cmd.Run()
+	if err != nil {
+		return CheckResult{
+			Passed: false,
+			Detail: fmt.Sprintf("command failed: %v", err),
+		}
+	}
+	
+	output := stdout.String()
+	var missingStrings []string
+	
+	for _, str := range contains {
+		if !strings.Contains(output, str) {
+			missingStrings = append(missingStrings, str)
+		}
+	}
+	
+	if len(missingStrings) == 0 {
+		return CheckResult{Passed: true}
+	}
+	
+	return CheckResult{
+		Passed: false,
+		Detail: fmt.Sprintf("missing strings in output: %s", strings.Join(missingStrings, ", ")),
+	}
 }
