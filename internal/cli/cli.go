@@ -3,6 +3,7 @@ package cli
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,10 +12,14 @@ import (
 )
 
 // Dispatch routes commands to their handlers
-func Dispatch(command string, args []string) error {
+func Dispatch(command string, args []string, w ...io.Writer) error {
+	var out io.Writer = os.Stdout
+	if len(w) > 0 && w[0] != nil {
+		out = w[0]
+	}
 	switch command {
 	case "run":
-		return runCommand(args)
+		return runCommand(args, out)
 	case "compare":
 		return compareCommand(args)
 	case "history":
@@ -26,8 +31,8 @@ func Dispatch(command string, args []string) error {
 	}
 }
 
-func runCommand(args []string) error {
-	fmt.Println("not implemented")
+func runCommand(args []string, w io.Writer) error {
+	fmt.Fprintln(w, "not implemented")
 	return fmt.Errorf("not implemented")
 }
 
