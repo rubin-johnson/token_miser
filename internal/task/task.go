@@ -3,23 +3,11 @@ package task
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
-type Criterion struct {
-	Type     string   `yaml:"type"`
-	Paths    []string `yaml:"paths"`
-	Command  string   `yaml:"command"`
-	Contains []string `yaml:"contains"`
-}
-
-type RubricDimension struct {
-	Dimension string `yaml:"dimension"`
-	Prompt    string `yaml:"prompt"`
-}
-
+// Task represents a task definition loaded from YAML
 type Task struct {
 	ID              string            `yaml:"id"`
 	Name            string            `yaml:"name"`
@@ -31,37 +19,41 @@ type Task struct {
 	QualityRubric   []RubricDimension `yaml:"quality_rubric"`
 }
 
-func LoadTask(path string) (*Task, error) {
-	data, err := os.ReadFile(path)
+// Criterion represents a success criterion with typed fields
+type Criterion struct {
+	Type     string   `yaml:"type"`
+	Paths    []string `yaml:"paths"`
+	Command  string   `yaml:"command"`
+	Contains []string `yaml:"contains"`
+}
+
+// RubricDimension represents a quality rubric dimension
+type RubricDimension struct {
+	Dimension string `yaml:"dimension"`
+	Prompt    string `yaml:"prompt"`
+}
+
+// LoadTask loads a task definition from a YAML file
+func LoadTask(filename string) (*Task, error) {
+	data, err := os.ReadFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("read task file: %w", err)
+		return nil, fmt.Errorf("failed to read file %s: %w", filename, err)
 	}
 
-	var t Task
-	if err := yaml.Unmarshal(data, &t); err != nil {
-		return nil, fmt.Errorf("parse task YAML: %w", err)
+	var task Task
+	if err := yaml.Unmarshal(data, &task); err != nil {
+		return nil, fmt.Errorf("failed to parse YAML: %w", err)
 	}
 
-	if t.Type == "" {
-		t.Type = "single_shot"
+	// Set default type if not specified
+	if task.Type == "" {
+		task.Type = "single_shot"
 	}
 
-	var missing []string
-	if t.ID == "" {
-		missing = append(missing, "id")
-	}
-	if t.Repo == "" {
-		missing = append(missing, "repo")
-	}
-	if t.StartingCommit == "" {
-		missing = append(missing, "starting_commit")
-	}
-	if t.Prompt == "" {
-		missing = append(missing, "prompt")
-	}
-	if len(missing) > 0 {
-		return nil, fmt.Errorf("task missing required fields: %s", strings.Join(missing, ", "))
+	// Validate required fields
+	if task.ID == "" {
+		return nil, fmt.Errorf("task id is required")
 	}
 
-	return &t, nil
+	return &task, nil
 }
