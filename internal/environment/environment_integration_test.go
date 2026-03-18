@@ -16,12 +16,12 @@ import (
 // RealCommander implements Commander using os/exec
 type RealCommander struct{}
 
-func (c *RealCommander) Run(command string, args ...string) error {
+func (c *RealCommander) Run(command string, args []string) error {
 	cmd := exec.Command(command, args...)
 	return cmd.Run()
 }
 
-func (c *RealCommander) RunWithOutput(command string, args ...string) (string, error) {
+func (c *RealCommander) RunWithOutput(command string, args []string) (string, error) {
 	cmd := exec.Command(command, args...)
 	output, err := cmd.Output()
 	return string(output), err
@@ -73,7 +73,7 @@ func TestSetupEnv_Integration(t *testing.T) {
 		t.Fatalf("Failed to change to workspace dir: %v", err)
 	}
 
-	output, err := commander.RunWithOutput("git", "rev-parse", "HEAD")
+	output, err := commander.RunWithOutput("git", []string{"rev-parse", "HEAD"})
 	if err != nil {
 		t.Fatalf("Failed to get current commit: %v", err)
 	}

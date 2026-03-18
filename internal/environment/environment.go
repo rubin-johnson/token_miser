@@ -12,19 +12,24 @@ import (
 // Commander interface for executing shell commands
 // This allows mocking in tests
 type Commander interface {
-	Run(command string, args ...string) error
-	RunWithOutput(command string, args ...string) (string, error)
+	Run(command string, args []string) error
+	RunWithOutput(command string, args []string) (string, error)
 }
 
 // DefaultCommander implements Commander using os/exec
 type DefaultCommander struct{}
 
-func (c *DefaultCommander) Run(command string, args ...string) error {
+// NewDefaultCommander returns a new DefaultCommander
+func NewDefaultCommander() *DefaultCommander {
+	return &DefaultCommander{}
+}
+
+func (c *DefaultCommander) Run(command string, args []string) error {
 	// Implementation would use os/exec.Command
 	panic("not implemented")
 }
 
-func (c *DefaultCommander) RunWithOutput(command string, args ...string) (string, error) {
+func (c *DefaultCommander) RunWithOutput(command string, args []string) (string, error) {
 	// Implementation would use os/exec.Command
 	panic("not implemented")
 }
@@ -53,13 +58,13 @@ func SetupEnv(t *task.Task, a *arm.Arm, commander Commander) (*EnvironmentContex
 	}
 
 	// Clone repo with --shared for speed
-	err = commander.Run("git", "clone", "--shared", t.Repo, repoPath)
+	err = commander.Run("git", []string{"clone", "--shared", t.Repo, repoPath})
 	if err != nil {
 		return nil, fmt.Errorf("failed to clone repo: %w", err)
 	}
 
 	// Checkout starting commit using -C to avoid os.Chdir
-	err = commander.Run("git", "-C", repoPath, "checkout", t.StartingCommit)
+	err = commander.Run("git", []string{"-C", repoPath, "checkout", t.StartingCommit})
 	if err != nil {
 		return nil, fmt.Errorf("failed to checkout commit: %w", err)
 	}
@@ -67,7 +72,7 @@ func SetupEnv(t *task.Task, a *arm.Arm, commander Commander) (*EnvironmentContex
 	// For treatment arm, apply loadout
 	if a.LoadoutPath != "" {
 		claudeDir := filepath.Join(homeDir, ".claude")
-		err = commander.Run("loadout", "apply", "--target", claudeDir, "--yes", a.LoadoutPath)
+		err = commander.Run("loadout", []string{"apply", "--target", claudeDir, "--yes", a.LoadoutPath})
 		if err != nil {
 			return nil, fmt.Errorf("failed to apply loadout: %w", err)
 		}

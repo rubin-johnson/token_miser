@@ -19,7 +19,7 @@ type MockCommander struct {
 	Errors   map[string]error
 }
 
-func (m *MockCommander) Run(command string, args ...string) error {
+func (m *MockCommander) Run(command string, args []string) error {
 	cmd := append([]string{command}, args...)
 	m.Commands = append(m.Commands, cmd)
 	cmdStr := strings.Join(cmd, " ")
@@ -29,7 +29,7 @@ func (m *MockCommander) Run(command string, args ...string) error {
 	return nil
 }
 
-func (m *MockCommander) RunWithOutput(command string, args ...string) (string, error) {
+func (m *MockCommander) RunWithOutput(command string, args []string) (string, error) {
 	cmd := append([]string{command}, args...)
 	m.Commands = append(m.Commands, cmd)
 	cmdStr := strings.Join(cmd, " ")
