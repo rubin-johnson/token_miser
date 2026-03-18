@@ -153,3 +153,77 @@ func runCommand(args []string, out io.Writer) error {
 
 func compareCommand(args []string, out io.Writer) error {
 	fs := flag.NewFlagSet("compare", flag.ContinueOnError)
+	taskID := fs.String("task", "", "task ID to compare")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	database, err := db.InitDB(dbPath())
+	if err != nil {
+		return fmt.Errorf("init db: %w", err)
+	}
+	defer database.Close()
+
+	result, err := report.Compare(*taskID, database.Conn())
+	if err != nil {
+		return fmt.Errorf("compare: %w", err)
+	}
+
+	fmt.Fprint(out, result)
+	return nil
+}
+
+func historyCommand(args []string, out io.Writer) error {
+	_ = args
+	database, err := db.InitDB(dbPath())
+	if err != nil {
+		return fmt.Errorf("init db: %w", err)
+	}
+	defer database.Close()
+
+	runs, err := database.GetRuns("")
+	if err != nil {
+		return fmt.Errorf("get runs: %w", err)
+	}
+
+	tw := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "ID\tTaskID\tArm\tTokens\tCost\tTimestamp")
+	for _, r := range runs {
+		fmt.Fprintf(tw, "%d\t%s\t%s\t%d\t$%.6f\t%s\n",
+			r.ID,
+			r.TaskID,
+			r.Arm,
+			r.InputTokens+r.OutputTokens,
+			r.TotalCostUSD,
+			r.StartedAt.Format(time.RFC3339),
+		)
+	}
+	return tw.Flush()
+}
+
+func tasksCommand(args []string, out io.Writer) error {
+	fs := flag.NewFlagSet("tasks", flag.ContinueOnError)
+	dir := fs.String("dir", "tasks", "directory containing task YAML files")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	entries, err := os.ReadDir(*dir)
+	if err != nil {
+		return fmt.Errorf("read dir %s: %w", *dir, err)
+	}
+
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".yaml") {
+			continue
+		}
+		path := filepath.Join(*dir, e.Name())
+		t, err := task.LoadTask(path)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "skip %s: %v\n", e.Name(), err)
+			continue
+		}
+		fmt.Fprintf(out, "%-20s %s\n", t.ID, t.Name)
+	}
+	return nil
+}

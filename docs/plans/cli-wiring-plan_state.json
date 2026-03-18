@@ -1,0 +1,134 @@
+{
+  "stories": {
+    "BT-001": {
+      "status": "complete",
+      "attempts": 2,
+      "fail_reason": "",
+      "cost": {
+        "input_tokens": 254537,
+        "output_tokens": 5850,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "cost_usd": 0.851361,
+        "model": "sonnet"
+      }
+    },
+    "BT-002": {
+      "status": "complete",
+      "attempts": 1,
+      "fail_reason": "",
+      "cost": {
+        "input_tokens": 55887,
+        "output_tokens": 1337,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "cost_usd": 0.187716,
+        "model": "sonnet"
+      }
+    },
+    "BT-003": {
+      "status": "complete",
+      "attempts": 1,
+      "fail_reason": "",
+      "cost": {
+        "input_tokens": 172997,
+        "output_tokens": 4261,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "cost_usd": 0.582906,
+        "model": "sonnet"
+      }
+    },
+    "BT-004": {
+      "status": "complete",
+      "attempts": 1,
+      "fail_reason": "",
+      "cost": {
+        "input_tokens": 198524,
+        "output_tokens": 4398,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "cost_usd": 0.661542,
+        "model": "sonnet"
+      }
+    },
+    "BT-005": {
+      "status": "complete",
+      "attempts": 1,
+      "fail_reason": "",
+      "cost": {
+        "input_tokens": 133464,
+        "output_tokens": 3238,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "cost_usd": 0.44896199999999997,
+        "model": "sonnet"
+      }
+    },
+    "STORY-001": {
+      "status": "complete",
+      "attempts": 1,
+      "fail_reason": "",
+      "cost": {
+        "input_tokens": 69718,
+        "output_tokens": 1786,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "cost_usd": 0.23594399999999996,
+        "model": "sonnet"
+      }
+    },
+    "STORY-002": {
+      "status": "complete",
+      "attempts": 1,
+      "fail_reason": "",
+      "cost": {
+        "input_tokens": 45818,
+        "output_tokens": 1183,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "cost_usd": 0.155199,
+        "model": "sonnet"
+      }
+    },
+    "STORY-003": {
+      "status": "complete",
+      "attempts": 1,
+      "fail_reason": "",
+      "cost": {
+        "input_tokens": 998759,
+        "output_tokens": 10986,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "cost_usd": 3.161066999999999,
+        "model": "sonnet"
+      }
+    },
+    "STORY-004": {
+      "status": "complete",
+      "attempts": 1,
+      "fail_reason": "",
+      "cost": {
+        "input_tokens": 192167,
+        "output_tokens": 2544,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "cost_usd": 0.614661,
+        "model": "sonnet"
+      }
+    },
+    "STORY-005": {
+      "status": "complete",
+      "attempts": 1,
+      "fail_reason": "",
+      "cost": {
+        "input_tokens": 127993,
+        "output_tokens": 3197,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "cost_usd": 0.4319340000000001,
+        "model": "sonnet"
+      }
+    }
+  }
+}
