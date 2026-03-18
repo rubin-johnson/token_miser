@@ -27,17 +27,54 @@ echo '{"type":"result","result":"fake output","total_cost_usd":0.001,"usage":{"i
 }
 
 // writeMinimalTask writes a minimal YAML task file for testing.
+// writeLocalGitRepo creates a minimal local git repository and returns its path and initial commit hash.
+func writeLocalGitRepo(t *testing.T) (string, string) {
+	t.Helper()
+	repoDir := t.TempDir()
+
+	runGit := func(args ...string) string {
+		cmd := exec.Command("git", args...)
+		cmd.Dir = repoDir
+		cmd.Env = append(os.Environ(),
+			"GIT_AUTHOR_NAME=test",
+			"GIT_AUTHOR_EMAIL=test@test.com",
+			"GIT_COMMITTER_NAME=test",
+			"GIT_COMMITTER_EMAIL=test@test.com",
+		)
+		out, err := cmd.Output()
+		if err != nil {
+			t.Fatalf("git %v failed: %v", args, err)
+		}
+		return strings.TrimSpace(string(out))
+	}
+
+	runGit("init")
+	runGit("config", "user.email", "test@test.com")
+	runGit("config", "user.name", "test")
+
+	// Create an initial commit
+	readmeFile := filepath.Join(repoDir, "README.md")
+	if err := os.WriteFile(readmeFile, []byte("# test repo\n"), 0644); err != nil {
+		t.Fatalf("failed to write README: %v", err)
+	}
+	runGit("add", ".")
+	runGit("commit", "-m", "initial commit")
+	commitHash := runGit("rev-parse", "HEAD")
+
+	return repoDir, commitHash
+}
+
 func writeMinimalTask(t *testing.T) string {
 	t.Helper()
+	repoDir, commitHash := writeLocalGitRepo(t)
 	dir := t.TempDir()
 	taskFile := filepath.Join(dir, "test-task.yaml")
-	content := `id: test-task-001
-repo: "https://example.com/repo.git"
-starting_commit: "abc123"
-prompt: "Write hello world"
-success_criteria: []
-quality_rubric: []
-`
+	content := "id: test-task-001\n" +
+		"repo: \"" + repoDir + "\"\n" +
+		"starting_commit: \"" + commitHash + "\"\n" +
+		"prompt: \"Write hello world\"\n" +
+		"success_criteria: []\n" +
+		"quality_rubric: []\n"
 	if err := os.WriteFile(taskFile, []byte(content), 0644); err != nil {
 		t.Fatalf("failed to write task file: %v", err)
 	}
