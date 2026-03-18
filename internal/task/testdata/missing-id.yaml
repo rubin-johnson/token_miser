@@ -1,0 +1,11 @@
+name: "Task Without ID"
+type: "single_shot"
+repo: "https://github.com/example/repo"
+starting_commit: "abc123"
+prompt: "Implement a feature"
+success_criteria:
+  - type: "file_exists"
+    paths: ["src/main.go"]
+quality_rubric:
+  - dimension: "code_quality"
+    prompt: "Rate the code quality"
