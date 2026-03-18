@@ -11,129 +11,130 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const schema = `
-CREATE TABLE IF NOT EXISTS runs (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	task_id TEXT NOT NULL,
-	arm TEXT NOT NULL,
-	loadout_name TEXT,
-	model TEXT,
-	started_at TEXT,
-	wall_seconds REAL,
-	input_tokens INTEGER,
-	output_tokens INTEGER,
-	cache_read_tokens INTEGER,
-	cache_write_tokens INTEGER,
-	total_cost_usd REAL,
-	exit_code INTEGER,
-	criteria_pass INTEGER,
-	criteria_total INTEGER,
-	quality_scores TEXT
-)`
-
+// Run represents a single experimental run stored in the database
 type Run struct {
-	ID              int64
-	TaskID          string
-	Arm             string
-	LoadoutName     string
-	Model           string
-	StartedAt       string
-	WallSeconds     float64
-	InputTokens     int
-	OutputTokens    int
-	CacheReadTokens int
-	CacheWriteTokens int
-	TotalCostUSD    float64
-	ExitCode        int
-	CriteriaPass    int
-	CriteriaTotal   int
-	QualityScores   string
+	ID            int64     `json:"id"`
+	TaskName      string    `json:"task_name"`
+	ArmName       string    `json:"arm_name"`
+	PromptTokens  int       `json:"prompt_tokens"`
+	OutputTokens  int       `json:"output_tokens"`
+	TotalTokens   int       `json:"total_tokens"`
+	Cost          float64   `json:"cost"`
+	QualityScores string    `json:"quality_scores"` // JSON string
+	Timestamp     time.Time `json:"timestamp"`
 }
 
-func DefaultDBPath() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("get user home dir: %w", err)
-	}
-	return filepath.Join(home, ".token_miser", "results.db"), nil
+// DB wraps the SQLite database connection
+type DB struct {
+	conn *sql.DB
 }
 
-func InitDB(path string) (*sql.DB, error) {
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		return nil, fmt.Errorf("create db dir: %w", err)
+// InitDB initializes the database connection and creates tables
+func InitDB(dbPath string) (*DB, error) {
+	// Create directory if it doesn't exist
+	dir := filepath.Dir(dbPath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create directory %s: %w", dir, err)
 	}
 
-	db, err := sql.Open("sqlite", path)
+	// Open database connection
+	conn, err := sql.Open("sqlite", dbPath)
 	if err != nil {
-		return nil, fmt.Errorf("open sqlite: %w", err)
+		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	if _, err := db.Exec(schema); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("create schema: %w", err)
+	db := &DB{conn: conn}
+
+	// Create tables
+	if err := db.createTables(); err != nil {
+		return nil, fmt.Errorf("failed to create tables: %w", err)
 	}
 
 	return db, nil
 }
 
-func StoreRun(db *sql.DB, run *Run) (int64, error) {
-	if run.StartedAt == "" {
-		run.StartedAt = time.Now().UTC().Format(time.RFC3339)
-	}
+// createTables creates the runs table with all required columns
+func (db *DB) createTables() error {
+	query := `
+	CREATE TABLE IF NOT EXISTS runs (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		task_name TEXT NOT NULL,
+		arm_name TEXT NOT NULL,
+		prompt_tokens INTEGER NOT NULL,
+		output_tokens INTEGER NOT NULL,
+		total_tokens INTEGER NOT NULL,
+		cost REAL NOT NULL,
+		quality_scores TEXT NOT NULL,
+		timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+	`
 
-	res, err := db.Exec(`INSERT INTO runs
-		(task_id, arm, loadout_name, model, started_at, wall_seconds,
-		 input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
-		 total_cost_usd, exit_code, criteria_pass, criteria_total, quality_scores)
-		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-		run.TaskID, run.Arm, run.LoadoutName, run.Model, run.StartedAt,
-		run.WallSeconds, run.InputTokens, run.OutputTokens,
-		run.CacheReadTokens, run.CacheWriteTokens, run.TotalCostUSD,
-		run.ExitCode, run.CriteriaPass, run.CriteriaTotal, run.QualityScores,
-	)
-	if err != nil {
-		return 0, fmt.Errorf("insert run: %w", err)
-	}
-
-	return res.LastInsertId()
+	_, err := db.conn.Exec(query)
+	return err
 }
 
-func GetRuns(db *sql.DB, taskID string) ([]*Run, error) {
-	query := `SELECT id, task_id, arm, loadout_name, model, started_at,
-		wall_seconds, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
-		total_cost_usd, exit_code, criteria_pass, criteria_total, quality_scores
-		FROM runs`
-	args := []any{}
-	if taskID != "" {
-		query += " WHERE task_id = ?"
-		args = append(args, taskID)
-	}
-	query += " ORDER BY id"
-
-	rows, err := db.Query(query, args...)
+// StoreRun inserts a run into the database and returns its ID
+func (db *DB) StoreRun(taskName, armName string, promptTokens, outputTokens, totalTokens int, cost float64, qualityScores map[string]interface{}) (int64, error) {
+	// Convert quality scores to JSON string
+	qualityJSON, err := json.Marshal(qualityScores)
 	if err != nil {
-		return nil, fmt.Errorf("query runs: %w", err)
+		return 0, fmt.Errorf("failed to marshal quality scores: %w", err)
+	}
+
+	query := `
+	INSERT INTO runs (task_name, arm_name, prompt_tokens, output_tokens, total_tokens, cost, quality_scores, timestamp)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	`
+
+	result, err := db.conn.Exec(query, taskName, armName, promptTokens, outputTokens, totalTokens, cost, string(qualityJSON), time.Now())
+	if err != nil {
+		return 0, fmt.Errorf("failed to insert run: %w", err)
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get last insert ID: %w", err)
+	}
+
+	return id, nil
+}
+
+// GetRuns retrieves runs from the database, optionally filtered by task name
+func (db *DB) GetRuns(taskName string) ([]Run, error) {
+	var query string
+	var args []interface{}
+
+	if taskName == "" {
+		query = "SELECT id, task_name, arm_name, prompt_tokens, output_tokens, total_tokens, cost, quality_scores, timestamp FROM runs ORDER BY timestamp DESC"
+	} else {
+		query = "SELECT id, task_name, arm_name, prompt_tokens, output_tokens, total_tokens, cost, quality_scores, timestamp FROM runs WHERE task_name = ? ORDER BY timestamp DESC"
+		args = append(args, taskName)
+	}
+
+	rows, err := db.conn.Query(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query runs: %w", err)
 	}
 	defer rows.Close()
 
-	var runs []*Run
+	var runs []Run
 	for rows.Next() {
-		var r Run
-		if err := rows.Scan(&r.ID, &r.TaskID, &r.Arm, &r.LoadoutName, &r.Model,
-			&r.StartedAt, &r.WallSeconds, &r.InputTokens, &r.OutputTokens,
-			&r.CacheReadTokens, &r.CacheWriteTokens, &r.TotalCostUSD,
-			&r.ExitCode, &r.CriteriaPass, &r.CriteriaTotal, &r.QualityScores); err != nil {
-			return nil, fmt.Errorf("scan run: %w", err)
+		var run Run
+		err := rows.Scan(&run.ID, &run.TaskName, &run.ArmName, &run.PromptTokens, &run.OutputTokens, &run.TotalTokens, &run.Cost, &run.QualityScores, &run.Timestamp)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan run: %w", err)
 		}
-		runs = append(runs, &r)
+		runs = append(runs, run)
 	}
-	return runs, rows.Err()
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
+
+	return runs, nil
 }
 
-func MarshalQualityScores(scores any) (string, error) {
-	data, err := json.Marshal(scores)
-	if err != nil {
-		return "", fmt.Errorf("marshal quality scores: %w", err)
-	}
-	return string(data), nil
+// Close closes the database connection
+func (db *DB) Close() error {
+	return db.conn.Close()
 }
