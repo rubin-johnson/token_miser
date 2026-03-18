@@ -1,29 +1,39 @@
-id: synth-001
-name: scaffold-loadout-package
-repo: /home/rujohnson/code/personal/loadout
-starting_commit: 1cc7fdf
-prompt: |
-  Read docs/design-notes.md. Scaffold this project as a Python package:
-  pyproject.toml with hatchling build backend, a loadout CLI entry point
-  using argparse with subcommands (validate, apply, restore, capture, status),
-  stub modules for each command that raise NotImplementedError, and a test
-  file that verifies help output and subcommand availability.
+name: "Scaffold Python Project"
+description: "Test Claude's ability to scaffold a Python project (the loadout repo). This task tests vanilla-vs-loadout comparison by setting up the target project's toolchain."
+target_repo: "/home/rujohnson/code/personal/loadout"
+target_commit: "fd88685"
 success_criteria:
-  - type: file_exists
-    paths:
-      - pyproject.toml
-      - tests/test_scaffold.py
-  - type: command_exits_zero
-    command: "pip install -e . && python -m loadout --help"
-  - type: output_contains
-    command: "python -m loadout --help"
-    contains: [validate, apply, restore, capture, status]
+  - type: "file_exists"
+    path: "pyproject.toml"
+    description: "Project configuration file exists"
+  - type: "file_exists"
+    path: "src/loadout/__init__.py"
+    description: "Main package module exists"
+  - type: "file_exists"
+    path: "tests/test_loadout.py"
+    description: "Test file exists"
+  - type: "command_exit_code"
+    command: "python -m pytest --version"
+    expected_code: 0
+    description: "pytest is available and working"
+  - type: "command_exit_code"
+    command: "python -c 'import loadout'"
+    expected_code: 0
+    description: "loadout package can be imported"
+  - type: "output_content"
+    command: "python -c 'import loadout; print(loadout.__version__)'"
+    expected_pattern: "^\\d+\\.\\d+\\.\\d+"
+    description: "Package has valid version string"
 quality_rubric:
-  - dimension: structure
-    prompt: "Does the package use proper Python layout with hatchling build backend?"
-  - dimension: cli_completeness
-    prompt: "Are all 5 subcommands (validate, apply, restore, capture, status) present and reachable?"
-  - dimension: tdd_readiness
-    prompt: "Do stubs raise NotImplementedError and do the tests provide meaningful coverage?"
-  - dimension: code_quality
-    prompt: "Is the code idiomatic without over-engineering or excessive comments?"
+  - category: "structure"
+    weight: 25
+    description: "Proper Python package structure with src/ layout"
+  - category: "cli_completeness"
+    weight: 25
+    description: "Command-line interface is complete and functional"
+  - category: "tdd_readiness"
+    weight: 25
+    description: "Test framework is set up and ready for TDD workflow"
+  - category: "code_quality"
+    weight: 25
+    description: "Code follows Python best practices and style guidelines"
