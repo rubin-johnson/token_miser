@@ -6,47 +6,60 @@ import (
 	"testing"
 )
 
-func TestParseArm_Vanilla(t *testing.T) {
-	a, err := ParseArm("vanilla")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if a.Name != "vanilla" || a.LoadoutPath != "" {
-		t.Errorf("got %+v, want {Name:vanilla LoadoutPath:}", a)
-	}
-}
+func TestParseArm(t *testing.T) {
+	t.Run("vanilla returns empty loadout path", func(t *testing.T) {
+		arm, err := ParseArm("vanilla")
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if arm.Name != "vanilla" {
+			t.Errorf("expected Name to be 'vanilla', got %s", arm.Name)
+		}
+		if arm.LoadoutPath != "" {
+			t.Errorf("expected LoadoutPath to be empty, got %s", arm.LoadoutPath)
+		}
+	})
 
-func TestParseArm_ExistingDir(t *testing.T) {
-	dir := t.TempDir()
-	a, err := ParseArm(dir)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if a.LoadoutPath != dir {
-		t.Errorf("LoadoutPath: got %q, want %q", a.LoadoutPath, dir)
-	}
-	if a.Name != filepath.Base(dir) {
-		t.Errorf("Name: got %q, want %q", a.Name, filepath.Base(dir))
-	}
-}
+	t.Run("existing directory returns correct arm", func(t *testing.T) {
+		// Create a temporary directory
+		tempDir, err := os.MkdirTemp("", "test_arm_dir")
+		if err != nil {
+			t.Fatalf("failed to create temp dir: %v", err)
+		}
+		defer os.RemoveAll(tempDir)
 
-func TestParseArm_NonexistentPath(t *testing.T) {
-	_, err := ParseArm("/nonexistent-path-that-does-not-exist-12345")
-	if err == nil {
-		t.Fatal("expected error for nonexistent path, got nil")
-	}
-}
+		arm, err := ParseArm(tempDir)
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		expectedName := filepath.Base(tempDir)
+		if arm.Name != expectedName {
+			t.Errorf("expected Name to be %s, got %s", expectedName, arm.Name)
+		}
+		if arm.LoadoutPath != tempDir {
+			t.Errorf("expected LoadoutPath to be %s, got %s", tempDir, arm.LoadoutPath)
+		}
+	})
 
-func TestParseArm_FileNotDir(t *testing.T) {
-	f, err := os.CreateTemp("", "arm-test-*.txt")
-	if err != nil {
-		t.Fatal(err)
-	}
-	f.Close()
-	defer os.Remove(f.Name())
+	t.Run("nonexistent path returns error", func(t *testing.T) {
+		_, err := ParseArm("/nonexistent/path/that/does/not/exist")
+		if err == nil {
+			t.Fatal("expected error for nonexistent path, got nil")
+		}
+	})
 
-	_, err = ParseArm(f.Name())
-	if err == nil {
-		t.Fatal("expected error for file path, got nil")
-	}
+	t.Run("file path returns error", func(t *testing.T) {
+		// Create a temporary file
+		tempFile, err := os.CreateTemp("", "test_arm_file")
+		if err != nil {
+			t.Fatalf("failed to create temp file: %v", err)
+		}
+		tempFile.Close()
+		defer os.Remove(tempFile.Name())
+
+		_, err = ParseArm(tempFile.Name())
+		if err == nil {
+			t.Fatal("expected error for file path, got nil")
+		}
+	})
 }
