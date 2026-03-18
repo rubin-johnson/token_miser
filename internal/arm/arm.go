@@ -6,28 +6,42 @@ import (
 	"path/filepath"
 )
 
+// Arm represents an experiment arm configuration
 type Arm struct {
-	Name        string
+	Name       string
 	LoadoutPath string
 }
 
-func ParseArm(spec string) (*Arm, error) {
+// ParseArm parses an arm specification from CLI arguments
+// "vanilla" returns an empty loadout path
+// Any other path is validated as an existing directory
+func ParseArm(spec string) (Arm, error) {
 	if spec == "vanilla" {
-		return &Arm{Name: "vanilla", LoadoutPath: ""}, nil
+		return Arm{
+			Name:        "vanilla",
+			LoadoutPath: "",
+		}, nil
 	}
 
-	abs, err := filepath.Abs(spec)
+	// Check if path exists
+	info, err := os.Stat(spec)
 	if err != nil {
-		return nil, fmt.Errorf("resolve arm path %q: %w", spec, err)
+		if os.IsNotExist(err) {
+			return Arm{}, fmt.Errorf("path does not exist: %s", spec)
+		}
+		return Arm{}, fmt.Errorf("error accessing path %s: %v", spec, err)
 	}
 
-	info, err := os.Stat(abs)
-	if err != nil {
-		return nil, fmt.Errorf("arm path %q: %w", abs, err)
-	}
+	// Check if it's a directory
 	if !info.IsDir() {
-		return nil, fmt.Errorf("arm path %q is not a directory", abs)
+		return Arm{}, fmt.Errorf("path is not a directory: %s", spec)
 	}
 
-	return &Arm{Name: filepath.Base(abs), LoadoutPath: abs}, nil
+	// Extract directory name for the arm name
+	name := filepath.Base(spec)
+
+	return Arm{
+		Name:        name,
+		LoadoutPath: spec,
+	}, nil
 }
