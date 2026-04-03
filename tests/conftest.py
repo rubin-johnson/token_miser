@@ -2,6 +2,20 @@
 import pytest
 from datetime import datetime, timedelta
 from token_miser.models import Project, TokenUsage, BudgetLimit, BudgetAlert, AnomalyAlert
+import os
+import pathlib
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _ensure_token_miser_on_path():
+    """Prepend local bin/ so tests can invoke `token-miser` shim."""
+    bin_dir = str((pathlib.Path(__file__).resolve().parents[1] / "bin"))
+    old_path = os.environ.get("PATH", "")
+    os.environ["PATH"] = bin_dir + os.pathsep + old_path
+    try:
+        yield
+    finally:
+        os.environ["PATH"] = old_path
 
 
 @pytest.fixture
