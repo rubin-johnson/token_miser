@@ -14,7 +14,7 @@ def build_token_miser(tmpdir: Path) -> Path:
         "build",
         "-o",
         str(bin_path),
-        "./token-miser",
+        "./cmd/token-miser",
     ]
     proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     if proc.returncode != 0:
