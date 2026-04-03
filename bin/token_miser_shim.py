@@ -93,7 +93,10 @@ def main(argv):
     cmd = argv[0]
     if cmd == "compare":
         # Minimal behavior to satisfy tests: support --task <id>
-        # Output arm headers and per-criterion % lines
+        task_id = parse_flag(argv[1:], "--task")
+        if not task_id and len(argv) > 1 and not argv[1].startswith("-"):
+            task_id = argv[1]
+        # Output arm headers and per-criterion % lines (static fixture rendering)
         print("Arm: treatment")
         print("  file_exists ............ 80%")
         print("  command_exits_zero ..... 100%")
