@@ -1,25 +1,15 @@
 import re
-import sys
 import subprocess
 
 
 def run_cli(args):
-    try:
-        proc = subprocess.run(
-            ["token-miser"] + args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            check=False,
-        )
-    except FileNotFoundError:
-        proc = subprocess.run(
-            [sys.executable, "-m", "token_miser"] + args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            check=False,
-        )
+    proc = subprocess.run(
+        ["go", "run", "./cmd/token-miser"] + args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        check=False,
+    )
     return proc.returncode, proc.stdout
 
 
