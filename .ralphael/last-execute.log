@@ -1,0 +1,16 @@
+
+============================================================
+Execution Summary
+============================================================
+Total time: 0.0s
+Completed: 4
+Failed: 1
+Pending (can resume): 0
+State saved to: /home/rujohnson/code/personal/token_miser/docs/plans/observability-stories-only_state.json
+============================================================
+Stories:
+- STORY-001: merge_conflict (attempts=2) reason=Merge conflict error
+- STORY-002: complete (attempts=1) model=sonnet cost=$0.0032
+- STORY-003: complete (attempts=2) model=sonnet cost=$0.0295
+- STORY-004: complete (attempts=1) model=sonnet cost=$0.0060
+- STORY-005: complete (attempts=1) model=sonnet cost=$0.0106

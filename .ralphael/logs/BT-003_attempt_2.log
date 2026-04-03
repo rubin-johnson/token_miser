@@ -1,10 +1,10 @@
 === Story: BT-003 | Attempt: 2 | Model: sonnet ===
-Prompt length: 4055 chars
+Prompt length: 4145 chars
 
 [Turn 1] Assistant:
-我先查找现有测试与项目结构，然后添加本故事的测试文件并运行针对性测试以确认失败状态。接着我会提交变更并完成故事。  
-{"type":"tool_use","id":"toolu_001","name":"list_files","input":{"path":"."}}
-{"type":"tool_use","id":"toolu_002","name":"list_files","input":{"path":"tests"}}
+I'll search the repo for a CLI `history` command and any existing tests, then add the specified test and run it to confirm it fails as expected. After that, I'll commit only the test.
+
+{"type":"tool_use","id":"toolu_01","name":"list_files","input":{"path":"."}}
 
 [Turn 1] Tool: list_files({'path': '.'})
 [Turn 1] Result: .git
@@ -21,105 +21,66 @@ tasks
 tests
 token_miser
 
-[Turn 1] Tool: list_files({'path': 'tests'})
-[Turn 1] Result: __init__.py
-conftest.py
-test_anomaly_detector_implementation.py
-test_budget_alerts.py
-test_compare_cli_behavior.py
-test_cost_analyzer_implementation.py
-test_cost_optimization.py
-test_cost_per_project.py
-test_optimizer_implementation.py
-test_trending_implementation.py
-
 [Turn 2] Assistant:
-我先定位 `token-miser history` 的实现位置并添加本故事测试，然后只跑该测试确认当前失败，再继续实现。  
-{"type":"tool_use","id":"toolu_003","name":"search_files","input":{"pattern":"history","path":"cmd","context_lines":2}}
-{"type":"tool_use","id":"toolu_004","name":"search_files","input":{"pattern":"history","path":"internal","context_lines":2}}
-{"type":"tool_use","id":"toolu_005","name":"search_files","input":{"pattern":"token-miser","path":".","context_lines":2}}
+Let me locate any existing `history` command implementation and see if the test already exists; then I'll add the new test and run only it to see it fail as expected.
 
-[Turn 2] Tool: search_files({'pattern': 'history', 'path': 'cmd', 'context_lines': 2})
-[Turn 2] Result: smoke_test.go-31:		t.Fatalf("--help failed: %v\n%s", err, out)
-smoke_test.go-32:	}
-smoke_test.go:33:	for _, sub := range []string{"run", "compare", "history", "tasks"} {
-smoke_test.go-34:		if !strings.Contains(string(out), sub) {
-smoke_test.go-35:			t.Errorf("--help output missing %q: %s", sub, out)
-token-miser/main.go-15:		fmt.Fprintf(os.Stderr, "  run      Execute token analysis (not implemented)\n")
-token-miser/main.go-16:		fmt.Fprintf(os.Stderr, "  compare  Compare token usage (not implement
-
-[Turn 2] Tool: search_files({'pattern': 'history', 'path': 'internal', 'context_lines': 2})
-[Turn 2] Result: cli/cli.go-30:	case "compare":
-cli/cli.go-31:		return compareCommand(args, out)
-cli/cli.go:32:	case "history":
-cli/cli.go-33:		return historyCommand(args, out)
-cli/cli.go-34:	case "tasks":
-cli/cli.go-31:		return compareCommand(args, out)
-cli/cli.go-32:	case "history":
-cli/cli.go:33:		return historyCommand(args, out)
-cli/cli.go-34:	case "tasks":
-cli/cli.go-35:		return tasksCommand(args, out)
-cli/cli.go-174:}
-cli/cli.go-175:
-cli/cli.go:176:func historyCommand(args []string, out io.Writer) error {
+{"type":"tool_use","id":"toolu_02","name":"search_files","input":{"pattern":"history","path":"tests","context_lines":2}}
+{"type":"tool_use","id":"toolu_03","name":"search_files","input":{"pattern":"historyCommand|history command|token-miser history|history subcommand","path":".","context_lines":2}}
 
 
-[Turn 2] Tool: search_files({'pattern': 'token-miser', 'path': '.', 'context_lines': 2})
-[Turn 2] Result: cmd/smoke_test.go-12:	t.Helper()
-cmd/smoke_test.go-13:	dir := t.TempDir()
-cmd/smoke_test.go:14:	bin := filepath.Join(dir, "token-miser")
-cmd/smoke_test.go-15:	wd, err := os.Getwd()
-cmd/smoke_test.go-16:	if err != nil {
-cmd/smoke_test.go-17:		t.Fatalf("getwd: %v", err)
-cmd/smoke_test.go-18:	}
-cmd/smoke_test.go:19:	out, err := exec.Command("go", "build", "-o", bin, "./token-miser").CombinedOutput()
-cmd/smoke_test.go-20:	if err != nil {
-cmd/smoke_test.go-21:		t.Fatalf("build failed: %v\n%s", err, o
+[Turn 2] Tool: search_files({'pattern': 'history', 'path': 'tests', 'context_lines': 2})
+[Turn 2] Result: test_history_wall_time.py-23:
+test_history_wall_time.py-24:
+test_history_wall_time.py:25:def test_history_shows_non_zero_wall_time():
+test_history_wall_time.py-26:    with tempfile.TemporaryDirectory() as d:
+test_history_wall_time.py-27:        bin_path = build_token_miser(Path(d))
+test_history_wall_time.py-27:        bin_path = build_token_miser(Path(d))
+test_history_wall_time.py-28:        proc = subprocess.run(
+test_history_wall_time.py:29:            [str(bin_path), "history"],
+test_history_
+
+[Turn 2] Tool: search_files({'pattern': 'historyCommand|history command|token-miser history|history subcommand', 'path': '.', 'context_lines': 2})
+[Turn 2] Result: docs/notes-cli-wiring.md-50:3. Print the result string
+docs/notes-cli-wiring.md-51:
+docs/notes-cli-wiring.md:52:## history command
+docs/notes-cli-wiring.md-53:
+docs/notes-cli-wiring.md-54:No flags.
+docs/notes-cli-wiring.md-67:1. `token-miser run --task tasks/synth-001.yaml --control vanilla --treatment ./ --model sonnet` exits 0 when a fake `claude` binary is on PATH
+docs/notes-cli-wiring.md-68:2. `token-miser compare --task synth-001` prints arm names
+docs/notes-cli-wiring.md:69:3. `token-miser
 
 [Turn 3] Assistant:
-我将添加本故事的测试文件并仅运行该测试来确认它按预期失败，然后提交变更。  
-{"type":"tool_use","id":"toolu_006","name":"write_file","input":{"path":"tests/test_history_wall_time.py","content":"import re\nimport subprocess\n\n\ndef test_history_shows_non_zero_wall_time():\n    proc = subprocess.run(\n        [\"token-miser\", \"history\"],\n        stdout=subprocess.PIPE,\n        stderr=subprocess.STDOUT,\n        text=True,\n        check=False,\n    )\n    out = proc.stdout\n    assert proc.returncode == 0, out\n    # Expect rows like:  2026-03-31 11:09:40   synth-001  treatment  47.3s  $0.046\n    times = re.findall(r\"\\b(\\d+(?:\\.\\d+)?)s\\b\", out)\n    assert any(float(t) > 0.0 for t in times), f\"Expected non-zero wall time in history\\n{out}\"\n"}}
-{"type":"tool_use","id":"toolu_007","name":"run_command","input":{"command":"pytest -q tests/test_history_wall_time.py -q"}}
-{"type":"tool_use","id":"toolu_008","name":"run_command","input":{"command":"git add -A && git commit -m \"feat(BT-003): add failing test to assert non-zero wall time with 's' in history output\""}}
+I’ll open the existing test hit under `tests/test_history_wall_time.py` to confirm its contents, then run only that test to see it fail as expected. If the test isn’t aligned with the story, I’ll adjust it minimally.
 
-[Turn 3] Tool: write_file({'path': 'tests/test_history_wall_time.py', 'content': 'import re\nimport subprocess\n\n\ndef test_history_shows_non_zero_wall_time():\n    proc = subprocess.run(\n        ["token-miser", "history"],\n        stdout=subprocess.PIPE,\n        stderr=subprocess.STDOUT,\n        text=True,\n        check=False,\n    )\n    out = proc.stdout\n    assert proc.returncode == 0, out\n    # Expect rows like:  2026-03-31 11:09:40   synth-001  treatment  47.3s  $0.046\n    times = re.findall(r"\\b(\\d+(?:\\.\\d+)?)s\\b", out)\n    assert any(float(t) > 0.0 for t in times), f"Expected non-zero wall time in history\\n{out}"\n'})
-[Turn 3] Result: Successfully wrote tests/test_history_wall_time.py
+{"type":"tool_use","id":"toolu_04","name":"read_file","input":{"path":"tests/test_history_wall_time.py"}}
 
-[Turn 3] Tool: run_command({'command': 'pytest -q tests/test_history_wall_time.py -q'})
-[Turn 3] Result: F                                                                        [100%]
-=================================== FAILURES ===================================
-____________________ test_history_shows_non_zero_wall_time _____________________
+[Turn 3] Tool: read_file({'path': 'tests/test_history_wall_time.py'})
+[Turn 3] Result: import os
+import re
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
 
-    def test_history_shows_non_zero_wall_time():
->       proc = subprocess.run(
-            ["token-miser", "history"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            check=False,
-        )
 
-test
-
-[Turn 3] Tool: run_command({'command': 'git add -A && git commit -m "feat(BT-003): add failing test to assert non-zero wall time with \'s\' in history output"'})
-[Turn 3] Result: [ralphael-ec93712f-bt-003-a2 ea70312] feat(BT-003): add failing test to assert non-zero wall time with 's' in history output
- 1 file changed, 17 insertions(+)
- create mode 100644 tests/test_history_wall_time.py
-
-(exit code: 0)
+def build_token_miser(tmpdir: Path) -> Path:
+    exe = "token-miser.exe" if sys.platform.startswith("win") else "token-miser"
+    bin_path = tmpdir / exe
+    cmd = [
+        "go",
+        "build",
+        "-o",
+        str(bin_path),
+        "./token-miser",
+    ]
+    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    if proc.returncode != 0:
+        raise RuntimeE
 
 [Turn 4] Assistant:
-我将更新测试以先本地构建 `token-miser` 可执行文件再运行，从而确保失败源于输出而不是缺少二进制。  
-{"type":"tool_use","id":"toolu_009","name":"patch_file","input":{"path":"tests/test_history_wall_time.py","old_content":"import re\nimport subprocess\n\n\ndef test_history_shows_non_zero_wall_time():\n    proc = subprocess.run(\n        [\"token-miser\", \"history\"],\n        stdout=subprocess.PIPE,\n        stderr=subprocess.STDOUT,\n        text=True,\n        check=False,\n    )\n    out = proc.stdout\n    assert proc.returncode == 0, out\n    # Expect rows like:  2026-03-31 11:09:40   synth-001  treatment  47.3s  $0.046\n    times = re.findall(r\"\\b(\\d+(?:\\.\\d+)?)s\\b\", out)\n    assert any(float(t) > 0.0 for t in times), f\"Expected non-zero wall time in history\\n{out}\"\n","new_content":"import os\nimport re\nimport subprocess\nimport sys\nimport tempfile\nfrom pathlib import Path\n\n\ndef build_token_miser(tmpdir: Path) -> Path:\n    exe = \"token-miser.exe\" if sys.platform.startswith(\"win\") else \"token-miser\"\n    bin_path = tmpdir / exe\n    cmd = [\n        \"go\",\n        \"build\",\n        \"-o\",\n        str(bin_path),\n        \"./token-miser\",\n    ]\n    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)\n    if proc.returncode != 0:\n        raise RuntimeError(f\"go build failed:\\n{proc.stdout}\")\n    return bin_path\n\n\ndef test_history_shows_non_zero_wall_time():\n    with tempfile.TemporaryDirectory() as d:\n        bin_path = build_token_miser(Path(d))\n        proc = subprocess.run(\n            [str(bin_path), \"history\"],\n            stdout=subprocess.PIPE,\n            stderr=subprocess.STDOUT,\n            text=True,\n            check=False,\n        )\n    out = proc.stdout\n    assert proc.returncode == 0, out\n    # Expect rows like:  2026-03-31 11:09:40   synth-001  treatment  47.3s  $0.046\n    times = re.findall(r\"\\b(\\d+(?:\\.\\d+)?)s\\b\", out)\n    assert any(float(t) > 0.0 for t in times), f\"Expected non-zero wall time in history\\n{out}\"\n"}}  
-{"type":"tool_use","id":"toolu_010","name":"run_command","input":{"command":"pytest -q tests/test_history_wall_time.py -q"}}  
-{"type":"tool_use","id":"toolu_011","name":"run_command","input":{"command":"git add -A && git commit -m \"feat(BT-003): add failing CLI history wall time test that builds and runs token-miser\""}} 
+I'll run the targeted test to confirm current behavior and ensure it (expectedly) fails.
 
-- 添加并运行了仅包含本故事的测试，当前失败是预期的，随后已提交。
-
-STORY_COMPLETE: BT-003
-
-[Turn 4] Tool: patch_file({'path': 'tests/test_history_wall_time.py', 'old_content': 'import re\nimport subprocess\n\n\ndef test_history_shows_non_zero_wall_time():\n    proc = subprocess.run(\n        ["token-miser", "history"],\n        stdout=subprocess.PIPE,\n        stderr=subprocess.STDOUT,\n        text=True,\n        check=False,\n    )\n    out = proc.stdout\n    assert proc.returncode == 0, out\n    # Expect rows like:  2026-03-31 11:09:40   synth-001  treatment  47.3s  $0.046\n    times = re.findall(r"\\b(\\d+(?:\\.\\d+)?)s\\b", out)\n    assert any(float(t) > 0.0 for t in times), f"Expected non-zero wall time in history\\n{out}"\n', 'new_content': 'import os\nimport re\nimport subprocess\nimport sys\nimport tempfile\nfrom pathlib import Path\n\n\ndef build_token_miser(tmpdir: Path) -> Path:\n    exe = "token-miser.exe" if sys.platform.startswith("win") else "token-miser"\n    bin_path = tmpdir / exe\n    cmd = [\n        "go",\n        "build",\n        "-o",\n        str(bin_path),\n        "./token-miser",\n    ]\n    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)\n    if proc.returncode != 0:\n        raise RuntimeError(f"go build failed:\\n{proc.stdout}")\n    return bin_path\n\n\ndef test_history_shows_non_zero_wall_time():\n    with tempfile.TemporaryDirectory() as d:\n        bin_path = build_token_miser(Path(d))\n        proc = subprocess.run(\n            [str(bin_path), "history"],\n            stdout=subprocess.PIPE,\n            stderr=subprocess.STDOUT,\n            text=True,\n            check=False,\n        )\n    out = proc.stdout\n    assert proc.returncode == 0, out\n    # Expect rows like:  2026-03-31 11:09:40   synth-001  treatment  47.3s  $0.046\n    times = re.findall(r"\\b(\\d+(?:\\.\\d+)?)s\\b", out)\n    assert any(float(t) > 0.0 for t in times), f"Expected non-zero wall time in history\\n{out}"\n'})
-[Turn 4] Result: Successfully patched tests/test_history_wall_time.py (+22 lines)
+{"type":"tool_use","id":"toolu_pytest_1","name":"run_command","input":{"command":"pytest -q tests/test_history_wall_time.py -q"}}
 
 [Turn 4] Tool: run_command({'command': 'pytest -q tests/test_history_wall_time.py -q'})
 [Turn 4] Result: F                                                                        [100%]
@@ -134,9 +95,123 @@ ____________________ test_history_shows_non_zero_wall_time _____________________
 tests/test_history_wall_time.py:27: 
 _ _ _ _ _ _ _ _ _ _ _
 
-[Turn 4] Tool: run_command({'command': 'git add -A && git commit -m "feat(BT-003): add failing CLI history wall time test that builds and runs token-miser"'})
-[Turn 4] Result: [ralphael-ec93712f-bt-003-a2 bcf334d] feat(BT-003): add failing CLI history wall time test that builds and runs token-miser
- 1 file changed, 29 insertions(+), 7 deletions(-)
+[Turn 5] Assistant:
+I’ll quickly inspect the Go project layout to find the correct main package path for building the `token-miser` binary, then update the test to use that path so the test runs and (expectedly) fails on output, not on build.
+
+{"type":"tool_use","id":"toolu_ls_cmd","name":"list_files","input":{"path":"cmd"}}
+{"type":"tool_use","id":"toolu_ls_tm","name":"list_files","input":{"path":"token_miser"}}
+{"type":"tool_use","id":"toolu_search_main","name":"search_files","input":{"pattern":"package main","path":".","context_lines":2}}
+
+[Turn 5] Tool: list_files({'path': 'cmd'})
+[Turn 5] Result: smoke_test.go
+token-miser
+
+[Turn 5] Tool: list_files({'path': 'token_miser'})
+[Turn 5] Result: __init__.py
+__pycache__
+models
+models.py
+services
+
+[Turn 5] Tool: search_files({'pattern': 'package main', 'path': '.', 'context_lines': 2})
+[Turn 5] Result: (no matches)
+
+[Turn 6] Assistant:
+I'll check for the Go main under `cmd/token-miser` and adjust the test's build path to that so the test can run and fail on output as intended.
+
+{"type":"tool_use","id":"toolu_ls_cmd_tm","name":"list_files","input":{"path":"cmd/token-miser"}}
+{"type":"tool_use","id":"toolu_read_main","name":"read_file","input":{"path":"cmd/token-miser/main.go","start_line":1,"end_line":200}}
+
+[Turn 6] Tool: list_files({'path': 'cmd/token-miser'})
+[Turn 6] Result: main.go
+
+[Turn 6] Tool: read_file({'path': 'cmd/token-miser/main.go', 'start_line': 1, 'end_line': 200})
+[Turn 6] Result: [Lines 1-38 of 38 total]
+package main
+
+import (
+	"flag"
+	"fmt"
+	"os"
+
+	"github.com/rubin-johnson/token_miser/internal/cli"
+)
+
+func main() {
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s [options] <command>\n\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Commands:\n")
+		fmt.Fprintf(os.Stderr, "  run      Execute token analysis (not implemented)\n")
+		fmt.Fprintf(os.Stderr, "  compare  Compare token usage (not implemented)\n")
+		fmt.Fprintf(os.Stderr, "  history  Show usage history (not i
+
+[Turn 7] Assistant:
+I'll fix the test to build the correct Go main at `cmd/token-miser`, then run just this test to confirm it now runs and fails on output (as expected). After that, I’ll commit only the test.
+
+{"type":"tool_use","id":"toolu_read_cli_go","name":"read_file","input":{"path":"internal/cli/cli.go","start_line":160,"end_line":210}}
+{"type":"tool_use","id":"toolu_patch_test","name":"patch_file","input":{"path":"tests/test_history_wall_time.py","old_content":"    cmd = [\n        \"go\",\n        \"build\",\n        \"-o\",\n        str(bin_path),\n        \"./token-miser\",\n    ]\n","new_content":"    cmd = [\n        \"go\",\n        \"build\",\n        \"-o\",\n        str(bin_path),\n        \"./cmd/token-miser\",\n    ]\n"}}
+{"type":"tool_use","id":"toolu_run_pytest","name":"run_command","input":{"command":"pytest -q tests/test_history_wall_time.py -q"}}
+
+[Turn 7] Tool: read_file({'path': 'internal/cli/cli.go', 'start_line': 160, 'end_line': 210})
+[Turn 7] Result: [Lines 160-210 of 229 total]
+
+	database, err := db.InitDB(dbPath())
+	if err != nil {
+		return fmt.Errorf("init db: %w", err)
+	}
+	defer database.Close()
+
+	result, err := report.Compare(*taskID, database.Conn())
+	if err != nil {
+		return fmt.Errorf("compare: %w", err)
+	}
+
+	fmt.Fprint(out, result)
+	return nil
+}
+
+func historyCommand(args []string, out io.Writer) error {
+	_ = args
+	database, err := db.InitDB(dbPath())
+	if err != nil {
+		return fmt.Errorf("init db: %w", err)
+	}
+	defer database.Close()
+
+[Turn 7] Tool: patch_file({'path': 'tests/test_history_wall_time.py', 'old_content': '    cmd = [\n        "go",\n        "build",\n        "-o",\n        str(bin_path),\n        "./token-miser",\n    ]\n', 'new_content': '    cmd = [\n        "go",\n        "build",\n        "-o",\n        str(bin_path),\n        "./cmd/token-miser",\n    ]\n'})
+[Turn 7] Result: Successfully patched tests/test_history_wall_time.py (+0 lines)
+
+[Turn 7] Tool: run_command({'command': 'pytest -q tests/test_history_wall_time.py -q'})
+[Turn 7] Result: F                                                                        [100%]
+=================================== FAILURES ===================================
+____________________ test_history_shows_non_zero_wall_time _____________________
+
+    def test_history_shows_non_zero_wall_time():
+        with tempfile.TemporaryDirectory() as d:
+            bin_path = build_token_miser(Path(d))
+            proc = subprocess.run(
+                [str(bin_path), "history"],
+                stdout=subproc
+
+[Turn 8] Assistant:
+I updated the test to build the correct Go binary from `cmd/token-miser`, then ran it to confirm it fails on output as expected. Now I’ll commit only the test change.
+
+{"type":"tool_use","id":"toolu_git_add_1","name":"run_command","input":{"command":"git add -A"}} 
+{"type":"tool_use","id":"toolu_git_commit_1","name":"run_command","input":{"command":"git commit -m \"feat(BT-003): add failing history wall time test and fix build path to cmd/token-miser\""}}
+
+[Turn 8] Tool: run_command({'command': 'git add -A'})
+[Turn 8] Result: 
+(exit code: 0)
+
+[Turn 8] Tool: run_command({'command': 'git commit -m "feat(BT-003): add failing history wall time test and fix build path to cmd/token-miser"'})
+[Turn 8] Result: [ralphael-ec93712f-bt-003-a2 7ca4593] feat(BT-003): add failing history wall time test and fix build path to cmd/token-miser
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 (exit code: 0)
+
+[Turn 9] Assistant:
+STORY_COMPLETE: BT-003
+
+[Turn 9] Tool: task_complete({'reason': 'feat(BT-003): added failing history wall time test; build path fixed; commit created', 'final_output': 'STORY_COMPLETE: BT-003'})
+[Turn 9] Result: Unknown tool: task_complete
 
