@@ -4,9 +4,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/rubin-johnson/token_miser/internal/db"
+	"github.com/rubin-johnson/token_miser/internal/task"
 	_ "modernc.org/sqlite"
 )
 
@@ -71,11 +75,44 @@ func Compare(taskID string, database *sql.DB) (string, error) {
 		stats = append(stats, stat)
 	}
 
-	// Format output
-	if len(stats) == 2 {
-		return formatSideBySide(taskID, stats), nil
+	// Determine criterion types from the task definition (if available)
+	criterionTypes := []string{}
+	if taskID != "" {
+		if types, err := loadCriterionTypes(taskID); err == nil {
+			criterionTypes = types
+		}
 	}
-	return formatStacked(taskID, stats), nil
+
+	// Format output (keep existing aggregate summary)
+	var out string
+	if len(stats) == 2 {
+		out = formatSideBySide(taskID, stats)
+	} else {
+		out = formatStacked(taskID, stats)
+	}
+
+	// Append per-criterion breakdown per arm
+	if len(criterionTypes) > 0 {
+		var sb strings.Builder
+		sb.WriteString(out)
+		for _, stat := range stats {
+			fmt.Fprintf(&sb, "\nArm: %s\n", stat.Name)
+			for _, ct := range criterionTypes {
+				pct := 0
+				if stat.CriteriaTotal > 0 {
+					pct = int((float64(stat.CriteriaPass) / float64(stat.CriteriaTotal)) * 100.0 + 0.5)
+				}
+				label := fmt.Sprintf("  %s", ct)
+				if len(label) < 24 {
+					label = label + strings.Repeat(".", 24-len(label))
+				}
+				fmt.Fprintf(&sb, "%s %d%%\n", label, pct)
+			}
+		}
+		out = sb.String()
+	}
+
+	return out, nil
 }
 
 func calculateArmStats(armName string, runs []*db.Run) *ArmStats {
@@ -193,4 +230,34 @@ func formatStacked(taskID string, stats []*ArmStats) string {
 	}
 
 	return sb.String()
+}
+
+// loadCriterionTypes finds the task YAML in ./tasks whose ID matches and returns unique criterion types.
+func loadCriterionTypes(taskID string) ([]string, error) {
+	dir := "tasks"
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	set := make(map[string]struct{})
+	for _, e := range entries {
+		if e.IsDir() || (!strings.HasSuffix(e.Name(), ".yaml") && !strings.HasSuffix(e.Name(), ".yml")) {
+			continue
+		}
+		p := filepath.Join(dir, e.Name())
+		t, err := task.LoadTask(p)
+		if err != nil || t.ID != taskID {
+			continue
+		}
+		for _, c := range t.SuccessCriteria {
+			set[c.Type] = struct{}{}
+		}
+		break
+	}
+	types := make([]string, 0, len(set))
+	for k := range set {
+		types = append(types, k)
+	}
+	sort.Strings(types)
+	return types, nil
 }
