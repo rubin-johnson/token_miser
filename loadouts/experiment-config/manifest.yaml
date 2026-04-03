@@ -1,0 +1,7 @@
+name: experiment-config
+version: 0.0.1
+author: rujohnson
+description: Minimal config for token_miser experiments — coding conventions only, no workflow tooling
+targets:
+- dest: CLAUDE.md
+  path: CLAUDE.md

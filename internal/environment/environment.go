@@ -43,6 +43,21 @@ type EnvironmentContext struct {
 	Commander    Commander
 }
 
+// resolveLoadout returns the path to the loadout binary, preferring the uv-installed
+// version over pyenv shims which may point to a stale/wrong Python environment.
+func resolveLoadout() string {
+	candidates := []string{
+		"/home/rujohnson/.local/bin/loadout",
+		"/home/rujohnson/.local/share/uv/tools/loadout/bin/loadout",
+	}
+	for _, p := range candidates {
+		if _, err := os.Stat(p); err == nil {
+			return p
+		}
+	}
+	return "loadout" // fall back to PATH
+}
+
 // SetupEnv creates temp dir, clones repo, checks out commit
 func SetupEnv(t *task.Task, a *arm.Arm, commander Commander) (*EnvironmentContext, error) {
 	// Create temporary directory as HOME
@@ -71,10 +86,33 @@ func SetupEnv(t *task.Task, a *arm.Arm, commander Commander) (*EnvironmentContex
 		return nil, fmt.Errorf("failed to checkout commit: %w", err)
 	}
 
+	// Copy credentials into isolated home so Claude CLI can authenticate.
+	// This is auth, not config — both vanilla and treatment arms need it.
+	realHome, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("get home dir: %w", err)
+	}
+	credSrc := filepath.Join(realHome, ".claude", ".credentials.json")
+	if _, statErr := os.Stat(credSrc); statErr == nil {
+		claudeDir := filepath.Join(homeDir, ".claude")
+		if mkdirErr := os.MkdirAll(claudeDir, 0700); mkdirErr != nil {
+			return nil, fmt.Errorf("create .claude dir: %w", mkdirErr)
+		}
+		credData, readErr := os.ReadFile(credSrc)
+		if readErr != nil {
+			return nil, fmt.Errorf("read credentials: %w", readErr)
+		}
+		if writeErr := os.WriteFile(filepath.Join(claudeDir, ".credentials.json"), credData, 0600); writeErr != nil {
+			return nil, fmt.Errorf("write credentials: %w", writeErr)
+		}
+	}
+
 	// For treatment arm, apply loadout
 	if a.LoadoutPath != "" {
 		claudeDir := filepath.Join(homeDir, ".claude")
-		err = commander.Run("loadout", []string{"apply", "--target", claudeDir, "--yes", a.LoadoutPath})
+		// Resolve loadout binary: prefer .local/bin over pyenv shims which may be stale
+		loadoutBin := resolveLoadout()
+		err = commander.Run(loadoutBin, []string{"apply", "--target", claudeDir, "--yes", a.LoadoutPath})
 		if err != nil {
 			return nil, fmt.Errorf("failed to apply loadout: %w", err)
 		}

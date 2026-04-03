@@ -113,7 +113,7 @@ func TestSetupEnv_TreatmentArm(t *testing.T) {
 	expectedCommands := [][]string{
 		{"git", "clone", "--shared", "https://github.com/example/repo.git", filepath.Join(env.HomeDir, "workspace")},
 		{"git", "-C", filepath.Join(env.HomeDir, "workspace"), "checkout", "abc123"},
-		{"loadout", "apply", "--target", filepath.Join(env.HomeDir, ".claude"), "--yes", "/some/loadout/bundle"},
+		{resolveLoadout(), "apply", "--target", filepath.Join(env.HomeDir, ".claude"), "--yes", "/some/loadout/bundle"},
 	}
 
 	if len(mock.Commands) != len(expectedCommands) {
