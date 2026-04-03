@@ -1,0 +1,61 @@
+{
+  "stories": {
+    "STORY-001": {
+      "status": "merge_conflict",
+      "attempts": 1,
+      "fail_reason": "Merge conflict error"
+    },
+    "STORY-002": {
+      "status": "complete",
+      "attempts": 1,
+      "fail_reason": "",
+      "cost": {
+        "input_tokens": 0,
+        "output_tokens": 210,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "cost_usd": 0.00315,
+        "model": "sonnet"
+      }
+    },
+    "STORY-003": {
+      "status": "complete",
+      "attempts": 2,
+      "fail_reason": "",
+      "cost": {
+        "input_tokens": 0,
+        "output_tokens": 1970,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "cost_usd": 0.02955,
+        "model": "sonnet"
+      }
+    },
+    "STORY-004": {
+      "status": "complete",
+      "attempts": 1,
+      "fail_reason": "",
+      "cost": {
+        "input_tokens": 0,
+        "output_tokens": 400,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "cost_usd": 0.006,
+        "model": "sonnet"
+      }
+    },
+    "STORY-005": {
+      "status": "complete",
+      "attempts": 1,
+      "fail_reason": "",
+      "cost": {
+        "input_tokens": 0,
+        "output_tokens": 710,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "cost_usd": 0.01065,
+        "model": "sonnet"
+      }
+    }
+  }
+}
