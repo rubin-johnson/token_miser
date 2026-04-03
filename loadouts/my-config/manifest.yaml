@@ -1,0 +1,13 @@
+author: captured
+description: Captured from /home/rujohnson/.claude
+name: my-config
+targets:
+- dest: CLAUDE.md
+  path: CLAUDE.md
+- dest: settings.json
+  path: settings.json
+- dest: hooks
+  path: hooks
+- dest: bin
+  path: bin
+version: 0.0.1

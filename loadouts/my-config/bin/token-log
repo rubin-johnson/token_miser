@@ -1,0 +1,45 @@
+#!/bin/bash
+#
+# Manually log token usage for current session
+# Usage: token-log <tokens> [notes]
+#
+
+set -euo pipefail
+
+DB="$HOME/.claude/token-usage.db"
+
+if [ $# -lt 1 ]; then
+    echo "Usage: token-log <tokens> [notes] [model]"
+    echo
+    echo "Examples:"
+    echo "  token-log 45000"
+    echo "  token-log 45000 'CPE-5208 EC2 module updates'"
+    echo "  token-log 45000 'EC2 module updates' sonnet"
+    exit 1
+fi
+
+TOKENS="$1"
+NOTES="${2:-}"
+MODEL="${3:-}"
+
+# Get last session ID
+LAST_ID=$(sqlite3 "$DB" "SELECT MAX(id) FROM sessions")
+
+if [ -z "$LAST_ID" ]; then
+    echo "Error: No sessions found in database"
+    exit 1
+fi
+
+# Update last session with token count
+sqlite3 "$DB" <<EOF
+UPDATE sessions
+SET tokens_total = $TOKENS,
+    notes = '$NOTES',
+    model = '$MODEL'
+WHERE id = $LAST_ID;
+EOF
+
+echo "Updated session $LAST_ID with $TOKENS tokens"
+
+# Show updated record
+sqlite3 -column -header "$DB" "SELECT * FROM sessions WHERE id = $LAST_ID"

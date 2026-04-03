@@ -1,0 +1,4 @@
+=== Story: BT-004 | Attempt: 10 | Model: haiku ===
+Prompt length: 10813 chars
+
+[Error] Error code: 429 - {'message': 'Too many tokens per day, please wait before trying again.'}

@@ -1,0 +1,52 @@
+{
+  "stories": {
+    "BT-001": {
+      "status": "merge_conflict",
+      "attempts": 1,
+      "fail_reason": "Merge conflict error"
+    },
+    "BT-002": {
+      "status": "complete",
+      "attempts": 1,
+      "fail_reason": "",
+      "cost": {
+        "input_tokens": 0,
+        "output_tokens": 642,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "cost_usd": 0.009630000000000001,
+        "model": "sonnet"
+      }
+    },
+    "BT-003": {
+      "status": "merge_conflict",
+      "attempts": 1,
+      "fail_reason": "Merge conflict error"
+    },
+    "STORY-001": {
+      "status": "pending",
+      "attempts": 0,
+      "fail_reason": ""
+    },
+    "STORY-002": {
+      "status": "pending",
+      "attempts": 0,
+      "fail_reason": ""
+    },
+    "STORY-003": {
+      "status": "pending",
+      "attempts": 0,
+      "fail_reason": ""
+    },
+    "STORY-004": {
+      "status": "pending",
+      "attempts": 0,
+      "fail_reason": ""
+    },
+    "STORY-005": {
+      "status": "pending",
+      "attempts": 0,
+      "fail_reason": ""
+    }
+  }
+}

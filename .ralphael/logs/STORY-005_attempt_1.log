@@ -1,0 +1,249 @@
+=== Story: STORY-005 | Attempt: 1 | Model: sonnet ===
+Prompt length: 5198 chars
+
+[Turn 1] Assistant:
+I'll start by exploring the project structure to understand what's already in place.
+
+[Turn 1] Tool: list_files({})
+[Turn 1] Result: .git
+.gitignore
+cmd
+docs
+go.mod
+go.sum
+internal
+pyproject.toml
+pytest.ini
+requirements.txt
+tasks
+tests
+token_miser
+
+[Turn 1] Tool: search_files({'pattern': 'historyCommand'})
+[Turn 1] Result: internal/cli/cli.go-22:		return compareCommand(args, out)
+internal/cli/cli.go-23:	case "history":
+internal/cli/cli.go:24:		return historyCommand(args, out)
+internal/cli/cli.go-25:	case "tasks":
+internal/cli/cli.go-26:		return tasksCommand(args, out)
+internal/cli/cli.go-63:}
+internal/cli/cli.go-64:
+internal/cli/cli.go:65:func historyCommand(args []string, out io.Writer) error {
+internal/cli/cli.go-66:	fmt.Fprintln(out, "not implemented")
+internal/cli/cli.go-67:	return fmt.Errorf("not implemented"
+
+[Turn 2] Tool: read_file({'path': 'internal/cli/cli.go'})
+[Turn 2] Result: package cli
+
+import (
+	"flag"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/rubin-johnson/token_miser/internal/db"
+	"github.com/rubin-johnson/token_miser/internal/report"
+	"github.com/rubin-johnson/token_miser/internal/task"
+)
+
+// Dispatch routes commands to their handlers
+func Dispatch(command string, args []string, out io.Writer) error {
+	switch command {
+	case "run":
+		return runCommand(args, out)
+	case "compare":
+		return compareCommand(args, out)
+	case "history":
+		return his
+
+[Turn 2] Tool: read_file({'path': 'internal/db/db.go'})
+[Turn 2] Result: package db
+
+import (
+	"database/sql"
+	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+
+	_ "modernc.org/sqlite"
+)
+
+// Run represents a single experimental run stored in the database
+type Run struct {
+	ID               int64     `json:"id"`
+	TaskID           string    `json:"task_id"`
+	Arm              string    `json:"arm"`
+	LoadoutName      string    `json:"loadout_name"`
+	Model            string    `json:"model"`
+	StartedAt        time.Time `json:"started_at"`
+	WallSeconds      float64   `json:"wall_secon
+
+[Turn 3] Assistant:
+Now I understand the db structure. The fields are: `ID`, `TaskID`, `Arm`, `TotalTokens` (doesn't exist - it's `InputTokens + OutputTokens`), `TotalCostUSD` (not `CostUSD`), `StartedAt` (not `Timestamp`).
+
+The test uses `CostUSD` and `Timestamp` fields on `db.Run` but those don't exist. Let me check the test file and what fields are actually available:
+
+Looking at the test:
+- `CostUSD: 0.001` - but the actual field is `TotalCostUSD`
+- `Timestamp: time.Now()` - but the actual field is `StartedAt`
+- `TotalTokens: 2` - but there's no `TotalTokens` field (it would be `InputTokens + OutputTokens`)
+
+I need to check if the test file already exists or needs to be created:
+
+[Turn 3] Tool: list_files({'path': 'internal/cli'})
+[Turn 3] Result: cli.go
+compare_bt_test.go
+history_bt_test.go
+run_bt_test.go
+
+[Turn 4] Tool: read_file({'path': 'internal/cli/history_bt_test.go'})
+[Turn 4] Result: package cli_test
+
+import (
+	"bytes"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/rubin-johnson/token_miser/internal/cli"
+	"github.com/rubin-johnson/token_miser/internal/db"
+)
+
+func seedHistoryDB(t *testing.T, dbDir string, n int) {
+	t.Helper()
+	dbPath := filepath.Join(dbDir, ".token_miser", "results.db")
+	os.MkdirAll(filepath.Dir(dbPath), 0755)
+	d, err := db.InitDB(dbPath)
+	if err != nil {
+		t.Fatalf("InitDB failed: %v", err)
+	}
+	for i := 0; i < n; i++ {
+		run := &db.Run{
+			TaskID
+
+[Turn 5] Assistant:
+Now I understand the actual test file. It uses `TotalCostUSD` and `InputTokens`/`OutputTokens` (no `TotalTokens` or `Timestamp` field). The story's example unit test uses different field names that don't exist in the real `db.Run` struct - I should ignore those and use the real BT test file.
+
+Now let me also check if there's a `dbPath()` function or if I need to replicate the logic from `compareCommand`:
+
+The `compareCommand` uses:
+```go
+home, err := os.UserHomeDir()
+dbPath := filepath.Join(home, ".token_miser", "results.db")
+```
+
+Now I'll implement the `historyCommand`. The real `db.Run` fields I'll use:
+- `ID` → `r.ID`
+- `TaskID` → `r.TaskID`  
+- `Arm` → `r.Arm`
+- `TotalTokens` → `r.InputTokens + r.OutputTokens`
+- `Cost` → `r.TotalCostUSD`
+- `Timestamp` → `r.StartedAt`
+
+[Turn 5] Tool: patch_file({'path': 'internal/cli/cli.go', 'old_content': 'import (\n\t"flag"\n\t"fmt"\n\t"io"\n\t"os"\n\t"path/filepath"\n\t"strings"\n\n\t"github.com/rubin-johnson/token_miser/internal/db"\n\t"github.com/rubin-johnson/token_miser/internal/report"\n\t"github.com/rubin-johnson/token_miser/internal/task"\n)', 'new_content': 'import (\n\t"flag"\n\t"fmt"\n\t"io"\n\t"os"\n\t"path/filepath"\n\t"strings"\n\t"text/tabwriter"\n\t"time"\n\n\t"github.com/rubin-johnson/token_miser/internal/db"\n\t"github.com/rubin-johnson/token_miser/internal/report"\n\t"github.com/rubin-johnson/token_miser/internal/task"\n)'})
+[Turn 5] Result: Successfully patched internal/cli/cli.go (+2 lines)
+
+[Turn 6] Tool: patch_file({'path': 'internal/cli/cli.go', 'old_content': 'func historyCommand(args []string, out io.Writer) error {\n\tfmt.Fprintln(out, "not implemented")\n\treturn fmt.Errorf("not implemented")\n}', 'new_content': 'func dbPath() (string, error) {\n\thome, err := os.UserHomeDir()\n\tif err != nil {\n\t\treturn "", fmt.Errorf("get home dir: %w", err)\n\t}\n\treturn filepath.Join(home, ".token_miser", "results.db"), nil\n}\n\nfunc historyCommand(args []string, out io.Writer) error {\n\tpath, err := dbPath()\n\tif err != nil {\n\t\treturn err\n\t}\n\tdatabase, err := db.InitDB(path)\n\tif err != nil {\n\t\treturn fmt.Errorf("init db: %w", err)\n\t}\n\tdefer database.Close()\n\n\truns, err := database.GetRuns("")\n\tif err != nil {\n\t\treturn fmt.Errorf("get runs: %w", err)\n\t}\n\n\ttw := tabwriter.NewWriter(out, 0, 0, 2, \' \', 0)\n\tfmt.Fprintln(tw, "ID\\tTaskID\\tArm\\tTokens\\tCost\\tTimestamp")\n\tfor _, r := range runs {\n\t\tfmt.Fprintf(tw, "%d\\t%s\\t%s\\t%d\\t$%.6f\\t%s\\n",\n\t\t\tr.ID,\n\t\t\tr.TaskID,\n\t\t\tr.Arm,\n\t\t\tr.InputTokens+r.OutputTokens,\n\t\t\tr.TotalCostUSD,\n\t\t\tr.StartedAt.Format(time.RFC3339),\n\t\t)\n\t}\n\treturn tw.Flush()\n}'})
+[Turn 6] Result: Successfully patched internal/cli/cli.go (+34 lines)
+
+[Turn 7] Assistant:
+Now I also need to update the `compareCommand` to use the new `dbPath()` helper (optional, but let's verify the file compiles first). Let me also check if the story's unit test file needs to be created:
+
+The story says to create `internal/cli/history_test.go` with `package cli` (internal package). But the existing BT test file is `package cli_test`. The story's test uses `db.Run` fields like `CostUSD` and `Timestamp` that don't exist. I should create the test file but adapt it to use the correct field names.
+
+Looking at the story again - it says the unit test uses `CostUSD` and `Timestamp`, but the actual `db.Run` struct has `TotalCostUSD` and `StartedAt`. The acceptance criteria says "BT-005 tests pass" which refers to the BT test file already present. The story's unit test is just for reference. Let me create the `history_test.go` with corrected field names:
+
+[Turn 7] Tool: write_file({'path': 'internal/cli/history_test.go', 'content': 'package cli\n\nimport (\n\t"bytes"\n\t"os"\n\t"path/filepath"\n\t"strings"\n\t"testing"\n\n\t"github.com/rubin-johnson/token_miser/internal/db"\n)\n\nfunc TestHistoryCommand_HeaderPresent(t *testing.T) {\n\tdir := t.TempDir()\n\torigHome := os.Getenv("HOME")\n\tos.Setenv("HOME", dir)\n\tdefer os.Setenv("HOME", origHome)\n\n\tdbDir := filepath.Join(dir, ".token_miser")\n\tos.MkdirAll(dbDir, 0755)\n\td, _ := db.InitDB(filepath.Join(dbDir, "results.db"))\n\td.StoreRun(&db.Run{\n\t\tTaskID:        "t1",\n\t\tArm:           "control",\n\t\tInputTokens:   1,\n\t\tOutputTokens:  1,\n\t\tTotalCostUSD:  0.001,\n\t\tQualityScores: "{}",\n\t})\n\n\tvar buf bytes.Buffer\n\terr := historyCommand([]string{}, &buf)\n\tif err != nil {\n\t\tt.Fatalf("historyCommand: %v", err)\n\t}\n\tout := buf.String()\n\tfor _, h := range []string{"ID", "TaskID", "Arm", "Tokens", "Cost", "Timestamp"} {\n\t\tif !strings.Contains(out, h) {\n\t\t\tt.Errorf("missing column %q in output: %q", h, out)\n\t\t}\n\t}\n}\n'})
+[Turn 7] Result: Successfully wrote internal/cli/history_test.go
+
+[Turn 8] Assistant:
+Now let's run the Go tests to see if they compile and pass:
+
+[Turn 8] Tool: run_command({'command': 'cd /root && go test ./internal/cli/... -v -run "TestHistory" 2>&1'})
+[Turn 8] Result: 
+STDERR:
+/bin/sh: 1: cd: can't cd to /root
+
+(exit code: 2)
+
+[Turn 9] Tool: run_command({'command': 'pwd && go test ./internal/cli/... -v -run "TestHistory" 2>&1'})
+[Turn 9] Result: /home/rujohnson/code/personal/token_miser/.worktrees/ralphael-ec93712f-story-005-a1
+=== RUN   TestHistoryCommand_HeaderPresent
+--- PASS: TestHistoryCommand_HeaderPresent (0.02s)
+=== RUN   TestHistoryCommand_PrintsRows
+--- PASS: TestHistoryCommand_PrintsRows (0.03s)
+=== RUN   TestHistoryCommand_PrintsHeaders
+--- PASS: TestHistoryCommand_PrintsHeaders (0.01s)
+=== RUN   TestHistoryCommand_EmptyDB_NoError
+--- PASS: TestHistoryCommand_EmptyDB_NoError (0.01s)
+PASS
+ok  	github.com/rubin-johnson/token_m
+
+[Turn 10] Assistant:
+All 4 history tests pass. Now let's run the full pytest to check:
+
+[Turn 10] Tool: run_command({'command': 'pytest tests/ -v 2>&1 | head -80'})
+[Turn 10] Result: ============================= test session starts ==============================
+platform linux -- Python 3.13.11, pytest-9.0.2, pluggy-1.6.0 -- /home/rujohnson/.pyenv/versions/3.13.11/bin/python3.13
+cachedir: .pytest_cache
+rootdir: /home/rujohnson/code/personal/token_miser/.worktrees/ralphael-ec93712f-story-005-a1
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: cov-7.0.0, anyio-4.12.1
+collecting ... collected 77 items
+
+tests/test_anomaly_detector_implementat
+
+[Turn 11] Tool: run_command({'command': 'pytest tests/ -v 2>&1 | tail -20'})
+[Turn 11] Result:   /home/rujohnson/code/personal/token_miser/.worktrees/ralphael-ec93712f-story-005-a1/tests/test_trending_implementation.py:199: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow()
+
+tests/test_trending_implementation.py::test_trends_without_project_filter
+  /home/rujohnson/code/personal/token_miser/.worktrees/ralphael-e
+
+[Turn 12] Assistant:
+The 10 failing tests are pre-existing failures unrelated to this story (they're in `test_budget_alerts.py` and `test_cost_analyzer_implementation.py`). All history-related Go tests pass.
+
+Let me also run the full Go test suite to confirm nothing is broken:
+
+[Turn 12] Tool: run_command({'command': 'go test ./... 2>&1'})
+[Turn 12] Result: ok  	github.com/rubin-johnson/token_miser/cmd	0.978s
+?   	github.com/rubin-johnson/token_miser/cmd/token-miser	[no test files]
+ok  	github.com/rubin-johnson/token_miser/internal/arm	(cached)
+ok  	github.com/rubin-johnson/token_miser/internal/checker	0.014s
+--- FAIL: TestRunCommand_ExitsWithoutError (0.00s)
+    run_bt_test.go:77: expected run to succeed, got error: not implemented
+--- FAIL: TestRunCommand_PersistsRunsToDB (0.00s)
+    run_bt_test.go:108: run failed: not implemented
+--- FAIL: TestR
+
+[Turn 13] Assistant:
+The failing tests in `internal/cli` are `TestRunCommand_*` which are pre-existing failures (the `runCommand` stub has "not implemented"). These are not related to this story. The history tests all pass.
+
+Now let's commit:
+
+[Turn 13] Tool: run_command({'command': 'git add internal/cli/cli.go internal/cli/history_test.go && git commit -m "feat(STORY-005): implement history command with tabwriter output"'})
+[Turn 13] Result: [ralphael-ec93712f-story-005-a1 eaf60c1] feat(STORY-005): implement history command with tabwriter output
+ 2 files changed, 80 insertions(+), 2 deletions(-)
+ create mode 100644 internal/cli/history_test.go
+
+(exit code: 0)
+
+[Turn 14] Assistant:
+The implementation is complete. Here's a summary of what was done:
+
+1. **Read `internal/db/db.go`** to verify the actual `db.Run` field names (`TotalCostUSD`, `StartedAt`, `InputTokens`, `OutputTokens` — no `TotalTokens` field).
+
+2. **Updated `internal/cli/cli.go`**:
+   - Added `"text/tabwriter"` and `"time"` imports
+   - Added a `dbPath()` helper function that returns `~/.token_miser/results.db`
+   - Implemented `historyCommand` using `tabwriter.NewWriter` with tab-separated columns: `ID`, `TaskID`, `Arm`, `Tokens`, `Cost`, `Timestamp`
+
+3. **Created `internal/cli/history_test.go`** with the internal package test using correct field names.
+
+4. All 4 history tests pass (`TestHistoryCommand_HeaderPresent`, `TestHistoryCommand_PrintsRows`, `TestHistoryCommand_PrintsHeaders`, `TestHistoryCommand_EmptyDB_NoError`).
+
+STORY_COMPLETE: STORY-005
+

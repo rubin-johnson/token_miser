@@ -1,39 +1,34 @@
+id: synth-001
 name: "Scaffold Python Project"
-description: "Test Claude's ability to scaffold a Python project (the loadout repo). This task tests vanilla-vs-loadout comparison by setting up the target project's toolchain."
-target_repo: "/home/rujohnson/code/personal/loadout"
-target_commit: "fd88685"
+repo: "/home/rujohnson/code/personal/loadout"
+starting_commit: "fd88685"
+prompt: |
+  You are working in the loadout Python project directory. Read docs/design-notes.md
+  for context on what this project does. Then scaffold the initial Python project:
+  - Set up pyproject.toml with the project metadata and dependencies
+  - Create the src/loadout/ package with an __init__.py that exports __version__
+  - Create a tests/ directory with a basic test_loadout.py
+  - Install the package so it can be imported
+  - Make sure the test suite is runnable
+
+  Do not implement any features yet — just get the project structure and toolchain in place.
 success_criteria:
-  - type: "file_exists"
-    path: "pyproject.toml"
-    description: "Project configuration file exists"
-  - type: "file_exists"
-    path: "src/loadout/__init__.py"
-    description: "Main package module exists"
-  - type: "file_exists"
-    path: "tests/test_loadout.py"
-    description: "Test file exists"
-  - type: "command_exit_code"
-    command: "python -m pytest --version"
-    expected_code: 0
-    description: "pytest is available and working"
-  - type: "command_exit_code"
-    command: "python -c 'import loadout'"
-    expected_code: 0
-    description: "loadout package can be imported"
-  - type: "output_content"
-    command: "python -c 'import loadout; print(loadout.__version__)'"
-    expected_pattern: "^\\d+\\.\\d+\\.\\d+"
-    description: "Package has valid version string"
+  - type: file_exists
+    paths: ["pyproject.toml"]
+  - type: file_exists
+    paths: ["src/loadout/__init__.py"]
+  - type: file_exists
+    paths: ["tests/test_loadout.py"]
+  - type: file_exists
+    paths: ["uv.lock"]
+  - type: command_exits_zero
+    command: "uv run python -c 'import loadout'"
 quality_rubric:
-  - category: "structure"
-    weight: 25
-    description: "Proper Python package structure with src/ layout"
-  - category: "cli_completeness"
-    weight: 25
-    description: "Command-line interface is complete and functional"
-  - category: "tdd_readiness"
-    weight: 25
-    description: "Test framework is set up and ready for TDD workflow"
-  - category: "code_quality"
-    weight: 25
-    description: "Code follows Python best practices and style guidelines"
+  - dimension: "toolchain"
+    prompt: "Does the project use uv for dependency management? Score 100 if uv is used (pyproject.toml + uv.lock present, no requirements.txt or setup.py), score 0 if pip/poetry/setuptools is used instead."
+  - dimension: "structure"
+    prompt: "Is the Python package structure correct? Score based on proper src/ layout, __init__.py with __version__, and a clear test directory."
+  - dimension: "tdd_readiness"
+    prompt: "Is the test framework properly configured and runnable? Score based on test file existence, pytest configuration in pyproject.toml, and whether tests can actually be discovered."
+  - dimension: "code_quality"
+    prompt: "Does the scaffolded code follow Python best practices? Score based on minimal clean __init__.py, sensible pyproject.toml metadata, and no unnecessary boilerplate."

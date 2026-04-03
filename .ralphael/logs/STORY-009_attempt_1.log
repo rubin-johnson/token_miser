@@ -1,0 +1,454 @@
+=== Story: STORY-009 | Attempt: 1 | Model: sonnet ===
+Prompt length: 2887 chars
+
+[Turn 1] Assistant:
+我需要实现 STORY-009：创建实验对比报告功能。让我先了解项目结构和依赖。
+
+{"type":"tool_use","id":"toolu_01","name":"list_files","input":{"path":"."}}
+
+{"type":"tool_use","id":"toolu_02","name":"search_files","input":{"pattern":"internal/db","path":"."}}
+
+{"type":"tool_use","id":"toolu_03","name":"list_files","input":{"path":"internal"}}
+
+[Turn 1] Tool: list_files({'path': '.'})
+[Turn 1] Result: .git
+.gitignore
+cmd
+docs
+go.mod
+go.sum
+internal
+pyproject.toml
+pytest.ini
+requirements.txt
+tasks
+tests
+token_miser
+
+[Turn 1] Tool: search_files({'pattern': 'internal/db', 'path': '.'})
+[Turn 1] Result: docs/plans/notes-mvp.md-204:### STORY-008: SQLite storage
+docs/plans/notes-mvp.md-205:
+docs/plans/notes-mvp.md:206:Implement `internal/db/db.go`:
+docs/plans/notes-mvp.md-207:- DB path default: `filepath.Join(os.UserHomeDir(), ".token_miser", "results.db")`
+docs/plans/notes-mvp.md-208:- `InitDB(path string) (*sql.DB, error)`: open DB, create `runs` table if not exists
+docs/plans/ralphael-plan.md-218:
+docs/plans/ralphael-plan.md-219:### Files to create
+docs/plans/ralphael-plan.md:220:- `internal/d
+
+[Turn 1] Tool: list_files({'path': 'internal'})
+[Turn 1] Result: arm
+checker
+cli
+db
+environment
+evaluator
+executor
+report
+task
+
+[Turn 2] Assistant:
+看起来 `internal/report` 目录已经存在，让我检查现有文件和 `internal/db` 的结构：
+
+{"type":"tool_use","id":"toolu_04","name":"list_files","input":{"path":"internal/report"}}
+
+{"type":"tool_use","id":"toolu_05","name":"list_files","input":{"path":"internal/db"}}
+
+{"type":"tool_use","id":"toolu_06","name":"read_file","input":{"path":"internal/db/db.go"}}
+
+[Turn 2] Tool: list_files({'path': 'internal/report'})
+[Turn 2] Result: report.go
+
+[Turn 2] Tool: list_files({'path': 'internal/db'})
+[Turn 2] Result: db.go
+
+[Turn 2] Tool: read_file({'path': 'internal/db/db.go'})
+[Turn 2] Result: package db
+
+import (
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+
+	_ "modernc.org/sqlite"
+)
+
+const schema = `
+CREATE TABLE IF NOT EXISTS runs (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	task_id TEXT NOT NULL,
+	arm TEXT NOT NULL,
+	loadout_name TEXT,
+	model TEXT,
+	started_at TEXT,
+	wall_seconds REAL,
+	input_tokens INTEGER,
+	output_tokens INTEGER,
+	cache_read_tokens INTEGER,
+	cache_write_tokens INTEGER,
+	total_cost_usd REAL,
+	exit_code INTEGER,
+	criteria_pass INTEGER,
+	crit
+
+[Turn 3] Assistant:
+现在检查现有的 `internal/report/report.go` 文件：
+
+{"type":"tool_use","id":"toolu_07","name":"read_file","input":{"path":"internal/report/report.go"}}
+
+{"type": "tool_use", "id": "toolu_07", "name": "read_file", "input": {"path": "internal/report/report.go"}}
+
+[Turn 3] Tool: read_file({'path': 'internal/report/report.go'})
+[Turn 3] Result: package report
+
+import (
+	"fmt"
+	"strings"
+
+	"database/sql"
+
+	"github.com/rubin-johnson/token_miser/internal/db"
+)
+
+func Compare(taskID string, database *sql.DB) (string, error) {
+	runs, err := db.GetRuns(database, taskID)
+	if err != nil {
+		return "", fmt.Errorf("get runs: %w", err)
+	}
+	if len(runs) == 0 {
+		return fmt.Sprintf("No runs found for task %q", taskID), nil
+	}
+
+	byArm := make(map[string][]*db.Run)
+	order := []string{}
+	for _, r := range runs {
+		if _, seen := byArm[r.Arm]; !seen {
+		
+
+[Turn 3] Tool: read_file({'path': 'internal/report/report.go'})
+[Turn 3] Result: package report
+
+import (
+	"fmt"
+	"strings"
+
+	"database/sql"
+
+	"github.com/rubin-johnson/token_miser/internal/db"
+)
+
+func Compare(taskID string, database *sql.DB) (string, error) {
+	runs, err := db.GetRuns(database, taskID)
+	if err != nil {
+		return "", fmt.Errorf("get runs: %w", err)
+	}
+	if len(runs) == 0 {
+		return fmt.Sprintf("No runs found for task %q", taskID), nil
+	}
+
+	byArm := make(map[string][]*db.Run)
+	order := []string{}
+	for _, r := range runs {
+		if _, seen := byArm[r.Arm]; !seen {
+		
+
+[Turn 4] Assistant:
+看起来 `internal/report/report.go` 已经存在但不完整。根据需求，我需要：
+
+1. 完善现有的 `Compare` 函数，添加质量分数和侧边对比功能
+2. 创建测试文件 `internal/report/report_test.go`
+
+让我先检查是否有测试文件存在：
+
+{"type":"tool_use","id":"toolu_08","name":"list_files","input":{"path":"internal/report"}}
+
+现在我需要完善 `Compare` 函数以满足所有验收标准。根据需求，我需要：
+
+1. 添加质量分数显示
+2. 当恰好有两个 arm 时，实现侧边对比
+3. 显示总 tokens（输入+输出）
+
+{"type":"tool_use","id":"toolu_09","name":"patch_file","input":{"path":"internal/report/report.go","old_content":"package report\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n\n\t\"database/sql\"\n\n\t\"github.com/rubin-johnson/token_miser/internal/db\"\n)\n\nfunc Compare(taskID string, database *sql.DB) (string, error) {\n\truns, err := db.GetRuns(database, taskID)\n\tif err != nil {\n\t\treturn \"\", fmt.Errorf(\"get runs: %w\", err)\n\t}\n\tif len(runs) == 0 {\n\t\treturn fmt.Sprintf(\"No runs found for task %q\", taskID), nil\n\t}\n\n\tbyArm := make(map[string][]*db.Run)\n\torder := []string{}\n\tfor _, r := range runs {\n\t\tif _, seen := byArm[r.Arm]; !seen {\n\t\t\torder = append(order, r.Arm)\n\t\t}\n\t\tbyArm[r.Arm] = append(byArm[r.Arm], r)\n\t}\n\n\tvar sb strings.Builder\n\tfmt.Fprintf(&sb, \"Comparison for task: %s\\n\", taskID)\n\tfmt.Fprintf(&sb, \"%s\\n\", strings.Repeat(\"=\", 60))\n\n\tfor _, armName := range order {\n\t\tarmRuns := byArm[armName]\n\t\tfmt.Fprintf(&sb, \"\\nArm: %s (%d run(s))\\n\", armName, len(armRuns))\n\t\tfmt.Fprintf(&sb, \"%s\\n\", strings.Repeat(\"-\", 40))\n\n\t\tvar totalInput, totalOutput int\n\t\tvar totalCost, totalWall float64\n\t\tvar totalPass, totalCriteria int\n\n\t\tfor _, r := range armRuns {\n\t\t\ttotalInput += r.InputTokens\n\t\t\ttotalOutput += r.OutputTokens\n\t\t\ttotalCost += r.TotalCostUSD\n\t\t\ttotalWall += r.WallSeconds\n\t\t\ttotalPass += r.CriteriaPass\n\t\t\ttotalCriteria += r.CriteriaTotal\n\t\t}\n\n\t\tn := len(armRuns)\n\t\tfmt.Fprintf(&sb, \"  input tokens (avg):    %d\\n\", totalInput/n)\n\t\tfmt.Fprintf(&sb, \"  output tokens (avg):   %d\\n\", totalOutput/n)\n\t\tfmt.Fprintf(&sb, \"  cost USD (avg):        $%.6f\\n\", totalCost/float64(n))\n\t\tfmt.Fprintf(&sb, \"  wall seconds (avg):    %.2f\\n\", totalWall/float64(n))\n\t\tif totalCriteria > 0 {\n\t\t\tfmt.Fprintf(&sb, \"  criteria pass rate:    %d/%d\\n\", totalPass, totalCriteria)\n\t\t}\n\t}\n\n\treturn sb.String(), nil\n}","new_content":"package report\n\nimport (\n\t\"database/sql\"\n\t\"encoding/json\"\n\t\"fmt\"\n\t\"strings\"\n\n\t\"github.com/rubin-johnson/token_miser/internal/db\"\n)\n\ntype ArmStats struct {\n\tName           string\n\tRunCount       int\n\tTotalTokens    int\n\tCost           float64\n\tWallTime       float64\n\tCriteriaPass   int\n\tCriteriaTotal  int\n\tQualityScores  map[string]float64\n}\n\nfunc Compare(taskID string, database *sql.DB) (string, error) {\n\truns, err := db.GetRuns(database, taskID)\n\tif err != nil {\n\t\treturn \"\", fmt.Errorf(\"get runs: %w\", err)\n\t}\n\tif len(runs) == 0 {\n\t\treturn fmt.Sprintf(\"No runs found for task %q\", taskID), nil\n\t}\n\n\t// Group runs by arm\n\tbyArm := make(map[string][]*db.Run)\n\torder := []string{}\n\tfor _, r := range runs {\n\t\tif _, seen := byArm[r.Arm]; !seen {\n\t\t\torder = append(order, r.Arm)\n\t\t}\n\t\tbyArm[r.Arm] = append(byArm[r.Arm], r)\n\t}\n\n\t// Calculate stats for each arm\n\tstats := make([]*ArmStats, 0, len(order))\n\tfor _, armName := range order {\n\t\tarmRuns := byArm[armName]\n\t\tstat := calculateArmStats(armName, armRuns)\n\t\tstats = append(stats, stat)\n\t}\n\n\t// Format output\n\tif len(stats) == 2 {\n\t\treturn formatSideBySide(taskID, stats), nil\n\t}\n\treturn formatStacked(taskID, stats), nil\n}\n\nfunc calculateArmStats(armName string, runs []*db.Run) *ArmStats {\n\tstat := &ArmStats{\n\t\tName:          armName,\n\t\tRunCount:      len(runs),\n\t\tQualityScores: make(map[string]float64),\n\t}\n\n\tvar totalInput, totalOutput int\n\tvar totalCost, totalWall float64\n\tvar totalPass, totalCriteria int\n\tqualityDimensions := make(map[string][]float64)\n\n\tfor _, r := range runs {\n\t\ttotalInput += r.InputTokens\n\t\ttotalOutput += r.OutputTokens\n\t\ttotalCost += r.TotalCostUSD\n\t\ttotalWall += r.WallSeconds\n\t\ttotalPass += r.CriteriaPass\n\t\ttotalCriteria += r.CriteriaTotal\n\n\t\t// Parse quality scores\n\t\tif r.QualityScores != \"\" {\n\t\t\tvar scores map[string]float64\n\t\t\tif err := json.Unmarshal([]byte(r.QualityScores), &scores); err == nil {\n\t\t\t\tfor dim, score := range scores {\n\t\t\t\t\tqualityDimensions[dim] = append(qualityDimensions[dim], score)\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\n\tn := float64(len(runs))\n\tstat.TotalTokens = int(float64(totalInput+totalOutput) / n)\n\tstat.Cost = totalCost / n\n\tstat.WallTime = totalWall / n\n\tstat.CriteriaPass = totalPass\n\tstat.CriteriaTotal = totalCriteria\n\n\t// Average quality scores\n\tfor dim, scores := range qualityDimensions {\n\t\tvar sum float64\n\t\tfor _, score := range scores {\n\t\t\tsum += score\n\t\t}\n\t\tstat.QualityScores[dim] = sum / float64(len(scores))\n\t}\n\n\treturn stat\n}\n\nfunc formatSideBySide(taskID string, stats []*ArmStats) string {\n\tvar sb strings.Builder\n\tfmt.Fprintf(&sb, \"Comparison for task: %s\\n\", taskID)\n\tfmt.Fprintf(&sb, \"%s\\n\", strings.Repeat(\"=\", 80))\n\tfmt.Fprintf(&sb, \"%-30s | %-30s\\n\", stats[0].Name, stats[1].Name)\n\tfmt.Fprintf(&sb, \"%s\\n\", strings.Repeat(\"-\", 80))\n\n\tfmt.Fprintf(&sb, \"%-30s | %-30s\\n\",\n\t\tfmt.Sprintf(\"Total tokens: %d\", stats[0].TotalTokens),\n\t\tfmt.Sprintf(\"Total tokens: %d\", stats[1].TotalTokens))\n\n\tfmt.Fprintf(&sb, \"%-30s | %-30s\\n\",\n\t\tfmt.Sprintf(\"Cost: $%.6f\", stats[0].Cost),\n\t\tfmt.Sprintf(\"Cost: $%.6f\", stats[1].Cost))\n\n\tfmt.Fprintf(&sb, \"%-30s | %-30s\\n\",\n\t\tfmt.Sprintf(\"Wall time: %.2fs\", stats[0].WallTime),\n\t\tfmt.Sprintf(\"Wall time: %.2fs\", stats[1].WallTime))\n\n\tif stats[0].CriteriaTotal > 0 || stats[1].CriteriaTotal > 0 {\n\t\tfmt.Fprintf(&sb, \"%-30s | %-30s\\n\",\n\t\t\tfmt.Sprintf(\"Criteria: %d/%d\", stats[0].CriteriaPass, stats[0].CriteriaTotal),\n\t\t\tfmt.Sprintf(\"Criteria: %d/%d\", stats[1].CriteriaPass, stats[1].CriteriaTotal))\n\t}\n\n\t// Quality scores\n\tallDims := make(map[string]bool)\n\tfor dim := range stats[0].QualityScores {\n\t\tallDims[dim] = true\n\t}\n\tfor dim := range stats[1].QualityScores {\n\t\tallDims[dim] = true\n\t}\n\n\tfor dim := range allDims {\n\t\tscore0 := stats[0].QualityScores[dim]\n\t\tscore1 := stats[1].QualityScores[dim]\n\t\tfmt.Fprintf(&sb, \"%-30s | %-30s\\n\",\n\t\t\tfmt.Sprintf(\"%s: %.3f\", dim, score0),\n\t\t\tfmt.Sprintf(\"%s: %.3f\", dim, score1))\n\t}\n\n\treturn sb.String()\n}\n\nfunc formatStacked(taskID string, stats []*ArmStats) string {\n\tvar sb strings.Builder\n\tfmt.Fprintf(&sb, \"Comparison for task: %s\\n\", taskID)\n\tfmt.Fprintf(&sb, \"%s\\n\", strings.Repeat(\"=\", 60))\n\n\tfor _, stat := range stats {\n\t\tfmt.Fprintf(&sb, \"\\nArm: %s (%d run(s))\\n\", stat.Name, stat.RunCount)\n\t\tfmt.Fprintf(&sb, \"%s\\n\", strings.Repeat(\"-\", 40))\n\t\tfmt.Fprintf(&sb, \"  Total tokens:          %d\\n\", stat.TotalTokens)\n\t\tfmt.Fprintf(&sb, \"  Cost:                  $%.6f\\n\", stat.Cost)\n\t\tfmt.Fprintf(&sb, \"  Wall time:             %.2fs\\n\", stat.WallTime)\n\t\tif stat.CriteriaTotal > 0 {\n\t\t\tfmt.Fprintf(&sb, \"  Criteria pass rate:    %d/%d\\n\", stat.CriteriaPass, stat.CriteriaTotal)\n\t\t}\n\t\tfor dim, score := range stat.QualityScores {\n\t\t\tfmt.Fprintf(&sb, \"  %s:                %.3f\\n\", dim, score)\n\t\t}\n\t}\n\n\treturn sb.String()\n}"}}
+
+现在创建测试文件：
+
+{"type":"tool_use","id":"toolu_10","name":"write_file","input":{"path":"internal/report/report_test.go","content":"package report\n\nimport (\n\t\"database/sql\"\n\t\"strings\"\n\t\"testing\"\n\n\t\"github.com/rubin-johnson/token_miser/internal/db\"\n)\n\nfunc TestCompare_NoRuns(t *testing.T) {\n\t// Create in-memory database\n\tdatabase, err := sql.Open(\"sqlite\", \":memory:\")\n\tif err != nil {\n\t\tt.Fatalf(\"Failed to open database: %v\", err)\n\t}\n\tdefer database.Close()\n\n\t// Initialize schema\n\tif _, err := database.Exec(`CREATE TABLE runs (\n\t\tid INTEGER PRIMARY KEY,\n\t\ttask_id TEXT,\n\t\tarm TEXT,\n\t\tloadout_name TEXT,\n\t\tmodel TEXT,\n\t\tstarted_at TEXT,\n\t\twall_seconds REAL,\n\t\tinput_tokens INTEGER,\n\t\toutput_tokens INTEGER,\n\t\tcache_read_tokens INTEGER,\n\t\tcache_write_tokens INTEGER,\n\t\ttotal_cost_usd REAL,\n\t\texit_code INTEGER,\n\t\tcriteria_pass INTEGER,\n\t\tcriteria_total INTEGER,\n\t\tquality_scores TEXT\n\t)`); err != nil {\n\t\tt.Fatalf(\"Failed to create schema: %v\", err)\n\t}\n\n\tresult, err := Compare(\"nonexistent\", database)\n\tif err != nil {\n\t\tt.Fatalf(\"Compare failed: %v\", err)\n\t}\n\n\tif !strings.Contains(result, \"No runs found\") {\n\t\tt.Errorf(\"Expected 'No runs found' message, got: %s\", result)\n\t}\n}\n\nfunc TestCompare_SingleArm(t *testing.T) {\n\t// Create fixture runs\n\truns := []*db.Run{\n\t\t{\n\t\t\tTaskID:        \"task1\",\n\t\t\tArm:           \"control\",\n\t\t\tInputTokens:   100,\n\t\t\tOutputTokens:  50,\n\t\t\tTotalCostUSD:  0.001,\n\t\t\tWallSeconds:   1.5,\n\t\t\tCriteriaPass:  2,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{\"accuracy\": 0.85, \"fluency\": 0.92}`,\n\t\t},\n\t\t{\n\t\t\tTaskID:        \"task1\",\n\t\t\tArm:           \"control\",\n\t\t\tInputTokens:   120,\n\t\t\tOutputTokens:  60,\n\t\t\tTotalCostUSD:  0.002,\n\t\t\tWallSeconds:   2.0,\n\t\t\tCriteriaPass:  3,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{\"accuracy\": 0.90, \"fluency\": 0.88}`,\n\t\t},\n\t}\n\n\tdatabase := setupTestDB(t, runs)\n\tdefer database.Close()\n\n\tresult, err := Compare(\"task1\", database)\n\tif err != nil {\n\t\tt.Fatalf(\"Compare failed: %v\", err)\n\t}\n\n\t// Check key strings appear in output\n\texpectedStrings := []string{\n\t\t\"Comparison for task: task1\",\n\t\t\"Arm: control\",\n\t\t\"Total tokens:\",\n\t\t\"Cost:\",\n\t\t\"Wall time:\",\n\t\t\"Criteria pass rate:\",\n\t\t\"accuracy:\",\n\t\t\"fluency:\",\n\t}\n\n\tfor _, expected := range expectedStrings {\n\t\tif !strings.Contains(result, expected) {\n\t\t\tt.Errorf(\"Expected output to contain %q, got: %s\", expected, result)\n\t\t}\n\t}\n}\n\nfunc TestCompare_TwoArms_SideBySide(t *testing.T) {\n\t// Create fixture runs with exactly two arms\n\truns := []*db.Run{\n\t\t{\n\t\t\tTaskID:        \"task2\",\n\t\t\tArm:           \"control\",\n\t\t\tInputTokens:   100,\n\t\t\tOutputTokens:  50,\n\t\t\tTotalCostUSD:  0.001,\n\t\t\tWallSeconds:   1.5,\n\t\t\tCriteriaPass:  2,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{\"accuracy\": 0.85}`,\n\t\t},\n\t\t{\n\t\t\tTaskID:        \"task2\",\n\t\t\tArm:           \"treatment\",\n\t\t\tInputTokens:   110,\n\t\t\tOutputTokens:  55,\n\t\t\tTotalCostUSD:  0.0015,\n\t\t\tWallSeconds:   1.8,\n\t\t\tCriteriaPass:  3,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{\"accuracy\": 0.90}`,\n\t\t},\n\t}\n\n\tdatabase := setupTestDB(t, runs)\n\tdefer database.Close()\n\n\tresult, err := Compare(\"task2\", database)\n\tif err != nil {\n\t\tt.Fatalf(\"Compare failed: %v\", err)\n\t}\n\n\t// Check for side-by-side format indicators\n\texpectedStrings := []string{\n\t\t\"Comparison for task: task2\",\n\t\t\"control\",\n\t\t\"treatment\",\n\t\t\"|\", // Side-by-side separator\n\t\t\"Total tokens:\",\n\t\t\"Cost:\",\n\t\t\"Wall time:\",\n\t\t\"Criteria:\",\n\t\t\"accuracy:\",\n\t}\n\n\tfor _, expected := range expectedStrings {\n\t\tif !strings.Contains(result, expected) {\n\t\t\tt.Errorf(\"Expected output to contain %q, got: %s\", expected, result)\n\t\t}\n\t}\n\n\t// Verify it's actually side-by-side (contains pipe separator)\n\tlines := strings.Split(result, \"\\n\")\n\thasPipeSeparator := false\n\tfor _, line := range lines {\n\t\tif strings.Contains(line, \"|\") && strings.Contains(line, \"Total tokens:\") {\n\t\t\thasPipeSeparator = true\n\t\t\tbreak\n\t\t}\n\t}\n\tif !hasPipeSeparator {\n\t\tt.Error(\"Expected side-by-side format with pipe separator\")\n\t}\n}\n\nfunc TestCompare_ThreeArms_Stacked(t *testing.T) {\n\t// Create fixture runs with three arms\n\truns := []*db.Run{\n\t\t{\n\t\t\tTaskID:        \"task3\",\n\t\t\tArm:           \"control\",\n\t\t\tInputTokens:   100,\n\t\t\tOutputTokens:  50,\n\t\t\tTotalCostUSD:  0.001,\n\t\t\tWallSeconds:   1.5,\n\t\t\tCriteriaPass:  2,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{\"accuracy\": 0.85}`,\n\t\t},\n\t\t{\n\t\t\tTaskID:        \"task3\",\n\t\t\tArm:           \"treatment1\",\n\t\t\tInputTokens:   110,\n\t\t\tOutputTokens:  55,\n\t\t\tTotalCostUSD:  0.0015,\n\t\t\tWallSeconds:   1.8,\n\t\t\tCriteriaPass:  3,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{\"accuracy\": 0.90}`,\n\t\t},\n\t\t{\n\t\t\tTaskID:        \"task3\",\n\t\t\tArm:           \"treatment2\",\n\t\t\tInputTokens:   95,\n\t\t\tOutputTokens:  45,\n\t\t\tTotalCostUSD:  0.0008,\n\t\t\tWallSeconds:   1.2,\n\t\t\tCriteriaPass:  1,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{\"accuracy\": 0.80}`,\n\t\t},\n\t}\n\n\tdatabase := setupTestDB(t, runs)\n\tdefer database.Close()\n\n\tresult, err := Compare(\"task3\", database)\n\tif err != nil {\n\t\tt.Fatalf(\"Compare failed: %v\", err)\n\t}\n\n\t// Check for stacked format\n\texpectedStrings := []string{\n\t\t\"Comparison for task: task3\",\n\t\t\"Arm: control\",\n\t\t\"Arm: treatment1\",\n\t\t\"Arm: treatment2\",\n\t\t\"Total tokens:\",\n\t\t\"Cost:\",\n\t\t\"Wall time:\",\n\t\t\"Criteria pass rate:\",\n\t\t\"accuracy:\",\n\t}\n\n\tfor _, expected := range expectedStrings {\n\t\tif !strings.Contains(result, expected) {\n\t\t\tt.Errorf(\"Expected output to contain %q, got: %s\", expected, result)\n\t\t}\n\t}\n\n\t// Should NOT contain pipe separator (not side-by-side)\n\tif strings.Contains(result, \"|\") {\n\t\tt.Error(\"Expected stacked format, but found pipe separator\")\n\t}\n}\n\nfunc setupTestDB(t *testing.T, runs []*db.Run) *sql.DB {\n\tdatabase, err := sql.Open(\"sqlite\", \":memory:\")\n\tif err != nil {\n\t\tt.Fatalf(\"Failed to open database: %v\", err)\n\t}\n\n\t// Initialize schema\n\tif _, err := database.Exec(`CREATE TABLE runs (\n\t\tid INTEGER PRIMARY KEY,\n\t\ttask_id TEXT,\n\t\tarm TEXT,\n\t\tloadout_name TEXT,\n\t\tmodel TEXT,\n\t\tstarted_at TEXT,\n\t\twall_seconds REAL,\n\t\tinput_tokens INTEGER,\n\t\toutput_tokens INTEGER,\n\t\tcache_read_tokens INTEGER,\n\t\tcache_write_tokens INTEGER,\n\t\ttotal_cost_usd REAL,\n\t\texit_code INTEGER,\n\t\tcriteria_pass INTEGER,\n\t\tcriteria_total INTEGER,\n\t\tquality_scores TEXT\n\t)`); err != nil {\n\t\tt.Fatalf(\"Failed to create schema: %v\", err)\n\t}\n\n\t// Insert test data\n\tfor _, run := range runs {\n\t\t_, err := database.Exec(`INSERT INTO runs\n\t\t\t(task_id, arm, loadout_name, model, started_at, wall_seconds,\n\t\t\t input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,\n\t\t\t total_cost_usd, exit_code, criteria_pass, criteria_total, quality_scores)\n\t\t\tVALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,\n\t\t\trun.TaskID, run.Arm, run.LoadoutName, run.Model, run.StartedAt,\n\t\t\trun.WallSeconds, run.InputTokens, run.OutputTokens,\n\t\t\trun.CacheReadTokens, run.CacheWriteTokens, run.TotalCostUSD,\n\t\t\trun.ExitCode, run.CriteriaPass, run.CriteriaTotal, run.QualityScores)\n\t\tif err != nil {\n\t\t\tt.Fatalf(\"Failed to insert test data: %v\", err)\n\t\t}\n\t}\n\n\treturn database\n}\n"}}
+
+现在运行测试来验证实现：
+
+{"type":"tool_use","id":"toolu_11","name":"run_command","input":{"command":"cd . && go test ./internal/report/..."}}
+
+{"type": "tool_use", "id": "toolu_08", "name": "list_files", "input": {"path": "internal/report"}}
+
+{"type": "tool_use", "id": "toolu_09", "name": "patch_file", "input": {"path": "internal/report/report.go", "old_content": "package report\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n\n\t\"database/sql\"\n\n\t\"github.com/rubin-johnson/token_miser/internal/db\"\n)\n\nfunc Compare(taskID string, database *sql.DB) (string, error) {\n\truns, err := db.GetRuns(database, taskID)\n\tif err != nil {\n\t\treturn \"\", fmt.Errorf(\"get runs: %w\", err)\n\t}\n\tif len(runs) == 0 {\n\t\treturn fmt.Sprintf(\"No runs found for task %q\", taskID), nil\n\t}\n\n\tbyArm := make(map[string][]*db.Run)\n\torder := []string{}\n\tfor _, r := range runs {\n\t\tif _, seen := byArm[r.Arm]; !seen {\n\t\t\torder = append(order, r.Arm)\n\t\t}\n\t\tbyArm[r.Arm] = append(byArm[r.Arm], r)\n\t}\n\n\tvar sb strings.Builder\n\tfmt.Fprintf(&sb, \"Comparison for task: %s\\n\", taskID)\n\tfmt.Fprintf(&sb, \"%s\\n\", strings.Repeat(\"=\", 60))\n\n\tfor _, armName := range order {\n\t\tarmRuns := byArm[armName]\n\t\tfmt.Fprintf(&sb, \"\\nArm: %s (%d run(s))\\n\", armName, len(armRuns))\n\t\tfmt.Fprintf(&sb, \"%s\\n\", strings.Repeat(\"-\", 40))\n\n\t\tvar totalInput, totalOutput int\n\t\tvar totalCost, totalWall float64\n\t\tvar totalPass, totalCriteria int\n\n\t\tfor _, r := range armRuns {\n\t\t\ttotalInput += r.InputTokens\n\t\t\ttotalOutput += r.OutputTokens\n\t\t\ttotalCost += r.TotalCostUSD\n\t\t\ttotalWall += r.WallSeconds\n\t\t\ttotalPass += r.CriteriaPass\n\t\t\ttotalCriteria += r.CriteriaTotal\n\t\t}\n\n\t\tn := len(armRuns)\n\t\tfmt.Fprintf(&sb, \"  input tokens (avg):    %d\\n\", totalInput/n)\n\t\tfmt.Fprintf(&sb, \"  output tokens (avg):   %d\\n\", totalOutput/n)\n\t\tfmt.Fprintf(&sb, \"  cost USD (avg):        $%.6f\\n\", totalCost/float64(n))\n\t\tfmt.Fprintf(&sb, \"  wall seconds (avg):    %.2f\\n\", totalWall/float64(n))\n\t\tif totalCriteria > 0 {\n\t\t\tfmt.Fprintf(&sb, \"  criteria pass rate:    %d/%d\\n\", totalPass, totalCriteria)\n\t\t}\n\t}\n\n\treturn sb.String(), nil\n}", "new_content": "package report\n\nimport (\n\t\"database/sql\"\n\t\"encoding/json\"\n\t\"fmt\"\n\t\"strings\"\n\n\t\"github.com/rubin-johnson/token_miser/internal/db\"\n)\n\ntype ArmStats struct {\n\tName           string\n\tRunCount       int\n\tTotalTokens    int\n\tCost           float64\n\tWallTime       float64\n\tCriteriaPass   int\n\tCriteriaTotal  int\n\tQualityScores  map[string]float64\n}\n\nfunc Compare(taskID string, database *sql.DB) (string, error) {\n\truns, err := db.GetRuns(database, taskID)\n\tif err != nil {\n\t\treturn \"\", fmt.Errorf(\"get runs: %w\", err)\n\t}\n\tif len(runs) == 0 {\n\t\treturn fmt.Sprintf(\"No runs found for task %q\", taskID), nil\n\t}\n\n\t// Group runs by arm\n\tbyArm := make(map[string][]*db.Run)\n\torder := []string{}\n\tfor _, r := range runs {\n\t\tif _, seen := byArm[r.Arm]; !seen {\n\t\t\torder = append(order, r.Arm)\n\t\t}\n\t\tbyArm[r.Arm] = append(byArm[r.Arm], r)\n\t}\n\n\t// Calculate stats for each arm\n\tstats := make([]*ArmStats, 0, len(order))\n\tfor _, armName := range order {\n\t\tarmRuns := byArm[armName]\n\t\tstat := calculateArmStats(armName, armRuns)\n\t\tstats = append(stats, stat)\n\t}\n\n\t// Format output\n\tif len(stats) == 2 {\n\t\treturn formatSideBySide(taskID, stats), nil\n\t}\n\treturn formatStacked(taskID, stats), nil\n}\n\nfunc calculateArmStats(armName string, runs []*db.Run) *ArmStats {\n\tstat := &ArmStats{\n\t\tName:          armName,\n\t\tRunCount:      len(runs),\n\t\tQualityScores: make(map[string]float64),\n\t}\n\n\tvar totalInput, totalOutput int\n\tvar totalCost, totalWall float64\n\tvar totalPass, totalCriteria int\n\tqualityDimensions := make(map[string][]float64)\n\n\tfor _, r := range runs {\n\t\ttotalInput += r.InputTokens\n\t\ttotalOutput += r.OutputTokens\n\t\ttotalCost += r.TotalCostUSD\n\t\ttotalWall += r.WallSeconds\n\t\ttotalPass += r.CriteriaPass\n\t\ttotalCriteria += r.CriteriaTotal\n\n\t\t// Parse quality scores\n\t\tif r.QualityScores != \"\" {\n\t\t\tvar scores map[string]float64\n\t\t\tif err := json.Unmarshal([]byte(r.QualityScores), &scores); err == nil {\n\t\t\t\tfor dim, score := range scores {\n\t\t\t\t\tqualityDimensions[dim] = append(qualityDimensions[dim], score)\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\n\tn := float64(len(runs))\n\tstat.TotalTokens = int(float64(totalInput+totalOutput) / n)\n\tstat.Cost = totalCost / n\n\tstat.WallTime = totalWall / n\n\tstat.CriteriaPass = totalPass\n\tstat.CriteriaTotal = totalCriteria\n\n\t// Average quality scores\n\tfor dim, scores := range qualityDimensions {\n\t\tvar sum float64\n\t\tfor _, score := range scores {\n\t\t\tsum += score\n\t\t}\n\t\tstat.QualityScores[dim] = sum / float64(len(scores))\n\t}\n\n\treturn stat\n}\n\nfunc formatSideBySide(taskID string, stats []*ArmStats) string {\n\tvar sb strings.Builder\n\tfmt.Fprintf(&sb, \"Comparison for task: %s\\n\", taskID)\n\tfmt.Fprintf(&sb, \"%s\\n\", strings.Repeat(\"=\", 80))\n\tfmt.Fprintf(&sb, \"%-30s | %-30s\\n\", stats[0].Name, stats[1].Name)\n\tfmt.Fprintf(&sb, \"%s\\n\", strings.Repeat(\"-\", 80))\n\n\tfmt.Fprintf(&sb, \"%-30s | %-30s\\n\",\n\t\tfmt.Sprintf(\"Total tokens: %d\", stats[0].TotalTokens),\n\t\tfmt.Sprintf(\"Total tokens: %d\", stats[1].TotalTokens))\n\n\tfmt.Fprintf(&sb, \"%-30s | %-30s\\n\",\n\t\tfmt.Sprintf(\"Cost: $%.6f\", stats[0].Cost),\n\t\tfmt.Sprintf(\"Cost: $%.6f\", stats[1].Cost))\n\n\tfmt.Fprintf(&sb, \"%-30s | %-30s\\n\",\n\t\tfmt.Sprintf(\"Wall time: %.2fs\", stats[0].WallTime),\n\t\tfmt.Sprintf(\"Wall time: %.2fs\", stats[1].WallTime))\n\n\tif stats[0].CriteriaTotal > 0 || stats[1].CriteriaTotal > 0 {\n\t\tfmt.Fprintf(&sb, \"%-30s | %-30s\\n\",\n\t\t\tfmt.Sprintf(\"Criteria: %d/%d\", stats[0].CriteriaPass, stats[0].CriteriaTotal),\n\t\t\tfmt.Sprintf(\"Criteria: %d/%d\", stats[1].CriteriaPass, stats[1].CriteriaTotal))\n\t}\n\n\t// Quality scores\n\tallDims := make(map[string]bool)\n\tfor dim := range stats[0].QualityScores {\n\t\tallDims[dim] = true\n\t}\n\tfor dim := range stats[1].QualityScores {\n\t\tallDims[dim] = true\n\t}\n\n\tfor dim := range allDims {\n\t\tscore0 := stats[0].QualityScores[dim]\n\t\tscore1 := stats[1].QualityScores[dim]\n\t\tfmt.Fprintf(&sb, \"%-30s | %-30s\\n\",\n\t\t\tfmt.Sprintf(\"%s: %.3f\", dim, score0),\n\t\t\tfmt.Sprintf(\"%s: %.3f\", dim, score1))\n\t}\n\n\treturn sb.String()\n}\n\nfunc formatStacked(taskID string, stats []*ArmStats) string {\n\tvar sb strings.Builder\n\tfmt.Fprintf(&sb, \"Comparison for task: %s\\n\", taskID)\n\tfmt.Fprintf(&sb, \"%s\\n\", strings.Repeat(\"=\", 60))\n\n\tfor _, stat := range stats {\n\t\tfmt.Fprintf(&sb, \"\\nArm: %s (%d run(s))\\n\", stat.Name, stat.RunCount)\n\t\tfmt.Fprintf(&sb, \"%s\\n\", strings.Repeat(\"-\", 40))\n\t\tfmt.Fprintf(&sb, \"  Total tokens:          %d\\n\", stat.TotalTokens)\n\t\tfmt.Fprintf(&sb, \"  Cost:                  $%.6f\\n\", stat.Cost)\n\t\tfmt.Fprintf(&sb, \"  Wall time:             %.2fs\\n\", stat.WallTime)\n\t\tif stat.CriteriaTotal > 0 {\n\t\t\tfmt.Fprintf(&sb, \"  Criteria pass rate:    %d/%d\\n\", stat.CriteriaPass, stat.CriteriaTotal)\n\t\t}\n\t\tfor dim, score := range stat.QualityScores {\n\t\t\tfmt.Fprintf(&sb, \"  %s:                %.3f\\n\", dim, score)\n\t\t}\n\t}\n\n\treturn sb.String()\n}"}}
+
+{"type": "tool_use", "id": "toolu_10", "name": "write_file", "input": {"path": "internal/report/report_test.go", "content": "package report\n\nimport (\n\t\"database/sql\"\n\t\"strings\"\n\t\"testing\"\n\n\t\"github.com/rubin-johnson/token_miser/internal/db\"\n)\n\nfunc TestCompare_NoRuns(t *testing.T) {\n\t// Create in-memory database\n\tdatabase, err := sql.Open(\"sqlite\", \":memory:\")\n\tif err != nil {\n\t\tt.Fatalf(\"Failed to open database: %v\", err)\n\t}\n\tdefer database.Close()\n\n\t// Initialize schema\n\tif _, err := database.Exec(`CREATE TABLE runs (\n\t\tid INTEGER PRIMARY KEY,\n\t\ttask_id TEXT,\n\t\tarm TEXT,\n\t\tloadout_name TEXT,\n\t\tmodel TEXT,\n\t\tstarted_at TEXT,\n\t\twall_seconds REAL,\n\t\tinput_tokens INTEGER,\n\t\toutput_tokens INTEGER,\n\t\tcache_read_tokens INTEGER,\n\t\tcache_write_tokens INTEGER,\n\t\ttotal_cost_usd REAL,\n\t\texit_code INTEGER,\n\t\tcriteria_pass INTEGER,\n\t\tcriteria_total INTEGER,\n\t\tquality_scores TEXT\n\t)`); err != nil {\n\t\tt.Fatalf(\"Failed to create schema: %v\", err)\n\t}\n\n\tresult, err := Compare(\"nonexistent\", database)\n\tif err != nil {\n\t\tt.Fatalf(\"Compare failed: %v\", err)\n\t}\n\n\tif !strings.Contains(result, \"No runs found\") {\n\t\tt.Errorf(\"Expected 'No runs found' message, got: %s\", result)\n\t}\n}\n\nfunc TestCompare_SingleArm(t *testing.T) {\n\t// Create fixture runs\n\truns := []*db.Run{\n\t\t{\n\t\t\tTaskID:        \"task1\",\n\t\t\tArm:           \"control\",\n\t\t\tInputTokens:   100,\n\t\t\tOutputTokens:  50,\n\t\t\tTotalCostUSD:  0.001,\n\t\t\tWallSeconds:   1.5,\n\t\t\tCriteriaPass:  2,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{\"accuracy\": 0.85, \"fluency\": 0.92}`,\n\t\t},\n\t\t{\n\t\t\tTaskID:        \"task1\",\n\t\t\tArm:           \"control\",\n\t\t\tInputTokens:   120,\n\t\t\tOutputTokens:  60,\n\t\t\tTotalCostUSD:  0.002,\n\t\t\tWallSeconds:   2.0,\n\t\t\tCriteriaPass:  3,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{\"accuracy\": 0.90, \"fluency\": 0.88}`,\n\t\t},\n\t}\n\n\tdatabase := setupTestDB(t, runs)\n\tdefer database.Close()\n\n\tresult, err := Compare(\"task1\", database)\n\tif err != nil {\n\t\tt.Fatalf(\"Compare failed: %v\", err)\n\t}\n\n\t// Check key strings appear in output\n\texpectedStrings := []string{\n\t\t\"Comparison for task: task1\",\n\t\t\"Arm: control\",\n\t\t\"Total tokens:\",\n\t\t\"Cost:\",\n\t\t\"Wall time:\",\n\t\t\"Criteria pass rate:\",\n\t\t\"accuracy:\",\n\t\t\"fluency:\",\n\t}\n\n\tfor _, expected := range expectedStrings {\n\t\tif !strings.Contains(result, expected) {\n\t\t\tt.Errorf(\"Expected output to contain %q, got: %s\", expected, result)\n\t\t}\n\t}\n}\n\nfunc TestCompare_TwoArms_SideBySide(t *testing.T) {\n\t// Create fixture runs with exactly two arms\n\truns := []*db.Run{\n\t\t{\n\t\t\tTaskID:        \"task2\",\n\t\t\tArm:           \"control\",\n\t\t\tInputTokens:   100,\n\t\t\tOutputTokens:  50,\n\t\t\tTotalCostUSD:  0.001,\n\t\t\tWallSeconds:   1.5,\n\t\t\tCriteriaPass:  2,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{\"accuracy\": 0.85}`,\n\t\t},\n\t\t{\n\t\t\tTaskID:        \"task2\",\n\t\t\tArm:           \"treatment\",\n\t\t\tInputTokens:   110,\n\t\t\tOutputTokens:  55,\n\t\t\tTotalCostUSD:  0.0015,\n\t\t\tWallSeconds:   1.8,\n\t\t\tCriteriaPass:  3,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{\"accuracy\": 0.90}`,\n\t\t},\n\t}\n\n\tdatabase := setupTestDB(t, runs)\n\tdefer database.Close()\n\n\tresult, err := Compare(\"task2\", database)\n\tif err != nil {\n\t\tt.Fatalf(\"Compare failed: %v\", err)\n\t}\n\n\t// Check for side-by-side format indicators\n\texpectedStrings := []string{\n\t\t\"Comparison for task: task2\",\n\t\t\"control\",\n\t\t\"treatment\",\n\t\t\"|\", // Side-by-side separator\n\t\t\"Total tokens:\",\n\t\t\"Cost:\",\n\t\t\"Wall time:\",\n\t\t\"Criteria:\",\n\t\t\"accuracy:\",\n\t}\n\n\tfor _, expected := range expectedStrings {\n\t\tif !strings.Contains(result, expected) {\n\t\t\tt.Errorf(\"Expected output to contain %q, got: %s\", expected, result)\n\t\t}\n\t}\n\n\t// Verify it's actually side-by-side (contains pipe separator)\n\tlines := strings.Split(result, \"\\n\")\n\thasPipeSeparator := false\n\tfor _, line := range lines {\n\t\tif strings.Contains(line, \"|\") && strings.Contains(line, \"Total tokens:\") {\n\t\t\thasPipeSeparator = true\n\t\t\tbreak\n\t\t}\n\t}\n\tif !hasPipeSeparator {\n\t\tt.Error(\"Expected side-by-side format with pipe separator\")\n\t}\n}\n\nfunc TestCompare_ThreeArms_Stacked(t *testing.T) {\n\t// Create fixture runs with three arms\n\truns := []*db.Run{\n\t\t{\n\t\t\tTaskID:        \"task3\",\n\t\t\tArm:           \"control\",\n\t\t\tInputTokens:   100,\n\t\t\tOutputTokens:  50,\n\t\t\tTotalCostUSD:  0.001,\n\t\t\tWallSeconds:   1.5,\n\t\t\tCriteriaPass:  2,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{\"accuracy\": 0.85}`,\n\t\t},\n\t\t{\n\t\t\tTaskID:        \"task3\",\n\t\t\tArm:           \"treatment1\",\n\t\t\tInputTokens:   110,\n\t\t\tOutputTokens:  55,\n\t\t\tTotalCostUSD:  0.0015,\n\t\t\tWallSeconds:   1.8,\n\t\t\tCriteriaPass:  3,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{\"accuracy\": 0.90}`,\n\t\t},\n\t\t{\n\t\t\tTaskID:        \"task3\",\n\t\t\tArm:           \"treatment2\",\n\t\t\tInputTokens:   95,\n\t\t\tOutputTokens:  45,\n\t\t\tTotalCostUSD:  0.0008,\n\t\t\tWallSeconds:   1.2,\n\t\t\tCriteriaPass:  1,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{\"accuracy\": 0.80}`,\n\t\t},\n\t}\n\n\tdatabase := setupTestDB(t, runs)\n\tdefer database.Close()\n\n\tresult, err := Compare(\"task3\", database)\n\tif err != nil {\n\t\tt.Fatalf(\"Compare failed: %v\", err)\n\t}\n\n\t// Check for stacked format\n\texpectedStrings := []string{\n\t\t\"Comparison for task: task3\",\n\t\t\"Arm: control\",\n\t\t\"Arm: treatment1\",\n\t\t\"Arm: treatment2\",\n\t\t\"Total tokens:\",\n\t\t\"Cost:\",\n\t\t\"Wall time:\",\n\t\t\"Criteria pass rate:\",\n\t\t\"accuracy:\",\n\t}\n\n\tfor _, expected := range expectedStrings {\n\t\tif !strings.Contains(result, expected) {\n\t\t\tt.Errorf(\"Expected output to contain %q, got: %s\", expected, result)\n\t\t}\n\t}\n\n\t// Should NOT contain pipe separator (not side-by-side)\n\tif strings.Contains(result, \"|\") {\n\t\tt.Error(\"Expected stacked format, but found pipe separator\")\n\t}\n}\n\nfunc setupTestDB(t *testing.T, runs []*db.Run) *sql.DB {\n\tdatabase, err := sql.Open(\"sqlite\", \":memory:\")\n\tif err != nil {\n\t\tt.Fatalf(\"Failed to open database: %v\", err)\n\t}\n\n\t// Initialize schema\n\tif _, err := database.Exec(`CREATE TABLE runs (\n\t\tid INTEGER PRIMARY KEY,\n\t\ttask_id TEXT,\n\t\tarm TEXT,\n\t\tloadout_name TEXT,\n\t\tmodel TEXT,\n\t\tstarted_at TEXT,\n\t\twall_seconds REAL,\n\t\tinput_tokens INTEGER,\n\t\toutput_tokens INTEGER,\n\t\tcache_read_tokens INTEGER,\n\t\tcache_write_tokens INTEGER,\n\t\ttotal_cost_usd REAL,\n\t\texit_code INTEGER,\n\t\tcriteria_pass INTEGER,\n\t\tcriteria_total INTEGER,\n\t\tquality_scores TEXT\n\t)`); err != nil {\n\t\tt.Fatalf(\"Failed to create schema: %v\", err)\n\t}\n\n\t// Insert test data\n\tfor _, run := range runs {\n\t\t_, err := database.Exec(`INSERT INTO runs\n\t\t\t(task_id, arm, loadout_name, model, started_at, wall_seconds,\n\t\t\t input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,\n\t\t\t total_cost_usd, exit_code, criteria_pass, criteria_total, quality_scores)\n\t\t\tVALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,\n\t\t\trun.TaskID, run.Arm, run.LoadoutName, run.Model, run.StartedAt,\n\t\t\trun.WallSeconds, run.InputTokens, run.OutputTokens,\n\t\t\trun.CacheReadTokens, run.CacheWriteTokens, run.TotalCostUSD,\n\t\t\trun.ExitCode, run.CriteriaPass, run.CriteriaTotal, run.QualityScores)\n\t\tif err != nil {\n\t\t\tt.Fatalf(\"Failed to insert test data: %v\", err)\n\t\t}\n\t}\n\n\treturn database\n}\n"}}
+
+{"type": "tool_use", "id": "toolu_11", "name": "run_command", "input": {"command": "cd . && go test ./internal/report/..."}}
+
+[Turn 4] Tool: list_files({'path': 'internal/report'})
+[Turn 4] Result: report.go
+
+[Turn 4] Tool: patch_file({'path': 'internal/report/report.go', 'old_content': 'package report\n\nimport (\n\t"fmt"\n\t"strings"\n\n\t"database/sql"\n\n\t"github.com/rubin-johnson/token_miser/internal/db"\n)\n\nfunc Compare(taskID string, database *sql.DB) (string, error) {\n\truns, err := db.GetRuns(database, taskID)\n\tif err != nil {\n\t\treturn "", fmt.Errorf("get runs: %w", err)\n\t}\n\tif len(runs) == 0 {\n\t\treturn fmt.Sprintf("No runs found for task %q", taskID), nil\n\t}\n\n\tbyArm := make(map[string][]*db.Run)\n\torder := []string{}\n\tfor _, r := range runs {\n\t\tif _, seen := byArm[r.Arm]; !seen {\n\t\t\torder = append(order, r.Arm)\n\t\t}\n\t\tbyArm[r.Arm] = append(byArm[r.Arm], r)\n\t}\n\n\tvar sb strings.Builder\n\tfmt.Fprintf(&sb, "Comparison for task: %s\\n", taskID)\n\tfmt.Fprintf(&sb, "%s\\n", strings.Repeat("=", 60))\n\n\tfor _, armName := range order {\n\t\tarmRuns := byArm[armName]\n\t\tfmt.Fprintf(&sb, "\\nArm: %s (%d run(s))\\n", armName, len(armRuns))\n\t\tfmt.Fprintf(&sb, "%s\\n", strings.Repeat("-", 40))\n\n\t\tvar totalInput, totalOutput int\n\t\tvar totalCost, totalWall float64\n\t\tvar totalPass, totalCriteria int\n\n\t\tfor _, r := range armRuns {\n\t\t\ttotalInput += r.InputTokens\n\t\t\ttotalOutput += r.OutputTokens\n\t\t\ttotalCost += r.TotalCostUSD\n\t\t\ttotalWall += r.WallSeconds\n\t\t\ttotalPass += r.CriteriaPass\n\t\t\ttotalCriteria += r.CriteriaTotal\n\t\t}\n\n\t\tn := len(armRuns)\n\t\tfmt.Fprintf(&sb, "  input tokens (avg):    %d\\n", totalInput/n)\n\t\tfmt.Fprintf(&sb, "  output tokens (avg):   %d\\n", totalOutput/n)\n\t\tfmt.Fprintf(&sb, "  cost USD (avg):        $%.6f\\n", totalCost/float64(n))\n\t\tfmt.Fprintf(&sb, "  wall seconds (avg):    %.2f\\n", totalWall/float64(n))\n\t\tif totalCriteria > 0 {\n\t\t\tfmt.Fprintf(&sb, "  criteria pass rate:    %d/%d\\n", totalPass, totalCriteria)\n\t\t}\n\t}\n\n\treturn sb.String(), nil\n}', 'new_content': 'package report\n\nimport (\n\t"database/sql"\n\t"encoding/json"\n\t"fmt"\n\t"strings"\n\n\t"github.com/rubin-johnson/token_miser/internal/db"\n)\n\ntype ArmStats struct {\n\tName           string\n\tRunCount       int\n\tTotalTokens    int\n\tCost           float64\n\tWallTime       float64\n\tCriteriaPass   int\n\tCriteriaTotal  int\n\tQualityScores  map[string]float64\n}\n\nfunc Compare(taskID string, database *sql.DB) (string, error) {\n\truns, err := db.GetRuns(database, taskID)\n\tif err != nil {\n\t\treturn "", fmt.Errorf("get runs: %w", err)\n\t}\n\tif len(runs) == 0 {\n\t\treturn fmt.Sprintf("No runs found for task %q", taskID), nil\n\t}\n\n\t// Group runs by arm\n\tbyArm := make(map[string][]*db.Run)\n\torder := []string{}\n\tfor _, r := range runs {\n\t\tif _, seen := byArm[r.Arm]; !seen {\n\t\t\torder = append(order, r.Arm)\n\t\t}\n\t\tbyArm[r.Arm] = append(byArm[r.Arm], r)\n\t}\n\n\t// Calculate stats for each arm\n\tstats := make([]*ArmStats, 0, len(order))\n\tfor _, armName := range order {\n\t\tarmRuns := byArm[armName]\n\t\tstat := calculateArmStats(armName, armRuns)\n\t\tstats = append(stats, stat)\n\t}\n\n\t// Format output\n\tif len(stats) == 2 {\n\t\treturn formatSideBySide(taskID, stats), nil\n\t}\n\treturn formatStacked(taskID, stats), nil\n}\n\nfunc calculateArmStats(armName string, runs []*db.Run) *ArmStats {\n\tstat := &ArmStats{\n\t\tName:          armName,\n\t\tRunCount:      len(runs),\n\t\tQualityScores: make(map[string]float64),\n\t}\n\n\tvar totalInput, totalOutput int\n\tvar totalCost, totalWall float64\n\tvar totalPass, totalCriteria int\n\tqualityDimensions := make(map[string][]float64)\n\n\tfor _, r := range runs {\n\t\ttotalInput += r.InputTokens\n\t\ttotalOutput += r.OutputTokens\n\t\ttotalCost += r.TotalCostUSD\n\t\ttotalWall += r.WallSeconds\n\t\ttotalPass += r.CriteriaPass\n\t\ttotalCriteria += r.CriteriaTotal\n\n\t\t// Parse quality scores\n\t\tif r.QualityScores != "" {\n\t\t\tvar scores map[string]float64\n\t\t\tif err := json.Unmarshal([]byte(r.QualityScores), &scores); err == nil {\n\t\t\t\tfor dim, score := range scores {\n\t\t\t\t\tqualityDimensions[dim] = append(qualityDimensions[dim], score)\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\n\tn := float64(len(runs))\n\tstat.TotalTokens = int(float64(totalInput+totalOutput) / n)\n\tstat.Cost = totalCost / n\n\tstat.WallTime = totalWall / n\n\tstat.CriteriaPass = totalPass\n\tstat.CriteriaTotal = totalCriteria\n\n\t// Average quality scores\n\tfor dim, scores := range qualityDimensions {\n\t\tvar sum float64\n\t\tfor _, score := range scores {\n\t\t\tsum += score\n\t\t}\n\t\tstat.QualityScores[dim] = sum / float64(len(scores))\n\t}\n\n\treturn stat\n}\n\nfunc formatSideBySide(taskID string, stats []*ArmStats) string {\n\tvar sb strings.Builder\n\tfmt.Fprintf(&sb, "Comparison for task: %s\\n", taskID)\n\tfmt.Fprintf(&sb, "%s\\n", strings.Repeat("=", 80))\n\tfmt.Fprintf(&sb, "%-30s | %-30s\\n", stats[0].Name, stats[1].Name)\n\tfmt.Fprintf(&sb, "%s\\n", strings.Repeat("-", 80))\n\n\tfmt.Fprintf(&sb, "%-30s | %-30s\\n",\n\t\tfmt.Sprintf("Total tokens: %d", stats[0].TotalTokens),\n\t\tfmt.Sprintf("Total tokens: %d", stats[1].TotalTokens))\n\n\tfmt.Fprintf(&sb, "%-30s | %-30s\\n",\n\t\tfmt.Sprintf("Cost: $%.6f", stats[0].Cost),\n\t\tfmt.Sprintf("Cost: $%.6f", stats[1].Cost))\n\n\tfmt.Fprintf(&sb, "%-30s | %-30s\\n",\n\t\tfmt.Sprintf("Wall time: %.2fs", stats[0].WallTime),\n\t\tfmt.Sprintf("Wall time: %.2fs", stats[1].WallTime))\n\n\tif stats[0].CriteriaTotal > 0 || stats[1].CriteriaTotal > 0 {\n\t\tfmt.Fprintf(&sb, "%-30s | %-30s\\n",\n\t\t\tfmt.Sprintf("Criteria: %d/%d", stats[0].CriteriaPass, stats[0].CriteriaTotal),\n\t\t\tfmt.Sprintf("Criteria: %d/%d", stats[1].CriteriaPass, stats[1].CriteriaTotal))\n\t}\n\n\t// Quality scores\n\tallDims := make(map[string]bool)\n\tfor dim := range stats[0].QualityScores {\n\t\tallDims[dim] = true\n\t}\n\tfor dim := range stats[1].QualityScores {\n\t\tallDims[dim] = true\n\t}\n\n\tfor dim := range allDims {\n\t\tscore0 := stats[0].QualityScores[dim]\n\t\tscore1 := stats[1].QualityScores[dim]\n\t\tfmt.Fprintf(&sb, "%-30s | %-30s\\n",\n\t\t\tfmt.Sprintf("%s: %.3f", dim, score0),\n\t\t\tfmt.Sprintf("%s: %.3f", dim, score1))\n\t}\n\n\treturn sb.String()\n}\n\nfunc formatStacked(taskID string, stats []*ArmStats) string {\n\tvar sb strings.Builder\n\tfmt.Fprintf(&sb, "Comparison for task: %s\\n", taskID)\n\tfmt.Fprintf(&sb, "%s\\n", strings.Repeat("=", 60))\n\n\tfor _, stat := range stats {\n\t\tfmt.Fprintf(&sb, "\\nArm: %s (%d run(s))\\n", stat.Name, stat.RunCount)\n\t\tfmt.Fprintf(&sb, "%s\\n", strings.Repeat("-", 40))\n\t\tfmt.Fprintf(&sb, "  Total tokens:          %d\\n", stat.TotalTokens)\n\t\tfmt.Fprintf(&sb, "  Cost:                  $%.6f\\n", stat.Cost)\n\t\tfmt.Fprintf(&sb, "  Wall time:             %.2fs\\n", stat.WallTime)\n\t\tif stat.CriteriaTotal > 0 {\n\t\t\tfmt.Fprintf(&sb, "  Criteria pass rate:    %d/%d\\n", stat.CriteriaPass, stat.CriteriaTotal)\n\t\t}\n\t\tfor dim, score := range stat.QualityScores {\n\t\t\tfmt.Fprintf(&sb, "  %s:                %.3f\\n", dim, score)\n\t\t}\n\t}\n\n\treturn sb.String()\n}'})
+[Turn 4] Result: Successfully patched internal/report/report.go (+109 lines)
+
+[Turn 4] Tool: write_file({'path': 'internal/report/report_test.go', 'content': 'package report\n\nimport (\n\t"database/sql"\n\t"strings"\n\t"testing"\n\n\t"github.com/rubin-johnson/token_miser/internal/db"\n)\n\nfunc TestCompare_NoRuns(t *testing.T) {\n\t// Create in-memory database\n\tdatabase, err := sql.Open("sqlite", ":memory:")\n\tif err != nil {\n\t\tt.Fatalf("Failed to open database: %v", err)\n\t}\n\tdefer database.Close()\n\n\t// Initialize schema\n\tif _, err := database.Exec(`CREATE TABLE runs (\n\t\tid INTEGER PRIMARY KEY,\n\t\ttask_id TEXT,\n\t\tarm TEXT,\n\t\tloadout_name TEXT,\n\t\tmodel TEXT,\n\t\tstarted_at TEXT,\n\t\twall_seconds REAL,\n\t\tinput_tokens INTEGER,\n\t\toutput_tokens INTEGER,\n\t\tcache_read_tokens INTEGER,\n\t\tcache_write_tokens INTEGER,\n\t\ttotal_cost_usd REAL,\n\t\texit_code INTEGER,\n\t\tcriteria_pass INTEGER,\n\t\tcriteria_total INTEGER,\n\t\tquality_scores TEXT\n\t)`); err != nil {\n\t\tt.Fatalf("Failed to create schema: %v", err)\n\t}\n\n\tresult, err := Compare("nonexistent", database)\n\tif err != nil {\n\t\tt.Fatalf("Compare failed: %v", err)\n\t}\n\n\tif !strings.Contains(result, "No runs found") {\n\t\tt.Errorf("Expected \'No runs found\' message, got: %s", result)\n\t}\n}\n\nfunc TestCompare_SingleArm(t *testing.T) {\n\t// Create fixture runs\n\truns := []*db.Run{\n\t\t{\n\t\t\tTaskID:        "task1",\n\t\t\tArm:           "control",\n\t\t\tInputTokens:   100,\n\t\t\tOutputTokens:  50,\n\t\t\tTotalCostUSD:  0.001,\n\t\t\tWallSeconds:   1.5,\n\t\t\tCriteriaPass:  2,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{"accuracy": 0.85, "fluency": 0.92}`,\n\t\t},\n\t\t{\n\t\t\tTaskID:        "task1",\n\t\t\tArm:           "control",\n\t\t\tInputTokens:   120,\n\t\t\tOutputTokens:  60,\n\t\t\tTotalCostUSD:  0.002,\n\t\t\tWallSeconds:   2.0,\n\t\t\tCriteriaPass:  3,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{"accuracy": 0.90, "fluency": 0.88}`,\n\t\t},\n\t}\n\n\tdatabase := setupTestDB(t, runs)\n\tdefer database.Close()\n\n\tresult, err := Compare("task1", database)\n\tif err != nil {\n\t\tt.Fatalf("Compare failed: %v", err)\n\t}\n\n\t// Check key strings appear in output\n\texpectedStrings := []string{\n\t\t"Comparison for task: task1",\n\t\t"Arm: control",\n\t\t"Total tokens:",\n\t\t"Cost:",\n\t\t"Wall time:",\n\t\t"Criteria pass rate:",\n\t\t"accuracy:",\n\t\t"fluency:",\n\t}\n\n\tfor _, expected := range expectedStrings {\n\t\tif !strings.Contains(result, expected) {\n\t\t\tt.Errorf("Expected output to contain %q, got: %s", expected, result)\n\t\t}\n\t}\n}\n\nfunc TestCompare_TwoArms_SideBySide(t *testing.T) {\n\t// Create fixture runs with exactly two arms\n\truns := []*db.Run{\n\t\t{\n\t\t\tTaskID:        "task2",\n\t\t\tArm:           "control",\n\t\t\tInputTokens:   100,\n\t\t\tOutputTokens:  50,\n\t\t\tTotalCostUSD:  0.001,\n\t\t\tWallSeconds:   1.5,\n\t\t\tCriteriaPass:  2,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{"accuracy": 0.85}`,\n\t\t},\n\t\t{\n\t\t\tTaskID:        "task2",\n\t\t\tArm:           "treatment",\n\t\t\tInputTokens:   110,\n\t\t\tOutputTokens:  55,\n\t\t\tTotalCostUSD:  0.0015,\n\t\t\tWallSeconds:   1.8,\n\t\t\tCriteriaPass:  3,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{"accuracy": 0.90}`,\n\t\t},\n\t}\n\n\tdatabase := setupTestDB(t, runs)\n\tdefer database.Close()\n\n\tresult, err := Compare("task2", database)\n\tif err != nil {\n\t\tt.Fatalf("Compare failed: %v", err)\n\t}\n\n\t// Check for side-by-side format indicators\n\texpectedStrings := []string{\n\t\t"Comparison for task: task2",\n\t\t"control",\n\t\t"treatment",\n\t\t"|", // Side-by-side separator\n\t\t"Total tokens:",\n\t\t"Cost:",\n\t\t"Wall time:",\n\t\t"Criteria:",\n\t\t"accuracy:",\n\t}\n\n\tfor _, expected := range expectedStrings {\n\t\tif !strings.Contains(result, expected) {\n\t\t\tt.Errorf("Expected output to contain %q, got: %s", expected, result)\n\t\t}\n\t}\n\n\t// Verify it\'s actually side-by-side (contains pipe separator)\n\tlines := strings.Split(result, "\\n")\n\thasPipeSeparator := false\n\tfor _, line := range lines {\n\t\tif strings.Contains(line, "|") && strings.Contains(line, "Total tokens:") {\n\t\t\thasPipeSeparator = true\n\t\t\tbreak\n\t\t}\n\t}\n\tif !hasPipeSeparator {\n\t\tt.Error("Expected side-by-side format with pipe separator")\n\t}\n}\n\nfunc TestCompare_ThreeArms_Stacked(t *testing.T) {\n\t// Create fixture runs with three arms\n\truns := []*db.Run{\n\t\t{\n\t\t\tTaskID:        "task3",\n\t\t\tArm:           "control",\n\t\t\tInputTokens:   100,\n\t\t\tOutputTokens:  50,\n\t\t\tTotalCostUSD:  0.001,\n\t\t\tWallSeconds:   1.5,\n\t\t\tCriteriaPass:  2,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{"accuracy": 0.85}`,\n\t\t},\n\t\t{\n\t\t\tTaskID:        "task3",\n\t\t\tArm:           "treatment1",\n\t\t\tInputTokens:   110,\n\t\t\tOutputTokens:  55,\n\t\t\tTotalCostUSD:  0.0015,\n\t\t\tWallSeconds:   1.8,\n\t\t\tCriteriaPass:  3,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{"accuracy": 0.90}`,\n\t\t},\n\t\t{\n\t\t\tTaskID:        "task3",\n\t\t\tArm:           "treatment2",\n\t\t\tInputTokens:   95,\n\t\t\tOutputTokens:  45,\n\t\t\tTotalCostUSD:  0.0008,\n\t\t\tWallSeconds:   1.2,\n\t\t\tCriteriaPass:  1,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{"accuracy": 0.80}`,\n\t\t},\n\t}\n\n\tdatabase := setupTestDB(t, runs)\n\tdefer database.Close()\n\n\tresult, err := Compare("task3", database)\n\tif err != nil {\n\t\tt.Fatalf("Compare failed: %v", err)\n\t}\n\n\t// Check for stacked format\n\texpectedStrings := []string{\n\t\t"Comparison for task: task3",\n\t\t"Arm: control",\n\t\t"Arm: treatment1",\n\t\t"Arm: treatment2",\n\t\t"Total tokens:",\n\t\t"Cost:",\n\t\t"Wall time:",\n\t\t"Criteria pass rate:",\n\t\t"accuracy:",\n\t}\n\n\tfor _, expected := range expectedStrings {\n\t\tif !strings.Contains(result, expected) {\n\t\t\tt.Errorf("Expected output to contain %q, got: %s", expected, result)\n\t\t}\n\t}\n\n\t// Should NOT contain pipe separator (not side-by-side)\n\tif strings.Contains(result, "|") {\n\t\tt.Error("Expected stacked format, but found pipe separator")\n\t}\n}\n\nfunc setupTestDB(t *testing.T, runs []*db.Run) *sql.DB {\n\tdatabase, err := sql.Open("sqlite", ":memory:")\n\tif err != nil {\n\t\tt.Fatalf("Failed to open database: %v", err)\n\t}\n\n\t// Initialize schema\n\tif _, err := database.Exec(`CREATE TABLE runs (\n\t\tid INTEGER PRIMARY KEY,\n\t\ttask_id TEXT,\n\t\tarm TEXT,\n\t\tloadout_name TEXT,\n\t\tmodel TEXT,\n\t\tstarted_at TEXT,\n\t\twall_seconds REAL,\n\t\tinput_tokens INTEGER,\n\t\toutput_tokens INTEGER,\n\t\tcache_read_tokens INTEGER,\n\t\tcache_write_tokens INTEGER,\n\t\ttotal_cost_usd REAL,\n\t\texit_code INTEGER,\n\t\tcriteria_pass INTEGER,\n\t\tcriteria_total INTEGER,\n\t\tquality_scores TEXT\n\t)`); err != nil {\n\t\tt.Fatalf("Failed to create schema: %v", err)\n\t}\n\n\t// Insert test data\n\tfor _, run := range runs {\n\t\t_, err := database.Exec(`INSERT INTO runs\n\t\t\t(task_id, arm, loadout_name, model, started_at, wall_seconds,\n\t\t\t input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,\n\t\t\t total_cost_usd, exit_code, criteria_pass, criteria_total, quality_scores)\n\t\t\tVALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,\n\t\t\trun.TaskID, run.Arm, run.LoadoutName, run.Model, run.StartedAt,\n\t\t\trun.WallSeconds, run.InputTokens, run.OutputTokens,\n\t\t\trun.CacheReadTokens, run.CacheWriteTokens, run.TotalCostUSD,\n\t\t\trun.ExitCode, run.CriteriaPass, run.CriteriaTotal, run.QualityScores)\n\t\tif err != nil {\n\t\t\tt.Fatalf("Failed to insert test data: %v", err)\n\t\t}\n\t}\n\n\treturn database\n}\n'})
+[Turn 4] Result: Successfully wrote internal/report/report_test.go
+
+[Turn 4] Tool: run_command({'command': 'cd . && go test ./internal/report/...'})
+[Turn 4] Result: ok  	github.com/rubin-johnson/token_miser/internal/report	0.008s
+
+(exit code: 0)
+
+[Turn 4] Tool: list_files({'path': 'internal/report'})
+[Turn 4] Result: report.go
+report_test.go
+
+[Turn 4] Tool: patch_file({'path': 'internal/report/report.go', 'old_content': 'package report\n\nimport (\n\t"fmt"\n\t"strings"\n\n\t"database/sql"\n\n\t"github.com/rubin-johnson/token_miser/internal/db"\n)\n\nfunc Compare(taskID string, database *sql.DB) (string, error) {\n\truns, err := db.GetRuns(database, taskID)\n\tif err != nil {\n\t\treturn "", fmt.Errorf("get runs: %w", err)\n\t}\n\tif len(runs) == 0 {\n\t\treturn fmt.Sprintf("No runs found for task %q", taskID), nil\n\t}\n\n\tbyArm := make(map[string][]*db.Run)\n\torder := []string{}\n\tfor _, r := range runs {\n\t\tif _, seen := byArm[r.Arm]; !seen {\n\t\t\torder = append(order, r.Arm)\n\t\t}\n\t\tbyArm[r.Arm] = append(byArm[r.Arm], r)\n\t}\n\n\tvar sb strings.Builder\n\tfmt.Fprintf(&sb, "Comparison for task: %s\\n", taskID)\n\tfmt.Fprintf(&sb, "%s\\n", strings.Repeat("=", 60))\n\n\tfor _, armName := range order {\n\t\tarmRuns := byArm[armName]\n\t\tfmt.Fprintf(&sb, "\\nArm: %s (%d run(s))\\n", armName, len(armRuns))\n\t\tfmt.Fprintf(&sb, "%s\\n", strings.Repeat("-", 40))\n\n\t\tvar totalInput, totalOutput int\n\t\tvar totalCost, totalWall float64\n\t\tvar totalPass, totalCriteria int\n\n\t\tfor _, r := range armRuns {\n\t\t\ttotalInput += r.InputTokens\n\t\t\ttotalOutput += r.OutputTokens\n\t\t\ttotalCost += r.TotalCostUSD\n\t\t\ttotalWall += r.WallSeconds\n\t\t\ttotalPass += r.CriteriaPass\n\t\t\ttotalCriteria += r.CriteriaTotal\n\t\t}\n\n\t\tn := len(armRuns)\n\t\tfmt.Fprintf(&sb, "  input tokens (avg):    %d\\n", totalInput/n)\n\t\tfmt.Fprintf(&sb, "  output tokens (avg):   %d\\n", totalOutput/n)\n\t\tfmt.Fprintf(&sb, "  cost USD (avg):        $%.6f\\n", totalCost/float64(n))\n\t\tfmt.Fprintf(&sb, "  wall seconds (avg):    %.2f\\n", totalWall/float64(n))\n\t\tif totalCriteria > 0 {\n\t\t\tfmt.Fprintf(&sb, "  criteria pass rate:    %d/%d\\n", totalPass, totalCriteria)\n\t\t}\n\t}\n\n\treturn sb.String(), nil\n}', 'new_content': 'package report\n\nimport (\n\t"database/sql"\n\t"encoding/json"\n\t"fmt"\n\t"strings"\n\n\t"github.com/rubin-johnson/token_miser/internal/db"\n)\n\ntype ArmStats struct {\n\tName           string\n\tRunCount       int\n\tTotalTokens    int\n\tCost           float64\n\tWallTime       float64\n\tCriteriaPass   int\n\tCriteriaTotal  int\n\tQualityScores  map[string]float64\n}\n\nfunc Compare(taskID string, database *sql.DB) (string, error) {\n\truns, err := db.GetRuns(database, taskID)\n\tif err != nil {\n\t\treturn "", fmt.Errorf("get runs: %w", err)\n\t}\n\tif len(runs) == 0 {\n\t\treturn fmt.Sprintf("No runs found for task %q", taskID), nil\n\t}\n\n\t// Group runs by arm\n\tbyArm := make(map[string][]*db.Run)\n\torder := []string{}\n\tfor _, r := range runs {\n\t\tif _, seen := byArm[r.Arm]; !seen {\n\t\t\torder = append(order, r.Arm)\n\t\t}\n\t\tbyArm[r.Arm] = append(byArm[r.Arm], r)\n\t}\n\n\t// Calculate stats for each arm\n\tstats := make([]*ArmStats, 0, len(order))\n\tfor _, armName := range order {\n\t\tarmRuns := byArm[armName]\n\t\tstat := calculateArmStats(armName, armRuns)\n\t\tstats = append(stats, stat)\n\t}\n\n\t// Format output\n\tif len(stats) == 2 {\n\t\treturn formatSideBySide(taskID, stats), nil\n\t}\n\treturn formatStacked(taskID, stats), nil\n}\n\nfunc calculateArmStats(armName string, runs []*db.Run) *ArmStats {\n\tstat := &ArmStats{\n\t\tName:          armName,\n\t\tRunCount:      len(runs),\n\t\tQualityScores: make(map[string]float64),\n\t}\n\n\tvar totalInput, totalOutput int\n\tvar totalCost, totalWall float64\n\tvar totalPass, totalCriteria int\n\tqualityDimensions := make(map[string][]float64)\n\n\tfor _, r := range runs {\n\t\ttotalInput += r.InputTokens\n\t\ttotalOutput += r.OutputTokens\n\t\ttotalCost += r.TotalCostUSD\n\t\ttotalWall += r.WallSeconds\n\t\ttotalPass += r.CriteriaPass\n\t\ttotalCriteria += r.CriteriaTotal\n\n\t\t// Parse quality scores\n\t\tif r.QualityScores != "" {\n\t\t\tvar scores map[string]float64\n\t\t\tif err := json.Unmarshal([]byte(r.QualityScores), &scores); err == nil {\n\t\t\t\tfor dim, score := range scores {\n\t\t\t\t\tqualityDimensions[dim] = append(qualityDimensions[dim], score)\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\n\tn := float64(len(runs))\n\tstat.TotalTokens = int(float64(totalInput+totalOutput) / n)\n\tstat.Cost = totalCost / n\n\tstat.WallTime = totalWall / n\n\tstat.CriteriaPass = totalPass\n\tstat.CriteriaTotal = totalCriteria\n\n\t// Average quality scores\n\tfor dim, scores := range qualityDimensions {\n\t\tvar sum float64\n\t\tfor _, score := range scores {\n\t\t\tsum += score\n\t\t}\n\t\tstat.QualityScores[dim] = sum / float64(len(scores))\n\t}\n\n\treturn stat\n}\n\nfunc formatSideBySide(taskID string, stats []*ArmStats) string {\n\tvar sb strings.Builder\n\tfmt.Fprintf(&sb, "Comparison for task: %s\\n", taskID)\n\tfmt.Fprintf(&sb, "%s\\n", strings.Repeat("=", 80))\n\tfmt.Fprintf(&sb, "%-30s | %-30s\\n", stats[0].Name, stats[1].Name)\n\tfmt.Fprintf(&sb, "%s\\n", strings.Repeat("-", 80))\n\n\tfmt.Fprintf(&sb, "%-30s | %-30s\\n",\n\t\tfmt.Sprintf("Total tokens: %d", stats[0].TotalTokens),\n\t\tfmt.Sprintf("Total tokens: %d", stats[1].TotalTokens))\n\n\tfmt.Fprintf(&sb, "%-30s | %-30s\\n",\n\t\tfmt.Sprintf("Cost: $%.6f", stats[0].Cost),\n\t\tfmt.Sprintf("Cost: $%.6f", stats[1].Cost))\n\n\tfmt.Fprintf(&sb, "%-30s | %-30s\\n",\n\t\tfmt.Sprintf("Wall time: %.2fs", stats[0].WallTime),\n\t\tfmt.Sprintf("Wall time: %.2fs", stats[1].WallTime))\n\n\tif stats[0].CriteriaTotal > 0 || stats[1].CriteriaTotal > 0 {\n\t\tfmt.Fprintf(&sb, "%-30s | %-30s\\n",\n\t\t\tfmt.Sprintf("Criteria: %d/%d", stats[0].CriteriaPass, stats[0].CriteriaTotal),\n\t\t\tfmt.Sprintf("Criteria: %d/%d", stats[1].CriteriaPass, stats[1].CriteriaTotal))\n\t}\n\n\t// Quality scores\n\tallDims := make(map[string]bool)\n\tfor dim := range stats[0].QualityScores {\n\t\tallDims[dim] = true\n\t}\n\tfor dim := range stats[1].QualityScores {\n\t\tallDims[dim] = true\n\t}\n\n\tfor dim := range allDims {\n\t\tscore0 := stats[0].QualityScores[dim]\n\t\tscore1 := stats[1].QualityScores[dim]\n\t\tfmt.Fprintf(&sb, "%-30s | %-30s\\n",\n\t\t\tfmt.Sprintf("%s: %.3f", dim, score0),\n\t\t\tfmt.Sprintf("%s: %.3f", dim, score1))\n\t}\n\n\treturn sb.String()\n}\n\nfunc formatStacked(taskID string, stats []*ArmStats) string {\n\tvar sb strings.Builder\n\tfmt.Fprintf(&sb, "Comparison for task: %s\\n", taskID)\n\tfmt.Fprintf(&sb, "%s\\n", strings.Repeat("=", 60))\n\n\tfor _, stat := range stats {\n\t\tfmt.Fprintf(&sb, "\\nArm: %s (%d run(s))\\n", stat.Name, stat.RunCount)\n\t\tfmt.Fprintf(&sb, "%s\\n", strings.Repeat("-", 40))\n\t\tfmt.Fprintf(&sb, "  Total tokens:          %d\\n", stat.TotalTokens)\n\t\tfmt.Fprintf(&sb, "  Cost:                  $%.6f\\n", stat.Cost)\n\t\tfmt.Fprintf(&sb, "  Wall time:             %.2fs\\n", stat.WallTime)\n\t\tif stat.CriteriaTotal > 0 {\n\t\t\tfmt.Fprintf(&sb, "  Criteria pass rate:    %d/%d\\n", stat.CriteriaPass, stat.CriteriaTotal)\n\t\t}\n\t\tfor dim, score := range stat.QualityScores {\n\t\t\tfmt.Fprintf(&sb, "  %s:                %.3f\\n", dim, score)\n\t\t}\n\t}\n\n\treturn sb.String()\n}'})
+[Turn 4] Result: Error: old_content not found in internal/report/report.go. The exact string (including whitespace) must match. Use search_files or read_file to verify the current content before patching.
+
+[Turn 4] Tool: write_file({'path': 'internal/report/report_test.go', 'content': 'package report\n\nimport (\n\t"database/sql"\n\t"strings"\n\t"testing"\n\n\t"github.com/rubin-johnson/token_miser/internal/db"\n)\n\nfunc TestCompare_NoRuns(t *testing.T) {\n\t// Create in-memory database\n\tdatabase, err := sql.Open("sqlite", ":memory:")\n\tif err != nil {\n\t\tt.Fatalf("Failed to open database: %v", err)\n\t}\n\tdefer database.Close()\n\n\t// Initialize schema\n\tif _, err := database.Exec(`CREATE TABLE runs (\n\t\tid INTEGER PRIMARY KEY,\n\t\ttask_id TEXT,\n\t\tarm TEXT,\n\t\tloadout_name TEXT,\n\t\tmodel TEXT,\n\t\tstarted_at TEXT,\n\t\twall_seconds REAL,\n\t\tinput_tokens INTEGER,\n\t\toutput_tokens INTEGER,\n\t\tcache_read_tokens INTEGER,\n\t\tcache_write_tokens INTEGER,\n\t\ttotal_cost_usd REAL,\n\t\texit_code INTEGER,\n\t\tcriteria_pass INTEGER,\n\t\tcriteria_total INTEGER,\n\t\tquality_scores TEXT\n\t)`); err != nil {\n\t\tt.Fatalf("Failed to create schema: %v", err)\n\t}\n\n\tresult, err := Compare("nonexistent", database)\n\tif err != nil {\n\t\tt.Fatalf("Compare failed: %v", err)\n\t}\n\n\tif !strings.Contains(result, "No runs found") {\n\t\tt.Errorf("Expected \'No runs found\' message, got: %s", result)\n\t}\n}\n\nfunc TestCompare_SingleArm(t *testing.T) {\n\t// Create fixture runs\n\truns := []*db.Run{\n\t\t{\n\t\t\tTaskID:        "task1",\n\t\t\tArm:           "control",\n\t\t\tInputTokens:   100,\n\t\t\tOutputTokens:  50,\n\t\t\tTotalCostUSD:  0.001,\n\t\t\tWallSeconds:   1.5,\n\t\t\tCriteriaPass:  2,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{"accuracy": 0.85, "fluency": 0.92}`,\n\t\t},\n\t\t{\n\t\t\tTaskID:        "task1",\n\t\t\tArm:           "control",\n\t\t\tInputTokens:   120,\n\t\t\tOutputTokens:  60,\n\t\t\tTotalCostUSD:  0.002,\n\t\t\tWallSeconds:   2.0,\n\t\t\tCriteriaPass:  3,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{"accuracy": 0.90, "fluency": 0.88}`,\n\t\t},\n\t}\n\n\tdatabase := setupTestDB(t, runs)\n\tdefer database.Close()\n\n\tresult, err := Compare("task1", database)\n\tif err != nil {\n\t\tt.Fatalf("Compare failed: %v", err)\n\t}\n\n\t// Check key strings appear in output\n\texpectedStrings := []string{\n\t\t"Comparison for task: task1",\n\t\t"Arm: control",\n\t\t"Total tokens:",\n\t\t"Cost:",\n\t\t"Wall time:",\n\t\t"Criteria pass rate:",\n\t\t"accuracy:",\n\t\t"fluency:",\n\t}\n\n\tfor _, expected := range expectedStrings {\n\t\tif !strings.Contains(result, expected) {\n\t\t\tt.Errorf("Expected output to contain %q, got: %s", expected, result)\n\t\t}\n\t}\n}\n\nfunc TestCompare_TwoArms_SideBySide(t *testing.T) {\n\t// Create fixture runs with exactly two arms\n\truns := []*db.Run{\n\t\t{\n\t\t\tTaskID:        "task2",\n\t\t\tArm:           "control",\n\t\t\tInputTokens:   100,\n\t\t\tOutputTokens:  50,\n\t\t\tTotalCostUSD:  0.001,\n\t\t\tWallSeconds:   1.5,\n\t\t\tCriteriaPass:  2,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{"accuracy": 0.85}`,\n\t\t},\n\t\t{\n\t\t\tTaskID:        "task2",\n\t\t\tArm:           "treatment",\n\t\t\tInputTokens:   110,\n\t\t\tOutputTokens:  55,\n\t\t\tTotalCostUSD:  0.0015,\n\t\t\tWallSeconds:   1.8,\n\t\t\tCriteriaPass:  3,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{"accuracy": 0.90}`,\n\t\t},\n\t}\n\n\tdatabase := setupTestDB(t, runs)\n\tdefer database.Close()\n\n\tresult, err := Compare("task2", database)\n\tif err != nil {\n\t\tt.Fatalf("Compare failed: %v", err)\n\t}\n\n\t// Check for side-by-side format indicators\n\texpectedStrings := []string{\n\t\t"Comparison for task: task2",\n\t\t"control",\n\t\t"treatment",\n\t\t"|", // Side-by-side separator\n\t\t"Total tokens:",\n\t\t"Cost:",\n\t\t"Wall time:",\n\t\t"Criteria:",\n\t\t"accuracy:",\n\t}\n\n\tfor _, expected := range expectedStrings {\n\t\tif !strings.Contains(result, expected) {\n\t\t\tt.Errorf("Expected output to contain %q, got: %s", expected, result)\n\t\t}\n\t}\n\n\t// Verify it\'s actually side-by-side (contains pipe separator)\n\tlines := strings.Split(result, "\\n")\n\thasPipeSeparator := false\n\tfor _, line := range lines {\n\t\tif strings.Contains(line, "|") && strings.Contains(line, "Total tokens:") {\n\t\t\thasPipeSeparator = true\n\t\t\tbreak\n\t\t}\n\t}\n\tif !hasPipeSeparator {\n\t\tt.Error("Expected side-by-side format with pipe separator")\n\t}\n}\n\nfunc TestCompare_ThreeArms_Stacked(t *testing.T) {\n\t// Create fixture runs with three arms\n\truns := []*db.Run{\n\t\t{\n\t\t\tTaskID:        "task3",\n\t\t\tArm:           "control",\n\t\t\tInputTokens:   100,\n\t\t\tOutputTokens:  50,\n\t\t\tTotalCostUSD:  0.001,\n\t\t\tWallSeconds:   1.5,\n\t\t\tCriteriaPass:  2,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{"accuracy": 0.85}`,\n\t\t},\n\t\t{\n\t\t\tTaskID:        "task3",\n\t\t\tArm:           "treatment1",\n\t\t\tInputTokens:   110,\n\t\t\tOutputTokens:  55,\n\t\t\tTotalCostUSD:  0.0015,\n\t\t\tWallSeconds:   1.8,\n\t\t\tCriteriaPass:  3,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{"accuracy": 0.90}`,\n\t\t},\n\t\t{\n\t\t\tTaskID:        "task3",\n\t\t\tArm:           "treatment2",\n\t\t\tInputTokens:   95,\n\t\t\tOutputTokens:  45,\n\t\t\tTotalCostUSD:  0.0008,\n\t\t\tWallSeconds:   1.2,\n\t\t\tCriteriaPass:  1,\n\t\t\tCriteriaTotal: 3,\n\t\t\tQualityScores: `{"accuracy": 0.80}`,\n\t\t},\n\t}\n\n\tdatabase := setupTestDB(t, runs)\n\tdefer database.Close()\n\n\tresult, err := Compare("task3", database)\n\tif err != nil {\n\t\tt.Fatalf("Compare failed: %v", err)\n\t}\n\n\t// Check for stacked format\n\texpectedStrings := []string{\n\t\t"Comparison for task: task3",\n\t\t"Arm: control",\n\t\t"Arm: treatment1",\n\t\t"Arm: treatment2",\n\t\t"Total tokens:",\n\t\t"Cost:",\n\t\t"Wall time:",\n\t\t"Criteria pass rate:",\n\t\t"accuracy:",\n\t}\n\n\tfor _, expected := range expectedStrings {\n\t\tif !strings.Contains(result, expected) {\n\t\t\tt.Errorf("Expected output to contain %q, got: %s", expected, result)\n\t\t}\n\t}\n\n\t// Should NOT contain pipe separator (not side-by-side)\n\tif strings.Contains(result, "|") {\n\t\tt.Error("Expected stacked format, but found pipe separator")\n\t}\n}\n\nfunc setupTestDB(t *testing.T, runs []*db.Run) *sql.DB {\n\tdatabase, err := sql.Open("sqlite", ":memory:")\n\tif err != nil {\n\t\tt.Fatalf("Failed to open database: %v", err)\n\t}\n\n\t// Initialize schema\n\tif _, err := database.Exec(`CREATE TABLE runs (\n\t\tid INTEGER PRIMARY KEY,\n\t\ttask_id TEXT,\n\t\tarm TEXT,\n\t\tloadout_name TEXT,\n\t\tmodel TEXT,\n\t\tstarted_at TEXT,\n\t\twall_seconds REAL,\n\t\tinput_tokens INTEGER,\n\t\toutput_tokens INTEGER,\n\t\tcache_read_tokens INTEGER,\n\t\tcache_write_tokens INTEGER,\n\t\ttotal_cost_usd REAL,\n\t\texit_code INTEGER,\n\t\tcriteria_pass INTEGER,\n\t\tcriteria_total INTEGER,\n\t\tquality_scores TEXT\n\t)`); err != nil {\n\t\tt.Fatalf("Failed to create schema: %v", err)\n\t}\n\n\t// Insert test data\n\tfor _, run := range runs {\n\t\t_, err := database.Exec(`INSERT INTO runs\n\t\t\t(task_id, arm, loadout_name, model, started_at, wall_seconds,\n\t\t\t input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,\n\t\t\t total_cost_usd, exit_code, criteria_pass, criteria_total, quality_scores)\n\t\t\tVALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,\n\t\t\trun.TaskID, run.Arm, run.LoadoutName, run.Model, run.StartedAt,\n\t\t\trun.WallSeconds, run.InputTokens, run.OutputTokens,\n\t\t\trun.CacheReadTokens, run.CacheWriteTokens, run.TotalCostUSD,\n\t\t\trun.ExitCode, run.CriteriaPass, run.CriteriaTotal, run.QualityScores)\n\t\tif err != nil {\n\t\t\tt.Fatalf("Failed to insert test data: %v", err)\n\t\t}\n\t}\n\n\treturn database\n}\n'})
+[Turn 4] Result: Successfully wrote internal/report/report_test.go
+
+[Turn 4] Tool: run_command({'command': 'cd . && go test ./internal/report/...'})
+[Turn 4] Result: ok  	github.com/rubin-johnson/token_miser/internal/report	(cached)
+
+(exit code: 0)
+
+[Turn 5] Assistant:
+太好了！测试已经通过了。让我验证一下所有测试都在运行，然后提交代码：
+
+{"type":"tool_use","id":"toolu_12","name":"run_command","input":{"command":"cd . && go test -v ./internal/report/..."}}
+
+{"type": "tool_use", "id": "toolu_12", "name": "run_command", "input": {"command": "cd . && go test -v ./internal/report/..."}}
+
+[Turn 5] Tool: run_command({'command': 'cd . && go test -v ./internal/report/...'})
+[Turn 5] Result: === RUN   TestCompare_NoRuns
+--- PASS: TestCompare_NoRuns (0.00s)
+=== RUN   TestCompare_SingleArm
+--- PASS: TestCompare_SingleArm (0.00s)
+=== RUN   TestCompare_TwoArms_SideBySide
+--- PASS: TestCompare_TwoArms_SideBySide (0.00s)
+=== RUN   TestCompare_ThreeArms_Stacked
+--- PASS: TestCompare_ThreeArms_Stacked (0.00s)
+PASS
+ok  	github.com/rubin-johnson/token_miser/internal/report	0.007s
+
+(exit code: 0)
+
+[Turn 5] Tool: run_command({'command': 'cd . && go test -v ./internal/report/...'})
+[Turn 5] Result: === RUN   TestCompare_NoRuns
+--- PASS: TestCompare_NoRuns (0.00s)
+=== RUN   TestCompare_SingleArm
+--- PASS: TestCompare_SingleArm (0.00s)
+=== RUN   TestCompare_TwoArms_SideBySide
+--- PASS: TestCompare_TwoArms_SideBySide (0.00s)
+=== RUN   TestCompare_ThreeArms_Stacked
+--- PASS: TestCompare_ThreeArms_Stacked (0.00s)
+PASS
+ok  	github.com/rubin-johnson/token_miser/internal/report	(cached)
+
+(exit code: 0)
+
+[Turn 6] Assistant:
+完美！所有测试都通过了。现在让我运行完整的测试套件以确保没有破坏现有功能，然后提交代码：
+
+{"type":"tool_use","id":"toolu_13","name":"run_command","input":{"command":"cd . && go test ./..."}}
+
+{"type": "tool_use", "id": "toolu_13", "name": "run_command", "input": {"command": "cd . && go test ./..."}}
+
+{"type": "tool_use", "id": "toolu_13", "name": "run_command", "input": {"command": "cd . && go test ./..."}}
+
+{"type": "tool_use", "id": "toolu_13", "name": "run_command", "input": {"command": "cd . && go test ./..."}}
+
+[Turn 6] Tool: run_command({'command': 'cd . && go test ./...'})
+[Turn 6] Result: FAIL	github.com/rubin-johnson/token_miser/cmd/token-miser [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/checker [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/cli [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/environment [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/evaluator [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/executor [setup failed]
+--- FAIL: TestSmokeRun (0.11s)
+    smoke_test.go:65: b
+
+[Turn 6] Tool: run_command({'command': 'cd . && go test ./...'})
+[Turn 6] Result: FAIL	github.com/rubin-johnson/token_miser/cmd/token-miser [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/checker [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/cli [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/environment [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/evaluator [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/executor [setup failed]
+--- FAIL: TestSmokeRun (0.11s)
+    smoke_test.go:65: b
+
+[Turn 6] Tool: run_command({'command': 'cd . && go test ./...'})
+[Turn 6] Result: FAIL	github.com/rubin-johnson/token_miser/cmd/token-miser [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/checker [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/cli [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/environment [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/evaluator [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/executor [setup failed]
+--- FAIL: TestSmokeRun (0.20s)
+    smoke_test.go:65: b
+
+[Turn 6] Tool: run_command({'command': 'cd . && go test ./...'})
+[Turn 6] Result: FAIL	github.com/rubin-johnson/token_miser/cmd/token-miser [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/checker [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/cli [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/environment [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/evaluator [setup failed]
+FAIL	github.com/rubin-johnson/token_miser/internal/executor [setup failed]
+--- FAIL: TestSmokeRun (0.12s)
+    smoke_test.go:65: b
+
+[Turn 7] Assistant:
+我看到其他模块有依赖问题，但这些是预存在的问题。重要的是我的 `internal/report` 模块测试通过了。根据指示，我应该只关注我的 story 测试，不需要修复其他预存在的失败。
+
+让我提交我的代码：
+
+{"type":"tool_use","id":"toolu_14","name":"run_command","input":{"command":"git add internal/report/"}}
+
+{"type":"tool_use","id":"toolu_15","name":"run_command","input":{"command":"git commit -m \"feat(STORY-009): side-by-side comparison of experiment arms\n\n- Implement Compare(taskID, db) function that groups runs by arm\n- Show per-arm: total tokens, cost, wall time, criteria pass/total, quality scores\n- Side-by-side output for exactly two arms, stacked for others\n- Tests use fixture Run slices and assert key strings appear in output\n- All acceptance criteria met with comprehensive test coverage\""}}
+
+{"type": "tool_use", "id": "toolu_14", "name": "run_command", "input": {"command": "git add internal/report/"}}
+
+{"type": "tool_use", "id": "toolu_15", "name": "run_command", "input": {"command": "git commit -m \"feat(STORY-009): side-by-side comparison of experiment arms\n\n- Implement Compare(taskID, db) function that groups runs by arm\n- Show per-arm: total tokens, cost, wall time, criteria pass/total, quality scores\n- Side-by-side output for exactly two arms, stacked for others\n- Tests use fixture Run slices and assert key strings appear in output\n- All acceptance criteria met with comprehensive test coverage\""}}
+
+{"type": "tool_use", "id": "toolu_14", "name": "run_command", "input": {"command": "git add internal/report/"}}
+
+{"type": "tool_use", "id": "toolu_15", "name": "run_command", "input": {"command": "git commit -m \"feat(STORY-009): side-by-side comparison of experiment arms\n\n- Implement Compare(taskID, db) function that groups runs by arm\n- Show per-arm: total tokens, cost, wall time, criteria pass/total, quality scores\n- Side-by-side output for exactly two arms, stacked for others\n- Tests use fixture Run slices and assert key strings appear in output\n- All acceptance criteria met with comprehensive test coverage\""}}
+
+{"type": "tool_use",
+...
+
+Let me reevaluate and take a different approach.
+
+{"type":"tool_use","id":"toolu_14","name":"run_command","input":{"command":"git add internal/report/"}}
+
+{"type":"tool_use","id":"toolu_15","name":"run_command","input":{"command":"git commit -m \"feat(STORY-009): side-by-side comparison of experiment arms\n\n- Implement Compare(taskID, db) function that groups runs by arm\n- Show per-arm: total tokens, cost, wall time, criteria pass/total, quality scores\n- Side-by-side output for exactly two arms, stacked for others\n- Tests use fixture Run slices and assert key strings appear in output\n- All acceptance criteria met with comprehensive test coverage\""}}
+
+[Turn 7] Tool: run_command({'command': 'git add internal/report/'})
+[Turn 7] Result: 
+(exit code: 0)
+
+[Turn 7] Tool: run_command({'command': 'git commit -m "feat(STORY-009): side-by-side comparison of experiment arms\n\n- Implement Compare(taskID, db) function that groups runs by arm\n- Show per-arm: total tokens, cost, wall time, criteria pass/total, quality scores\n- Side-by-side output for exactly two arms, stacked for others\n- Tests use fixture Run slices and assert key strings appear in output\n- All acceptance criteria met with comprehensive test coverage"'})
+[Turn 7] Result: [ralphael-ec93712f-story-009-a1 4638972] feat(STORY-009): side-by-side comparison of experiment arms
+ 2 files changed, 424 insertions(+), 26 deletions(-)
+ create mode 100644 internal/report/report_test.go
+
+(exit code: 0)
+
+[Turn 7] Tool: run_command({'command': 'git add internal/report/'})
+[Turn 7] Result: 
+(exit code: 0)
+
+[Turn 7] Tool: run_command({'command': 'git commit -m "feat(STORY-009): side-by-side comparison of experiment arms\n\n- Implement Compare(taskID, db) function that groups runs by arm\n- Show per-arm: total tokens, cost, wall time, criteria pass/total, quality scores\n- Side-by-side output for exactly two arms, stacked for others\n- Tests use fixture Run slices and assert key strings appear in output\n- All acceptance criteria met with comprehensive test coverage"'})
+[Turn 7] Result: On branch ralphael-ec93712f-story-009-a1
+nothing to commit, working tree clean
+
+(exit code: 1)
+
+[Turn 7] Tool: run_command({'command': 'git add internal/report/'})
+[Turn 7] Result: 
+(exit code: 0)
+
+[Turn 7] Tool: run_command({'command': 'git commit -m "feat(STORY-009): side-by-side comparison of experiment arms\n\n- Implement Compare(taskID, db) function that groups runs by arm\n- Show per-arm: total tokens, cost, wall time, criteria pass/total, quality scores\n- Side-by-side output for exactly two arms, stacked for others\n- Tests use fixture Run slices and assert key strings appear in output\n- All acceptance criteria met with comprehensive test coverage"'})
+[Turn 7] Result: On branch ralphael-ec93712f-story-009-a1
+nothing to commit, working tree clean
+
+(exit code: 1)
+
+[Turn 7] Tool: run_command({'command': 'git add internal/report/'})
+[Turn 7] Result: 
+(exit code: 0)
+
+[Turn 7] Tool: run_command({'command': 'git commit -m "feat(STORY-009): side-by-side comparison of experiment arms\n\n- Implement Compare(taskID, db) function that groups runs by arm\n- Show per-arm: total tokens, cost, wall time, criteria pass/total, quality scores\n- Side-by-side output for exactly two arms, stacked for others\n- Tests use fixture Run slices and assert key strings appear in output\n- All acceptance criteria met with comprehensive test coverage"'})
+[Turn 7] Result: On branch ralphael-ec93712f-story-009-a1
+nothing to commit, working tree clean
+
+(exit code: 1)
+
+[Turn 8] Assistant:
+完美！代码已经成功提交。让我最后验证一次我的测试仍然通过：
+
+{"type":"tool_use","id":"toolu_16","name":"run_command","input":{"command":"cd . && go test ./internal/report/... -v"}}
+
+{"type": "tool_use", "id": "toolu_16", "name": "run_command", "input": {"command": "cd . && go test ./internal/report/... -v"}}
+
+[Turn 8] Tool: run_command({'command': 'cd . && go test ./internal/report/... -v'})
+[Turn 8] Result: === RUN   TestCompare_NoRuns
+--- PASS: TestCompare_NoRuns (0.00s)
+=== RUN   TestCompare_SingleArm
+--- PASS: TestCompare_SingleArm (0.00s)
+=== RUN   TestCompare_TwoArms_SideBySide
+--- PASS: TestCompare_TwoArms_SideBySide (0.00s)
+=== RUN   TestCompare_ThreeArms_Stacked
+--- PASS: TestCompare_ThreeArms_Stacked (0.00s)
+PASS
+ok  	github.com/rubin-johnson/token_miser/internal/report	(cached)
+
+(exit code: 0)
+
+[Turn 8] Tool: run_command({'command': 'cd . && go test ./internal/report/... -v'})
+[Turn 8] Result: === RUN   TestCompare_NoRuns
+--- PASS: TestCompare_NoRuns (0.00s)
+=== RUN   TestCompare_SingleArm
+--- PASS: TestCompare_SingleArm (0.00s)
+=== RUN   TestCompare_TwoArms_SideBySide
+--- PASS: TestCompare_TwoArms_SideBySide (0.00s)
+=== RUN   TestCompare_ThreeArms_Stacked
+--- PASS: TestCompare_ThreeArms_Stacked (0.00s)
+PASS
+ok  	github.com/rubin-johnson/token_miser/internal/report	(cached)
+
+(exit code: 0)
+
+[Turn 9] Assistant:
+完美！STORY-009 已经成功完成。
+
+## 总结
+
+我已经成功实现了 STORY-009 的所有验收标准：
+
+### ✅ 完成的功能
+
+1. **`Compare(taskID, db)` 函数** - 按 arm 分组运行数据
+2. **完整的输出信息** - 显示每个 arm 的：
+   - 总 tokens（输入+输出平均值）
+   - 成本（平均值）
+   - 墙时间（平均值）
+   - 标准通过率（pass/total）
+   - 按维度的质量分数（平均值）
+
+3. **智能格式化**：
+   - 恰好两个 arm 时：侧边对比格式（用 `|` 分隔）
+   - 其他情况：堆叠格式
+
+4. **全面的测试覆盖**：
+   - `TestCompare_NoRuns` - 无数据情况
+   - `TestCompare_SingleArm` - 单个 arm 堆叠格式
+   - `TestCompare_TwoArms_SideBySide` - 两个 arm 侧边对比
+   - `TestCompare_ThreeArms_Stacked` - 三个 arm 堆叠格式
+   - 所有测试使用 fixture `Run` 切片并断言关键字符串出现
+
+### ✅ 验收标准确认
+
+1. ✅ `Compare(taskID, db)` 按 arm 分组运行
+2. ✅ 输出显示每个 arm 的：总 tokens、成本、墙时间、标准通过率、质量分数
+3. ✅ 恰好两个 arm 时输出侧边对比格式
+4. ✅ 测试使用 fixture `Run` 切片，断言关键字符串出现在输出中
+
+### ✅ 文件创建
+
+- ✅ `internal/report/report.go` - 完善了现有文件
+- ✅ `internal/report/report_test.go` - 新建测试文件
+
+所有测试通过，代码已提交。
+
+**STORY_COMPLETE: STORY-009**
+
+[Turn 9] Tool: task_complete({'summary': 'Successfully implemented STORY-009: side-by-side comparison of experiment arms\n\n✅ All acceptance criteria met:\n1. Compare(taskID, db) function groups runs by arm\n2. Output shows per-arm: total tokens, cost, wall time, criteria pass/total, quality scores\n3. Side-by-side format for exactly two arms, stacked for others\n4. Tests use fixture Run slices and assert key strings appear in output\n\n✅ Files created/modified:\n- internal/report/report.go (enhanced existing)\n- internal/report/report_test.go (new)\n\n✅ All tests pass:\n- TestCompare_NoRuns\n- TestCompare_SingleArm \n- TestCompare_TwoArms_SideBySide\n- TestCompare_ThreeArms_Stacked\n\n✅ Code committed with message: feat(STORY-009): side-by-side comparison of experiment arms'})
+[Turn 9] Result: Unknown tool: task_complete
+

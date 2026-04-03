@@ -1,0 +1,59 @@
+#!/bin/bash
+#
+# Record a prepaid API credit top-up
+# Usage: credits-add <amount> [account] [notes]
+#
+# Examples:
+#   credits-add 100              # $100 to work account (default)
+#   credits-add 25 personal      # $25 to personal account
+#   credits-add 50 work "Q1 top-up"
+#
+
+set -euo pipefail
+
+DB="$HOME/.claude/token-usage.db"
+
+if [ $# -lt 1 ]; then
+    echo "Usage: credits-add <amount> [account] [notes]"
+    echo
+    echo "Accounts: work (default), personal, openrouter"
+    exit 1
+fi
+
+AMOUNT="$1"
+ACCOUNT="${2:-work}"
+NOTES="${3:-}"
+TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S")
+DATE=$(date -u +"%Y-%m-%d")
+
+# Ensure DB and table exist
+if [ ! -f "$DB" ]; then
+    echo "Error: token-usage.db not found. Run a session first."
+    exit 1
+fi
+
+sqlite3 "$DB" "CREATE TABLE IF NOT EXISTS credit_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT NOT NULL,
+    date TEXT NOT NULL,
+    amount_usd REAL NOT NULL,
+    account TEXT DEFAULT 'work',
+    notes TEXT
+);" 2>/dev/null || true
+
+sqlite3 "$DB" <<EOF
+INSERT INTO credit_events (timestamp, date, amount_usd, account, notes)
+VALUES ('$TIMESTAMP', '$DATE', $AMOUNT, '$ACCOUNT', '$NOTES');
+EOF
+
+# Show updated balance for this account
+echo "Recorded \$$AMOUNT credit top-up for '$ACCOUNT' account"
+echo
+sqlite3 -column -header "$DB" <<EOF
+SELECT
+    '$ACCOUNT' as account,
+    printf('\$%.2f', SUM(ce.amount_usd)) as total_loaded,
+    printf('\$%.2f', COALESCE((SELECT SUM(cost_usd) FROM sessions WHERE account = '$ACCOUNT' AND cost_usd IS NOT NULL), 0)) as total_spent,
+    printf('\$%.2f', SUM(ce.amount_usd) - COALESCE((SELECT SUM(cost_usd) FROM sessions WHERE account = '$ACCOUNT' AND cost_usd IS NOT NULL), 0)) as balance
+FROM credit_events ce WHERE ce.account = '$ACCOUNT';
+EOF

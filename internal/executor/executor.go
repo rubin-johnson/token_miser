@@ -36,15 +36,26 @@ func ParseClaudeJSON(jsonData []byte) (*ExecutorResult, error) {
 	return &result, nil
 }
 
-// FilterEnv strips CLAUDECODE from environment and sets HOME
+// FilterEnv strips session state from environment, sets HOME, and forwards auth vars.
+// Auth tokens (CLAUDE_CODE_OAUTH_TOKEN, ANTHROPIC_*) are forwarded so the subprocess
+// can authenticate. Session state (CLAUDECODE) is stripped to prevent contamination.
 func FilterEnv(env []string, homeDir string) []string {
 	var filtered []string
+	homeSet := false
 	for _, e := range env {
-		if !strings.HasPrefix(e, "CLAUDECODE=") {
+		switch {
+		case strings.HasPrefix(e, "CLAUDECODE="):
+			// strip session marker
+		case strings.HasPrefix(e, "HOME="):
+			filtered = append(filtered, "HOME="+homeDir)
+			homeSet = true
+		default:
 			filtered = append(filtered, e)
 		}
 	}
-	filtered = append(filtered, "HOME="+homeDir)
+	if !homeSet {
+		filtered = append(filtered, "HOME="+homeDir)
+	}
 	return filtered
 }
 
