@@ -35,6 +35,8 @@ func Dispatch(command string, args []string, out io.Writer) error {
 		return tasksCommand(args, out)
 	case "migrate":
 		return migrateCommand(args, out)
+	case "show":
+		return showCommand(ctx, args[1:])
 	default:
 		return fmt.Errorf("unknown command: %s", command)
 	}
