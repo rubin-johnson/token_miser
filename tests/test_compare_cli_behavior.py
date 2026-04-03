@@ -4,7 +4,7 @@ import subprocess
 
 def run_cli(args):
     proc = subprocess.run(
-        ["go", "run", "./cmd/token-miser"] + args,
+        ["token-miser"] + args,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
