@@ -82,7 +82,20 @@ func (db *DB) createTables() error {
 	);
 	`
 
-	_, err := db.conn.Exec(query)
+	if _, err := db.conn.Exec(query); err != nil {
+		return err
+	}
+	// Ensure criterion_results exists (idempotent)
+	crit := `
+	CREATE TABLE IF NOT EXISTS criterion_results (
+		id INTEGER PRIMARY KEY,
+		run_id INTEGER REFERENCES runs(id),
+		criterion_type TEXT,
+		passed INTEGER,
+		detail TEXT
+	);
+	`
+	_, err := db.conn.Exec(crit)
 	return err
 }
 
