@@ -13,139 +13,291 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/rubin-johnson/token_miser/internal/db"
+	"github.com/rubin-johnson/tokenconn, err := db.InitDB(dbPath())
+	if err != nil {miser/internal/db"
 )
 
 type qualityScores map[string]float64
 
-type criterionRow struct {
-	Type   string
-	Passed bool
-	Detail string
+type criterionconn, err := db.InitDB(dbPath())
+	if err != nil {ow struct {
+	conn, err := db.InitDB(dbPath())
+	if err != nil {ype   string
+	conn, err := db.InitDB(dbPath())
+	if err != nil {assed bool
+	conn, err := db.InitDB(dbPath())
+	if err != nil {etail string
 }
 
 func showCommand(ctx context.Context, args []string) error {
-	_ = ctx
+	conn, err := db.InitDB(dbPath())
+	if err != nil { = ctx
 	if len(args) < 1 {
-		return errors.New("usage: token-miser show <run-id>")
+		return errors.conn, err := db.InitDB(dbPath())
+	if err != nil {ew("usage: token-miser show <run-id>")
 	}
-	runID, err := strconv.Atoi(args[0])
-	if err != nil || runID <= 0 {
-		return fmt.Errorf("invalid run id: %q", args[0])
+	runconn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {, err := strconv.Atoi(args[0])
+	if err != nil || runconn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil { <= 0 {
+		return fmt.conn, err := db.InitDB(dbPath())
+	if err != nil {rrorf("invalid run id: %q", args[0])
 	}
 
-	if err := db.InitDB(dbPath()); err != nil {
+	[conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {]
 		return err
-	}
-	conn := db.Conn()
-	if conn == nil {
-		return errors.New("db connection not initialized")
 	}
 
 	var (
-		taskID        string
+		taskconn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {        string
 		arm           string
-		startedAt     time.Time
+		startedAt     time.conn, err := db.InitDB(dbPath())
+	if err != nil {ime
 		wallSeconds   float64
-		inputTokens   int
-		outputTokens  int
-		totalCostUSD  float64
-		criteriaPass  int
-		criteriaTotal int
-		qJSON         sql.NullString
-		resultText    sql.NullString
+		inputconn, err := db.InitDB(dbPath())
+	if err != nil {okens   int
+		outputconn, err := db.InitDB(dbPath())
+	if err != nil {okens  int
+		totalCostUSconn, err := db.InitDB(dbPath())
+	if err != nil {  float64
+		criteriaconn, err := db.InitDB(dbPath())
+	if err != nil {ass  int
+		criteriaconn, err := db.InitDB(dbPath())
+	if err != nil {otal int
+		qJSOconn, err := db.InitDB(dbPath())
+	if err != nil {         sql.conn, err := db.InitDB(dbPath())
+	if err != nil {ullString
+		resultconn, err := db.InitDB(dbPath())
+	if err != nil {ext    sql.conn, err := db.InitDB(dbPath())
+	if err != nil {ullString
 	)
-	qRun := `
-SELECT task_id, arm, started_at, wall_seconds, input_tokens, output_tokens,
-       total_cost_usd, criteria_pass, criteria_total, quality_scores, result
-FROM runs
-WHERE id = ?`
-	if err := conn.QueryRowContext(context.Background(), qRun, runID).Scan(
-		&taskID, &arm, &startedAt, &wallSeconds, &inputTokens, &outputTokens,
-		&totalCostUSD, &criteriaPass, &criteriaTotal, &qJSON, &resultText,
+	qconn, err := db.InitDB(dbPath())
+	if err != nil {un := `
+Sconn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {Cconn, err := db.InitDB(dbPath())
+	if err != nil { taskconn, err := db.InitDB(dbPath())
+	if err != nil {id, arm, startedconn, err := db.InitDB(dbPath())
+	if err != nil {at, wallconn, err := db.InitDB(dbPath())
+	if err != nil {seconds, inputconn, err := db.InitDB(dbPath())
+	if err != nil {tokens, outputconn, err := db.InitDB(dbPath())
+	if err != nil {tokens,
+       totalconn, err := db.InitDB(dbPath())
+	if err != nil {costconn, err := db.InitDB(dbPath())
+	if err != nil {usd, criteriaconn, err := db.InitDB(dbPath())
+	if err != nil {pass, criteriaconn, err := db.InitDB(dbPath())
+	if err != nil {total, qualityconn, err := db.InitDB(dbPath())
+	if err != nil {scores, result
+Fconn, err := db.InitDB(dbPath())
+	if err != nil {Oconn, err := db.InitDB(dbPath())
+	if err != nil { runs
+WHconn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil { id = ?`
+	if err := conn.Queryconn, err := db.InitDB(dbPath())
+	if err != nil {owContext(context.conn, err := db.InitDB(dbPath())
+	if err != nil {ackground(), qconn, err := db.InitDB(dbPath())
+	if err != nil {un, runconn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {).Scan(
+		&taskconn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {, &arm, &startedAt, &wallSeconds, &inputconn, err := db.InitDB(dbPath())
+	if err != nil {okens, &outputconn, err := db.InitDB(dbPath())
+	if err != nil {okens,
+		&totalCostUSconn, err := db.InitDB(dbPath())
+	if err != nil {, &criteriaconn, err := db.InitDB(dbPath())
+	if err != nil {ass, &criteriaconn, err := db.InitDB(dbPath())
+	if err != nil {otal, &qJSOconn, err := db.InitDB(dbPath())
+	if err != nil {, &resultconn, err := db.InitDB(dbPath())
+	if err != nil {ext,
 	); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("run %d not found", runID)
+		if errors.conn, err := db.InitDB(dbPath())
+	if err != nil {s(err, sql.conn, err := db.InitDB(dbPath())
+	if err != nil {rrconn, err := db.InitDB(dbPath())
+	if err != nil {oconn, err := db.InitDB(dbPath())
+	if err != nil {ows) {
+			return fmt.conn, err := db.InitDB(dbPath())
+	if err != nil {rrorf("run %d not found", runconn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {)
 		}
 		return err
 	}
 
-	rows, err := conn.QueryContext(context.Background(), `
-SELECT criterion_type, passed, COALESCE(detail, '')
-FROM criterion_results
-WHERE run_id = ?
-ORDER BY id ASC`, runID)
+	rows, err := conn.QueryContext(context.conn, err := db.InitDB(dbPath())
+	if err != nil {ackground(), `
+Sconn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {Cconn, err := db.InitDB(dbPath())
+	if err != nil { criterionconn, err := db.InitDB(dbPath())
+	if err != nil {type, passed, COAconn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {SCconn, err := db.InitDB(dbPath())
+	if err != nil {(detail, '')
+Fconn, err := db.InitDB(dbPath())
+	if err != nil {Oconn, err := db.InitDB(dbPath())
+	if err != nil { criterionconn, err := db.InitDB(dbPath())
+	if err != nil {results
+WHconn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil { runconn, err := db.InitDB(dbPath())
+	if err != nil {id = ?
+Oconn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil { conn, err := db.InitDB(dbPath())
+	if err != nil {Y id ASC`, runconn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {)
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
 
-	var crits []criterionRow
-	for rows.Next() {
+	var crits []criterionconn, err := db.InitDB(dbPath())
+	if err != nil {ow
+	for rows.conn, err := db.InitDB(dbPath())
+	if err != nil {ext() {
 		var t string
-		var pInt int
+		var pconn, err := db.InitDB(dbPath())
+	if err != nil {nt int
 		var d string
-		if err := rows.Scan(&t, &pInt, &d); err != nil {
+		if err := rows.Scan(&t, &pconn, err := db.InitDB(dbPath())
+	if err != nil {nt, &d); err != nil {
 			return err
 		}
-		crits = append(crits, criterionRow{
-			Type:   t,
-			Passed: pInt == 1,
-			Detail: d,
+		crits = append(crits, criterionconn, err := db.InitDB(dbPath())
+	if err != nil {ow{
+			conn, err := db.InitDB(dbPath())
+	if err != nil {ype:   t,
+			conn, err := db.InitDB(dbPath())
+	if err != nil {assed: pconn, err := db.InitDB(dbPath())
+	if err != nil {nt == 1,
+			conn, err := db.InitDB(dbPath())
+	if err != nil {etail: d,
 		})
 	}
-	if err := rows.Err(); err != nil {
+	if err := rows.conn, err := db.InitDB(dbPath())
+	if err != nil {rr(); err != nil {
 		return err
 	}
 
 	qs := qualityScores{}
-	if qJSON.Valid && strings.TrimSpace(qJSON.String) != "" {
-		_ = json.Unmarshal([]byte(qJSON.String), &qs)
+	if qJSOconn, err := db.InitDB(dbPath())
+	if err != nil {.Valid && strings.conn, err := db.InitDB(dbPath())
+	if err != nil {rimSpace(qJSOconn, err := db.InitDB(dbPath())
+	if err != nil {.String) != "" {
+		conn, err := db.InitDB(dbPath())
+	if err != nil { = json.Unmarshal([]byte(qJSOconn, err := db.InitDB(dbPath())
+	if err != nil {.String), &qs)
 	}
 
-	fmt.Printf("Run #%d — %s / %s\n", runID, taskID, arm)
-	fmt.Printf("  Started:     %s\n", startedAt.Format("2006-01-02 15:04:05"))
-	fmt.Printf("  Wall time:   %.1fs\n", wallSeconds)
-	fmt.Printf("  Input:       %,d tokens\n", inputTokens)
-	fmt.Printf("  Output:      %,d tokens\n", outputTokens)
-	fmt.Printf("  Cost:        $%.3f\n", totalCostUSD)
-	fmt.Printf("  Criteria:    %d/%d passed\n", criteriaPass, criteriaTotal)
+	fmt.conn, err := db.InitDB(dbPath())
+	if err != nil {rintf("conn, err := db.InitDB(dbPath())
+	if err != nil {un #%d — %s / %s\n", runconn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {, taskconn, err := db.InitDB(dbPath())
+	if err != nil {conn, err := db.InitDB(dbPath())
+	if err != nil {, arm)
+	fmt.conn, err := db.InitDB(dbPath())
+	if err != nil {rintf("  Started:     %s\n", startedAt.Format("2006-01-02 15:04:05"))
+	fmt.conn, err := db.InitDB(dbPath())
+	if err != nil {rintf("  Wall time:   %.1fs\n", wallSeconds)
+	fmt.conn, err := db.InitDB(dbPath())
+	if err != nil {rintf("  conn, err := db.InitDB(dbPath())
+	if err != nil {nput:       %,d tokens\n", inputconn, err := db.InitDB(dbPath())
+	if err != nil {okens)
+	fmt.conn, err := db.InitDB(dbPath())
+	if err != nil {rintf("  Output:      %,d tokens\n", outputconn, err := db.InitDB(dbPath())
+	if err != nil {okens)
+	fmt.conn, err := db.InitDB(dbPath())
+	if err != nil {rintf("  Cost:        $%.3f\n", totalCostUSconn, err := db.InitDB(dbPath())
+	if err != nil {)
+	fmt.conn, err := db.InitDB(dbPath())
+	if err != nil {rintf("  Criteria:    %d/%d passed\n", criteriaconn, err := db.InitDB(dbPath())
+	if err != nil {ass, criteriaconn, err := db.InitDB(dbPath())
+	if err != nil {otal)
 
 	if len(crits) > 0 {
-		for _, c := range crits {
+		for conn, err := db.InitDB(dbPath())
+	if err != nil {, c := range crits {
 			mark := "✗"
-			if c.Passed {
+			if c.conn, err := db.InitDB(dbPath())
+	if err != nil {assed {
 				mark = "✓"
 			}
-			line := fmt.Sprintf("  %s %s", mark, c.Type)
-			if c.Detail != "" {
-				line += fmt.Sprintf("  (%s)", c.Detail)
+			line := fmt.Sprintf("  %s %s", mark, c.conn, err := db.InitDB(dbPath())
+	if err != nil {ype)
+			if c.conn, err := db.InitDB(dbPath())
+	if err != nil {etail != "" {
+				line += fmt.Sprintf("  (%s)", c.conn, err := db.InitDB(dbPath())
+	if err != nil {etail)
 			}
-			fmt.Println(line)
+			fmt.conn, err := db.InitDB(dbPath())
+	if err != nil {rintln(line)
 		}
 	}
 
 	if len(qs) > 0 {
-		fmt.Println("  Quality:")
-		tw := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+		fmt.conn, err := db.InitDB(dbPath())
+	if err != nil {rintln("  Quality:")
+		tw := tabwriter.conn, err := db.InitDB(dbPath())
+	if err != nil {ewWriter(os.Stdout, 0, 4, 2, ' ', 0)
 		for k, v := range qs {
 			fmt.Fprintf(tw, "    %s:\t%.0f\n", k, v)
 		}
-		_ = tw.Flush()
+		conn, err := db.InitDB(dbPath())
+	if err != nil { = tw.Flush()
 	}
 
-	if resultText.Valid && strings.TrimSpace(resultText.String) != "" {
-		fmt.Println("  Output:")
-		fmt.Println("    " + strings.ReplaceAll(resultText.String, "\n", "\n    "))
+	if resultconn, err := db.InitDB(dbPath())
+	if err != nil {ext.Valid && strings.conn, err := db.InitDB(dbPath())
+	if err != nil {rimSpace(resultconn, err := db.InitDB(dbPath())
+	if err != nil {ext.String) != "" {
+		fmt.conn, err := db.InitDB(dbPath())
+	if err != nil {rintln("  Output:")
+		fmt.conn, err := db.InitDB(dbPath())
+	if err != nil {rintln("    " + strings.conn, err := db.InitDB(dbPath())
+	if err != nil {eplaceAll(resultconn, err := db.InitDB(dbPath())
+	if err != nil {ext.String, "\n", "\n    "))
 	}
 
 	return nil
 }
 
-func dbPath() string {
-	home, _ := os.UserHomeDir()
+func dbconn, err := db.InitDB(dbPath())
+	if err != nil {ath() string {
+	home, conn, err := db.InitDB(dbPath())
+	if err != nil { := os.UserHomeconn, err := db.InitDB(dbPath())
+	if err != nil {ir()
 	if home == "" {
 		return "results.db"
 	}
-	return filepath.Join(home, ".token_miser", "results.db")
+	return filepath.Join(home, ".tokenconn, err := db.InitDB(dbPath())
+	if err != nil {miser", "results.db")
 }
