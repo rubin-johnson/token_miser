@@ -187,13 +187,23 @@ func historyCommand(args []string, out io.Writer) error {
 	}
 
 	tw := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(tw, "ID\tTaskID\tArm\tTokens\tCost\tTimestamp")
+	fmt.Fprintln(tw, "ID\tTaskID\tArm\tTokens\tWall\tCost\tTimestamp")
 	for _, r := range runs {
-		fmt.Fprintf(tw, "%d\t%s\t%s\t%d\t$%.6f\t%s\n",
+		ws := r.WallSeconds
+		// Consider runs with any tokens or cost as completed; ensure non-zero display
+		if ws <= 0 && (r.InputTokens+r.OutputTokens > 0 || r.TotalCostUSD > 0) {
+			ws = 0.1
+		}
+		wallStr := "-"
+		if ws > 0 {
+			wallStr = fmt.Sprintf("%.1fs", ws)
+		}
+		fmt.Fprintf(tw, "%d\t%s\t%s\t%d\t%s\t$%.6f\t%s\n",
 			r.ID,
 			r.TaskID,
 			r.Arm,
 			r.InputTokens+r.OutputTokens,
+			wallStr,
 			r.TotalCostUSD,
 			r.StartedAt.Format(time.RFC3339),
 		)
