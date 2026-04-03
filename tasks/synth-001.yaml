@@ -1,6 +1,8 @@
 id: synth-001
 name: "Scaffold Python Project"
-repo: "/home/rujohnson/code/personal/loadout"
+# repo must be an absolute path to the git repository Claude will work in.
+# Set this to your local clone of the target project before running.
+repo: "/path/to/your/project"
 starting_commit: "fd88685"
 prompt: |
   You are working in the loadout Python project directory. Read docs/design-notes.md

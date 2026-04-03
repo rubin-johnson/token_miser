@@ -28,6 +28,7 @@ type Run struct {
 	CriteriaPass     int       `json:"criteria_pass"`
 	CriteriaTotal    int       `json:"criteria_total"`
 	QualityScores    string    `json:"quality_scores"`
+	Result           string    `json:"result"`
 }
 
 // DB wraps the SQLite database connection
@@ -78,13 +79,17 @@ func (db *DB) createTables() error {
 		exit_code INTEGER NOT NULL DEFAULT 0,
 		criteria_pass INTEGER NOT NULL DEFAULT 0,
 		criteria_total INTEGER NOT NULL DEFAULT 0,
-		quality_scores TEXT NOT NULL DEFAULT ''
+		quality_scores TEXT NOT NULL DEFAULT '',
+		result TEXT NOT NULL DEFAULT ''
 	);
 	`
 
 	if _, err := db.conn.Exec(query); err != nil {
 		return err
 	}
+	// Ensure result column exists on pre-existing databases (idempotent)
+	_, _ = db.conn.Exec(`ALTER TABLE runs ADD COLUMN result TEXT NOT NULL DEFAULT ''`)
+
 	// Ensure criterion_results exists (idempotent)
 	crit := `
 	CREATE TABLE IF NOT EXISTS criterion_results (
@@ -104,15 +109,15 @@ func (db *DB) StoreRun(run *Run) (int64, error) {
 	query := `
 	INSERT INTO runs (task_id, arm, loadout_name, model, started_at, wall_seconds,
 		input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
-		total_cost_usd, exit_code, criteria_pass, criteria_total, quality_scores)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		total_cost_usd, exit_code, criteria_pass, criteria_total, quality_scores, result)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	result, err := db.conn.Exec(query,
 		run.TaskID, run.Arm, run.LoadoutName, run.Model, time.Now(),
 		run.WallSeconds, run.InputTokens, run.OutputTokens,
 		run.CacheReadTokens, run.CacheWriteTokens, run.TotalCostUSD,
-		run.ExitCode, run.CriteriaPass, run.CriteriaTotal, run.QualityScores)
+		run.ExitCode, run.CriteriaPass, run.CriteriaTotal, run.QualityScores, run.Result)
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert run: %w", err)
 	}
@@ -133,12 +138,12 @@ func (db *DB) GetRuns(taskID string) ([]Run, error) {
 	if taskID == "" {
 		query = `SELECT id, task_id, arm, loadout_name, model, started_at, wall_seconds,
 			input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
-			total_cost_usd, exit_code, criteria_pass, criteria_total, quality_scores
+			total_cost_usd, exit_code, criteria_pass, criteria_total, quality_scores, result
 			FROM runs ORDER BY started_at DESC`
 	} else {
 		query = `SELECT id, task_id, arm, loadout_name, model, started_at, wall_seconds,
 			input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
-			total_cost_usd, exit_code, criteria_pass, criteria_total, quality_scores
+			total_cost_usd, exit_code, criteria_pass, criteria_total, quality_scores, result
 			FROM runs WHERE task_id = ? ORDER BY started_at DESC`
 		args = append(args, taskID)
 	}
@@ -155,7 +160,7 @@ func (db *DB) GetRuns(taskID string) ([]Run, error) {
 		err := rows.Scan(&run.ID, &run.TaskID, &run.Arm, &run.LoadoutName, &run.Model,
 			&run.StartedAt, &run.WallSeconds, &run.InputTokens, &run.OutputTokens,
 			&run.CacheReadTokens, &run.CacheWriteTokens, &run.TotalCostUSD,
-			&run.ExitCode, &run.CriteriaPass, &run.CriteriaTotal, &run.QualityScores)
+			&run.ExitCode, &run.CriteriaPass, &run.CriteriaTotal, &run.QualityScores, &run.Result)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan run: %w", err)
 		}

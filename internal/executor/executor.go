@@ -59,17 +59,48 @@ func FilterEnv(env []string, homeDir string) []string {
 	return filtered
 }
 
-// RunClaude executes Claude CLI in an isolated environment
-func RunClaude(prompt string, homeDir string) (*ExecutorResult, error) {
+// SequentialResult holds the per-prompt results and an accumulated total.
+type SequentialResult struct {
+	Steps []*ExecutorResult
+	Total ExecutorResult // summed cost/tokens, last step's Result text
+}
+
+// RunClaudeSequential runs multiple prompts sequentially in the same HOME directory.
+// Memories and session state written by earlier prompts are visible to later ones,
+// which is the key property needed to test cross-session memory tools.
+func RunClaudeSequential(prompts []string, homeDir string, workspaceDir string) (*SequentialResult, error) {
+	sr := &SequentialResult{}
+	wallStart := time.Now()
+
+	for _, prompt := range prompts {
+		res, err := RunClaude(prompt, homeDir, workspaceDir)
+		if err != nil {
+			return nil, fmt.Errorf("prompt %d failed: %w", len(sr.Steps)+1, err)
+		}
+		sr.Steps = append(sr.Steps, res)
+		sr.Total.TotalCostUSD += res.TotalCostUSD
+		sr.Total.Usage.InputTokens += res.Usage.InputTokens
+		sr.Total.Usage.OutputTokens += res.Usage.OutputTokens
+		sr.Total.Usage.CacheCreationInputTokens += res.Usage.CacheCreationInputTokens
+		sr.Total.Usage.CacheReadInputTokens += res.Usage.CacheReadInputTokens
+		sr.Total.Result = res.Result // keep last step's output
+	}
+
+	sr.Total.WallSeconds = time.Since(wallStart).Seconds()
+	return sr, nil
+}
+
+// RunClaude executes Claude CLI in an isolated environment with CWD set to workspaceDir.
+func RunClaude(prompt string, homeDir string, workspaceDir string) (*ExecutorResult, error) {
 	start := time.Now()
-	
+
 	// Create isolated environment
 	env := FilterEnv(os.Environ(), homeDir)
-	
+
 	// Prepare Claude CLI command
 	cmd := exec.Command("claude", "--print", "--dangerously-skip-permissions", "--output-format", "json", "--no-session-persistence")
 	cmd.Env = env
-	cmd.Dir = homeDir
+	cmd.Dir = workspaceDir
 	
 	// Set up stdin with prompt
 	cmd.Stdin = strings.NewReader(prompt)

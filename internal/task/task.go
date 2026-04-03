@@ -15,6 +15,7 @@ type Task struct {
 	Repo            string            `yaml:"repo"`
 	StartingCommit  string            `yaml:"starting_commit"`
 	Prompt          string            `yaml:"prompt"`
+	Prompts         []string          `yaml:"prompts"` // for type: sequential
 	SuccessCriteria []Criterion       `yaml:"success_criteria"`
 	QualityRubric   []RubricDimension `yaml:"quality_rubric"`
 }
@@ -47,12 +48,27 @@ func LoadTask(filename string) (*Task, error) {
 
 	// Set default type if not specified
 	if task.Type == "" {
-		task.Type = "single_shot"
+		if len(task.Prompts) > 0 {
+			task.Type = "sequential"
+		} else {
+			task.Type = "single_shot"
+		}
 	}
 
 	// Validate required fields
 	if task.ID == "" {
 		return nil, fmt.Errorf("task id is required")
+	}
+
+	switch task.Type {
+	case "sequential":
+		if len(task.Prompts) < 2 {
+			return nil, fmt.Errorf("sequential task requires at least 2 prompts")
+		}
+	default:
+		if task.Prompt == "" {
+			return nil, fmt.Errorf("prompt is required for single_shot tasks")
+		}
 	}
 
 	return &task, nil

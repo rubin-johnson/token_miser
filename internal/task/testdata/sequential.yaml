@@ -1,0 +1,11 @@
+id: seq-001
+name: "Sequential Test Task"
+repo: "/some/repo"
+starting_commit: "abc123"
+type: sequential
+prompts:
+  - "First prompt: do step one"
+  - "Second prompt: build on step one"
+success_criteria:
+  - type: file_exists
+    paths: ["output.txt"]

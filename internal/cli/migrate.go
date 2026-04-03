@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"flag"
 	"fmt"
 	"io"
 
@@ -8,10 +9,18 @@ import (
 )
 
 func migrateCommand(args []string, out io.Writer) error {
-	_ = args
-	_, err := db.InitDB(dbPath())
-	if err != nil {
-		return fmt.Errorf("init db: %w", err)
+	fs := flag.NewFlagSet("migrate", flag.ContinueOnError)
+	dbFlag := fs.String("db", "", "path to database file (default: ~/.token_miser/results.db)")
+	if err := fs.Parse(args); err != nil {
+		return err
 	}
+	path := *dbFlag
+	if path == "" {
+		path = dbPath()
+	}
+	if _, err := db.InitDB(path); err != nil {
+		return fmt.Errorf("migrate: %w", err)
+	}
+	fmt.Fprintln(out, "migrations applied")
 	return nil
 }

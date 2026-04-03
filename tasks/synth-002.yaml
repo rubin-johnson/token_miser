@@ -1,0 +1,70 @@
+id: synth-002
+name: "Implement validate_bundle"
+repo: "/path/to/your/project"  # set to your local clone before running
+starting_commit: "46d8b03"
+prompt: |
+  You are working in the loadout Python project. This is a tool that manages
+  Claude Code configuration bundles.
+
+  Your task: implement the `validate_bundle` function in `loadout/validate.py`.
+
+  The function is currently a stub that raises NotImplementedError. It should:
+  - Accept a `pathlib.Path` pointing to a bundle directory
+  - Use `load_manifest` from `loadout/manifest.py` to validate the manifest
+  - Additionally check that every file listed in `manifest.targets` actually
+    exists in the bundle directory
+  - Return a `list[str]` of error messages (empty list = valid bundle)
+  - Never raise — collect all errors and return them
+
+  Also wire it into the CLI: `loadout validate <bundle_dir>` should print each
+  error on its own line and exit 1 if there are errors, exit 0 if the bundle is valid.
+
+  Read the existing code before writing anything. Run the tests when you are done
+  to verify your implementation is correct.
+
+success_criteria:
+  - type: file_exists
+    paths: ["loadout/validate.py"]
+  - type: command_exits_zero
+    command: "uv sync -q && uv run --with pytest python -m pytest tests/test_manifest.py tests/test_scaffold.py -q"
+  - type: command_exits_zero
+    command: |
+      uv sync -q && uv run python3 -c "
+      import pathlib, tempfile, yaml
+      with tempfile.TemporaryDirectory() as d:
+          p = pathlib.Path(d)
+          (p / 'manifest.yaml').write_text(yaml.dump({
+              'name': 't', 'version': '0.1.0', 'author': 'a',
+              'description': 'd',
+              'targets': [{'path': 'CLAUDE.md', 'dest': 'CLAUDE.md'}]
+          }))
+          (p / 'CLAUDE.md').write_text('x')
+          from loadout.validate import validate_bundle
+          errors = validate_bundle(p)
+          assert errors == [], f'expected no errors, got {errors}'
+          print('valid bundle: OK')
+      "
+  - type: command_exits_zero
+    command: |
+      uv sync -q && uv run python3 -c "
+      import pathlib, tempfile
+      with tempfile.TemporaryDirectory() as d:
+          p = pathlib.Path(d)
+          # empty dir: no manifest.yaml at all
+          from loadout.validate import validate_bundle
+          errors = validate_bundle(p)
+          assert len(errors) >= 1, f'expected errors for empty dir, got {errors}'
+          print(f'missing manifest caught {len(errors)} error(s): OK')
+      "
+  - type: command_exits_zero
+    command: "uv sync -q && uv run python -m loadout validate --help"
+
+quality_rubric:
+  - dimension: "correctness"
+    prompt: "Does validate_bundle return an empty list for a valid bundle and a non-empty list for an invalid bundle? Does it collect all errors rather than failing fast?"
+  - dimension: "code_quality"
+    prompt: "Is the implementation idiomatic Python? Does it reuse load_manifest properly rather than duplicating validation logic?"
+  - dimension: "cli_integration"
+    prompt: "Is the validate subcommand wired into cli.py correctly? Does it exit 0 on success and 1 on failure?"
+  - dimension: "test_passing"
+    prompt: "Do the pre-existing tests (test_manifest.py, test_scaffold.py) all still pass after the changes?"

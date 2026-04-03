@@ -6,8 +6,10 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -37,6 +39,8 @@ func Dispatch(command string, args []string, out io.Writer) error {
 		return migrateCommand(args, out)
 	case "show":
 		return showCommand(context.Background(), args)
+	case "analyze":
+		return analyzeCommand(args, out)
 	default:
 		return fmt.Errorf("unknown command: %s", command)
 	}
@@ -71,8 +75,8 @@ func runCommand(args []string, out io.Writer) error {
 	var results []armResult
 
 	for _, spec := range []struct{ name, spec string }{
-		{"control", *controlSpec},
-		{"treatment", *treatmentSpec},
+		{*controlSpec, *controlSpec},
+		{*treatmentSpec, *treatmentSpec},
 	} {
 		t, err := task.LoadTask(*taskFile)
 		if err != nil {
@@ -88,9 +92,19 @@ func runCommand(args []string, out io.Writer) error {
 		}
 		defer env.TeardownEnv()
 
-		res, err := executor.RunClaude(t.Prompt, env.HomeDir)
-		if err != nil {
-			return fmt.Errorf("run claude: %w", err)
+		var res *executor.ExecutorResult
+		if t.Type == "sequential" {
+			sr, seqErr := executor.RunClaudeSequential(t.Prompts, env.HomeDir, env.WorkspaceDir)
+			if seqErr != nil {
+				return fmt.Errorf("run claude sequential: %w", seqErr)
+			}
+			res = &sr.Total
+		} else {
+			var runErr error
+			res, runErr = executor.RunClaude(t.Prompt, env.HomeDir, env.WorkspaceDir)
+			if runErr != nil {
+				return fmt.Errorf("run claude: %w", runErr)
+			}
 		}
 
 		checkResults := checker.New(env).CheckAllCriteria(t.SuccessCriteria)
@@ -119,13 +133,15 @@ func runCommand(args []string, out io.Writer) error {
 		}
 		run := db.Run{
 			TaskID:        t.ID,
-			Arm:           spec.name,
+			Arm:           a.Name,
 			InputTokens:   res.Usage.InputTokens,
 			OutputTokens:  res.Usage.OutputTokens,
+			WallSeconds:   res.WallSeconds,
 			TotalCostUSD:  res.TotalCostUSD,
 			CriteriaPass:  passed,
 			CriteriaTotal: total,
 			QualityScores: qualityJSON,
+			Result:        res.Result,
 			StartedAt:     time.Now(),
 		}
 		if _, err := database.StoreRun(&run); err != nil {
@@ -240,4 +256,185 @@ func tasksCommand(args []string, out io.Writer) error {
 		fmt.Fprintf(out, "%-20s %s\n", t.ID, t.Name)
 	}
 	return nil
+}
+
+func analyzeCommand(args []string, out io.Writer) error {
+	fs := flag.NewFlagSet("analyze", flag.ContinueOnError)
+	taskID := fs.String("task", "", "task ID to analyze (required)")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if *taskID == "" {
+		return fmt.Errorf("--task is required")
+	}
+
+	database, err := db.InitDB(dbPath())
+	if err != nil {
+		return fmt.Errorf("init db: %w", err)
+	}
+	defer database.Close()
+
+	runs, err := database.GetRuns(*taskID)
+	if err != nil {
+		return fmt.Errorf("get runs: %w", err)
+	}
+	if len(runs) == 0 {
+		fmt.Fprintf(out, "No runs found for task %q\n", *taskID)
+		return nil
+	}
+
+	return analyzeRuns(*taskID, runs, out)
+}
+
+// armSummary holds the computed statistics for one arm.
+type armSummary struct {
+	name         string
+	runs         int
+	avgCost      float64
+	stdevCost    float64
+	medianCost   float64
+	avgTokens    float64
+	criteriaRate float64 // 0–100
+}
+
+// analyzeRuns computes per-arm statistics from a slice of Run values and
+// writes the formatted table to out. Extracted for unit-testability.
+func analyzeRuns(taskID string, runs []db.Run, out io.Writer) error {
+	// Group by arm
+	byArm := make(map[string][]db.Run)
+	armOrder := []string{}
+	for _, r := range runs {
+		if _, seen := byArm[r.Arm]; !seen {
+			armOrder = append(armOrder, r.Arm)
+		}
+		byArm[r.Arm] = append(byArm[r.Arm], r)
+	}
+
+	summaries := make([]armSummary, 0, len(armOrder))
+	for _, name := range armOrder {
+		armRuns := byArm[name]
+		n := float64(len(armRuns))
+
+		var totalCost, totalTokens float64
+		var totalPass, totalCriteriaTotal int
+		costs := make([]float64, len(armRuns))
+		for i, r := range armRuns {
+			totalCost += r.TotalCostUSD
+			totalTokens += float64(r.InputTokens + r.OutputTokens)
+			totalPass += r.CriteriaPass
+			totalCriteriaTotal += r.CriteriaTotal
+			costs[i] = r.TotalCostUSD
+		}
+
+		avgCost := totalCost / n
+
+		// Population stdev
+		var variance float64
+		for _, c := range costs {
+			d := c - avgCost
+			variance += d * d
+		}
+		stdev := math.Sqrt(variance / n)
+
+		// Median
+		sorted := make([]float64, len(costs))
+		copy(sorted, costs)
+		sort.Float64s(sorted)
+		var median float64
+		mid := len(sorted) / 2
+		if len(sorted)%2 == 0 {
+			median = (sorted[mid-1] + sorted[mid]) / 2
+		} else {
+			median = sorted[mid]
+		}
+
+		var criteriaRate float64
+		if totalCriteriaTotal > 0 {
+			criteriaRate = float64(totalPass) / float64(totalCriteriaTotal) * 100
+		}
+
+		summaries = append(summaries, armSummary{
+			name:         name,
+			runs:         len(armRuns),
+			avgCost:      avgCost,
+			stdevCost:    stdev,
+			medianCost:   median,
+			avgTokens:    totalTokens / n,
+			criteriaRate: criteriaRate,
+		})
+	}
+
+	// Sort by avg cost ascending
+	sort.Slice(summaries, func(i, j int) bool {
+		return summaries[i].avgCost < summaries[j].avgCost
+	})
+
+	// Baseline: "vanilla" if present, otherwise the cheapest arm (index 0 after sort)
+	baselineIdx := 0
+	for i, s := range summaries {
+		if s.name == "vanilla" {
+			baselineIdx = i
+			break
+		}
+	}
+	baseline := summaries[baselineIdx]
+
+	// Count total runs
+	totalRuns := 0
+	for _, s := range summaries {
+		totalRuns += s.runs
+	}
+
+	fmt.Fprintf(out, "Task: %s  (%d runs across %d arms)\n\n", taskID, totalRuns, len(summaries))
+
+	tw := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(tw, "Arm\tRuns\tAvg Cost\tStdev\tMedian\tAvg Tok\tCriteria\tvs vanilla")
+	fmt.Fprintln(tw, "---------------\t----\t--------\t------\t-------\t-------\t--------\t----------")
+
+	for _, s := range summaries {
+		var deltaStr string
+		if s.name == baseline.name {
+			deltaStr = "(baseline)"
+		} else {
+			delta := (s.avgCost - baseline.avgCost) / baseline.avgCost * 100
+			if delta >= 0 {
+				deltaStr = fmt.Sprintf("+%.1f%%", delta)
+			} else {
+				deltaStr = fmt.Sprintf("%.1f%%", delta)
+			}
+		}
+
+		fmt.Fprintf(tw, "%s\t%d\t$%.3f\t$%.3f\t$%.3f\t%s\t%.1f%%\t%s\n",
+			s.name,
+			s.runs,
+			s.avgCost,
+			s.stdevCost,
+			s.medianCost,
+			formatTokens(int(math.Round(s.avgTokens))),
+			s.criteriaRate,
+			deltaStr,
+		)
+	}
+
+	return tw.Flush()
+}
+
+// formatTokens formats an integer with comma separators.
+func formatTokens(n int) string {
+	s := fmt.Sprintf("%d", n)
+	if len(s) <= 3 {
+		return s
+	}
+	// Insert commas from right
+	result := make([]byte, 0, len(s)+len(s)/3)
+	start := len(s) % 3
+	if start == 0 {
+		start = 3
+	}
+	result = append(result, s[:start]...)
+	for i := start; i < len(s); i += 3 {
+		result = append(result, ',')
+		result = append(result, s[i:i+3]...)
+	}
+	return string(result)
 }

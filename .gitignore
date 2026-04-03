@@ -1,4 +1,10 @@
+# Build artifacts
+token-miser
+
+# Claude Code session data
 .claude/
+
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -11,7 +17,26 @@ build/
 *.egg-info/
 .venv/
 venv/
+*.egg
+
+# Editor / OS
 .vscode/
 .idea/
 .DS_Store
-*.egg
+.cursor/
+
+# Personal loadout configs — commit only shared/example loadouts
+loadouts/my-config/
+
+# Agent execution artifacts
+.ralphael/
+.worktrees/
+*.log
+
+# Plan execution state
+docs/plans/*_state.json
+
+# Internal dev notes
+docs/notes-*.md
+docs/research-notes.md
+docs/plans/notes-*.md

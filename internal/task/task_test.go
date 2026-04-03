@@ -1,6 +1,7 @@
 package task
 
 import (
+	"os"
 	"strings"
 	"testing"
 )
@@ -137,6 +138,64 @@ func TestCriterionStruct(t *testing.T) {
 	}
 	if len(crit.Contains) != 2 {
 		t.Errorf("Expected 2 contains items, got %d", len(crit.Contains))
+	}
+}
+
+func TestLoadTask_Sequential(t *testing.T) {
+	task, err := LoadTask("testdata/sequential.yaml")
+	if err != nil {
+		t.Fatalf("Expected no error, got: %v", err)
+	}
+	if task.Type != "sequential" {
+		t.Errorf("Expected type 'sequential', got '%s'", task.Type)
+	}
+	if len(task.Prompts) != 2 {
+		t.Fatalf("Expected 2 prompts, got %d", len(task.Prompts))
+	}
+	if task.Prompts[0] != "First prompt: do step one" {
+		t.Errorf("Unexpected first prompt: %q", task.Prompts[0])
+	}
+}
+
+func TestLoadTask_SequentialInferredType(t *testing.T) {
+	// type should be inferred as sequential when prompts are present
+	const yaml = `id: inferred
+repo: /r
+starting_commit: abc
+prompts:
+  - "prompt one"
+  - "prompt two"
+success_criteria: []
+`
+	tmpFile := t.TempDir() + "/inferred.yaml"
+	if err := os.WriteFile(tmpFile, []byte(yaml), 0644); err != nil {
+		t.Fatal(err)
+	}
+	task, err := LoadTask(tmpFile)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if task.Type != "sequential" {
+		t.Errorf("expected inferred type 'sequential', got %q", task.Type)
+	}
+}
+
+func TestLoadTask_SequentialRequiresMultiplePrompts(t *testing.T) {
+	const yaml = `id: bad-seq
+repo: /r
+starting_commit: abc
+type: sequential
+prompts:
+  - "only one prompt"
+success_criteria: []
+`
+	tmpFile := t.TempDir() + "/bad.yaml"
+	if err := os.WriteFile(tmpFile, []byte(yaml), 0644); err != nil {
+		t.Fatal(err)
+	}
+	_, err := LoadTask(tmpFile)
+	if err == nil {
+		t.Fatal("expected error for single-prompt sequential task")
 	}
 }
 
