@@ -33,6 +33,8 @@ func Dispatch(command string, args []string, out io.Writer) error {
 		return historyCommand(args, out)
 	case "tasks":
 		return tasksCommand(args, out)
+	case "migrate":
+		return migrateCommand(args, out)
 	default:
 		return fmt.Errorf("unknown command: %s", command)
 	}

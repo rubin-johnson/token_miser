@@ -16,6 +16,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  compare  Compare token usage (not implemented)\n")
 		fmt.Fprintf(os.Stderr, "  history  Show usage history (not implemented)\n")
 		fmt.Fprintf(os.Stderr, "  tasks    List available tasks (not implemented)\n")
+		fmt.Fprintf(os.Stderr, "  migrate  Run database migrations\n")
 		fmt.Fprintf(os.Stderr, "\nOptions:\n")
 		flag.PrintDefaults()
 	}
