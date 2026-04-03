@@ -1,0 +1,14 @@
+---
+alwaysApply: false
+description: BT-002 per-criterion pass rate breakdown in compare CLI for a task
+---
+# BT-002 — Compare CLI per-criterion breakdown
+
+This story adds behavioral tests ensuring `token-miser compare --task <id>` shows per-criterion pass rates per arm.
+
+References:
+- Tests: [tests/test_compare_cli_behavior.py](mdc:tests/test_compare_cli_behavior.py)
+- Task fixtures live under [tasks/](mdc:tasks)
+
+Acceptance intent:
+- Keep any existing aggregate N/M info, but also include per-criterion lines with trailing `%` under each `Arm:` section.
