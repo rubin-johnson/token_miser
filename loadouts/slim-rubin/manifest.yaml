@@ -1,0 +1,7 @@
+name: slim-rubin
+version: 0.1.0
+author: rubin-johnson
+description: Rubin's config trimmed to behavior-changing rules only — ~40 lines
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md
