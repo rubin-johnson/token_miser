@@ -2,14 +2,14 @@
 
 A/B test Claude Code configurations.
 
-token-miser runs identical tasks under different Claude Code "arms" (configuration bundles) and measures token usage, cost, and quality. Compare a vanilla Claude Code setup against one with a custom CLAUDE.md, hooks, and tooling to see whether a configuration change is actually worth the overhead.
+token-miser runs identical tasks under different Claude Code packages (configuration packages) and measures token usage, cost, and quality. Compare a vanilla Claude Code setup against one with a custom CLAUDE.md, hooks, and tooling to see whether a configuration change is actually worth the overhead.
 
 ## Concepts
 
 - **Task** -- A YAML file describing work for Claude to do: a prompt, a target repo, success criteria, and a quality rubric.
-- **Arm** -- A Claude Code configuration bundle (a [loadout](https://github.com/rubin-johnson/loadout)) used to execute the task.
-- **Run** -- A single execution of a task under one arm.
-- **Experiment** -- A pair of runs (control + treatment arm) on the same task.
+- **Package** -- A Claude Code configuration package (a [loadout](https://github.com/rubin-johnson/loadout)) used to execute the task.
+- **Run** -- A single execution of a task under one package.
+- **Experiment** -- A pair of runs (baseline + package) on the same task.
 
 ## Requirements
 
@@ -38,11 +38,11 @@ export EXPERIMENT_REPO=$HOME/code/personal/loadout
 # Initialize the database
 token-miser migrate
 
-# Run an experiment: vanilla (no config) vs. a loadout bundle
+# Run an experiment: vanilla (no config) vs. a loadout package
 token-miser run \
   --task tasks/synth-001.yaml \
-  --control vanilla \
-  --treatment loadouts/experiment-config
+  --baseline vanilla \
+  --package loadouts/experiment-config
 
 # Compare the results
 token-miser compare --task synth-001
@@ -55,9 +55,9 @@ token-miser analyze --task synth-001
 
 | Command | Purpose |
 |---------|---------|
-| `run` | Execute a task under control and/or treatment arms |
+| `run` | Execute a task under baseline and/or package |
 | `compare` | Side-by-side comparison of runs for a task |
-| `analyze` | Statistical summary (mean, stdev, median per arm) |
+| `analyze` | Statistical summary (mean, stdev, median per package) |
 | `history` | List all recorded runs |
 | `show <id>` | Inspect a specific run in detail |
 | `tasks` | List available task YAML files |
@@ -68,8 +68,8 @@ token-miser analyze --task synth-001
 ```bash
 token-miser run \
   --task tasks/synth-001.yaml \
-  --control vanilla \
-  --treatment loadouts/experiment-config \
+  --baseline vanilla \
+  --package loadouts/experiment-config \
   --model sonnet \
   --timeout 600
 ```
@@ -77,8 +77,8 @@ token-miser run \
 | Flag | Default | Purpose |
 |------|---------|---------|
 | `--task` | (required) | Path to task YAML |
-| `--control` | (required) | Control arm: `vanilla` or path to loadout bundle |
-| `--treatment` | (optional) | Treatment arm: path to loadout bundle |
+| `--baseline` | (required) | Baseline: `vanilla` or path to loadout package |
+| `--package` | (optional) | Package to test: path to loadout package |
 | `--model` | `sonnet` | Model identifier for metadata |
 | `--timeout` | `600` | Per-invocation timeout in seconds |
 
@@ -105,41 +105,28 @@ Task `repo` fields support `${VAR}` expansion from environment variables, so tas
 
 ## How it works
 
-For each arm in an experiment:
+For each package in an experiment:
 
 1. Create an isolated temp directory as `HOME`
 2. Clone the task's target repo and checkout the starting commit
 3. Copy Claude credentials into the isolated HOME
-4. If treatment arm: run `loadout apply` to deploy the configuration bundle
+4. If package under test: run `loadout apply` to deploy the configuration package
 5. Invoke `claude --print --dangerously-skip-permissions --output-format json`
 6. Check success criteria against the workspace
 7. Optionally score quality via Claude-as-judge (requires `ANTHROPIC_API_KEY`)
 8. Store results in SQLite (`~/.token_miser/results.db`)
 
-## Loadout bundles
+## Loadout packages
 
-Three loadout bundles ship with this repo, each representing a different Claude Code philosophy:
+Three loadout packages ship with this repo, each representing a different Claude Code philosophy:
 
-| Bundle | Philosophy |
-|--------|-----------|
+| Package | Philosophy |
+|---------|-----------|
 | `loadouts/token-miser/` | Minimize tokens -- terse output, lazy reads, no extras |
 | `loadouts/thorough/` | Maximize correctness -- read everything, explain reasoning |
 | `loadouts/tdd-strict/` | Strict TDD -- failing test first, always |
 
-Each is a valid loadout bundle with a `manifest.yaml` and `CLAUDE.md`.
-
-## Relationship with loadout and kanon
-
-**[loadout](https://github.com/rubin-johnson/loadout)** manages Claude Code configuration bundles. token-miser uses loadout to deploy treatment arms into isolated test environments.
-
-**[kanon](https://github.com/caylent-solutions/kanon)** distributes versioned packages across teams. Loadout bundles can be distributed as kanon packages, giving teams a pipeline:
-
-```
-kanon distributes  ->  loadout applies  ->  token-miser measures
-(versioned bundles)    (local config)       (A/B comparison)
-```
-
-This repo includes a `.kanon` file that configures kanon to sync loadout bundles from a manifest repository. See [docs/kanon-integration.md](docs/kanon-integration.md) for details.
+Each is a valid loadout package with a `manifest.yaml` and `CLAUDE.md`.
 
 ## Data
 
@@ -151,4 +138,13 @@ All results stored locally in `~/.token_miser/results.db` (SQLite). Nothing is s
 uv sync
 uv run pytest tests/ -v
 uv run ruff check src/ tests/
+```
+
+## Ecosystem
+
+kanon installs versioned configuration packages to `.packages/`. loadout applies a package to the local machine. token_miser benchmarks packages by running identical tasks under baseline (vanilla) and package configurations, then compares token usage, cost, and quality. Results can be published back to kanon so teams converge on the best-performing package.
+
+```
+kanon distributes  ->  loadout applies  ->  token-miser measures  ->  publish to kanon
+(versioned packages)   (local config)       (A/B comparison)         (best package wins)
 ```

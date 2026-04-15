@@ -5,11 +5,11 @@ build-backend = "hatchling.build"
 [project]
 name = "token-miser"
 version = "0.1.0"
-description = "A/B test Claude Code configurations"
+description = "Benchmark Claude Code configuration packages"
 requires-python = ">=3.11"
 license = "Apache-2.0"
 authors = [{ name = "Rubin Johnson" }]
-keywords = ["claude", "claude-code", "testing", "devtools"]
+keywords = ["claude", "claude-code", "testing", "devtools", "kanon", "loadout"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
