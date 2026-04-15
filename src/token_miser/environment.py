@@ -58,13 +58,17 @@ def setup_env(task: Task, package_ref: PackageRef) -> EnvironmentContext:
                 cmd, shell=True, check=True, capture_output=True, cwd=workspace_dir,
             )
 
-        # Copy credentials into isolated HOME so Claude can authenticate
+        # Copy credentials and base config into isolated HOME
         real_home = Path.home()
+        claude_dir = Path(home_dir) / ".claude"
+        claude_dir.mkdir(mode=0o700, exist_ok=True)
         cred_src = real_home / ".claude" / ".credentials.json"
         if cred_src.exists():
-            claude_dir = Path(home_dir) / ".claude"
-            claude_dir.mkdir(mode=0o700, exist_ok=True)
             shutil.copy2(cred_src, claude_dir / ".credentials.json")
+        # Copy user's CLAUDE.md as baseline (loadout apply will overwrite if a package is applied)
+        claude_md_src = real_home / ".claude" / "CLAUDE.md"
+        if claude_md_src.exists():
+            shutil.copy2(claude_md_src, claude_dir / "CLAUDE.md")
 
         # Symlink AWS config so Bedrock/SSO credentials work in the isolated HOME
         aws_dir = real_home / ".aws"
