@@ -32,6 +32,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     results = []
     for spec in specs:
         arm = parse_arm(spec)
+        print(f"Running arm: {arm.name}...", file=sys.stderr)
         env = setup_env(task, arm)
         try:
             if task.type == "sequential":

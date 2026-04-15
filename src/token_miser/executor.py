@@ -72,8 +72,10 @@ def run_claude(prompt: str, home_dir: str, workspace_dir: str, timeout: int = DE
     )
 
     if proc.returncode != 0:
-        stderr = proc.stderr.strip() if proc.stderr else "(no stderr)"
-        raise RuntimeError(f"claude exited {proc.returncode}: {stderr}")
+        stderr = proc.stderr.strip() if proc.stderr else ""
+        stdout_hint = proc.stdout.strip()[:500] if proc.stdout else ""
+        details = stderr or stdout_hint or "(no output)"
+        raise RuntimeError(f"claude exited {proc.returncode}: {details}")
 
     result = parse_claude_json(proc.stdout.encode())
     result.wall_seconds = time.monotonic() - start
