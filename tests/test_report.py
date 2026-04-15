@@ -19,7 +19,7 @@ def test_compare_no_runs(tmp_path):
     conn.close()
 
 
-def test_compare_two_arms(tmp_path):
+def test_compare_two_packages(tmp_path):
     runs = [
         Run(task_id="t1", package_name="vanilla", input_tokens=100, output_tokens=50, total_cost_usd=0.01),
         Run(task_id="t1", package_name="treatment", input_tokens=80, output_tokens=40, total_cost_usd=0.008),
@@ -32,7 +32,7 @@ def test_compare_two_arms(tmp_path):
     conn.close()
 
 
-def test_compare_three_arms(tmp_path):
+def test_compare_three_packages(tmp_path):
     runs = [
         Run(task_id="t1", package_name="a", total_cost_usd=0.01),
         Run(task_id="t1", package_name="b", total_cost_usd=0.02),

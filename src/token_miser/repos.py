@@ -1,6 +1,7 @@
 """Repo cache management — cloning, fixture unpacking, version pinning."""
 from __future__ import annotations
 
+import shutil
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -14,7 +15,7 @@ class RepoSpec:
     type: str = "remote"
     url: str = ""
     commit: str = ""
-    bundle: str = ""
+    bundle: str = ""  # git bundle file path (git bundle create artifact, not a loadout package)
     shallow: bool = False
     setup_commands: list[str] = field(default_factory=list)
 
@@ -43,6 +44,8 @@ def ensure_repo(spec: RepoSpec, cache_dir: Path, benchmarks_dir: Path | None = N
 
     if dest.exists() and (dest / ".git").exists():
         return dest
+    if dest.exists():
+        shutil.rmtree(dest)  # stale partial clone
 
     if spec.type == "fixture":
         bundle_path = Path(spec.bundle)

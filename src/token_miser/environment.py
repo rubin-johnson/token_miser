@@ -45,11 +45,18 @@ def setup_env(task: Task, package_ref: PackageRef) -> EnvironmentContext:
         )
 
         # Checkout starting commit
-        subprocess.run(
-            ["git", "-C", workspace_dir, "checkout", task.starting_commit],
-            check=True,
-            capture_output=True,
-        )
+        if task.starting_commit:
+            subprocess.run(
+                ["git", "-C", workspace_dir, "checkout", task.starting_commit],
+                check=True,
+                capture_output=True,
+            )
+
+        # Run setup commands (e.g., pip install, npm install)
+        for cmd in task.setup_commands:
+            subprocess.run(
+                cmd, shell=True, check=True, capture_output=True, cwd=workspace_dir,
+            )
 
         # Copy credentials into isolated HOME so Claude can authenticate
         real_home = Path.home()

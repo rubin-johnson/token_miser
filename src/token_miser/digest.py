@@ -101,13 +101,15 @@ def export_session(conn: sqlite3.Connection, session_id: int, output_dir: Path |
 
 def export_all(conn: sqlite3.Connection, output_dir: Path | None = None) -> list[Path]:
     """Export all tune sessions as digest files."""
+    import sys
+
     rows = conn.execute("SELECT id FROM tune_sessions ORDER BY started_at").fetchall()
     paths = []
     for row in rows:
         try:
             paths.append(export_session(conn, row["id"], output_dir))
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"WARNING: failed to export session {row['id']}: {e}", file=sys.stderr)
     return paths
 
 

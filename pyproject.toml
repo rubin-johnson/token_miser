@@ -49,4 +49,4 @@ select = ["F", "E", "W", "I"]
 
 [tool.uv.sources]
 loadout = { path = "../loadout", editable = true }
-kanon-cli = { path = "/home/rujohnson/code/caylent/kanon", editable = true }
+kanon-cli = { path = "../../caylent/kanon", editable = true }

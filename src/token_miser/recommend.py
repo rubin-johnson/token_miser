@@ -25,8 +25,10 @@ def _parse_quality_scores(raw: str) -> dict[str, float] | None:
     try:
         data = json.loads(raw)
         if isinstance(data, dict):
-            return data
-    except (json.JSONDecodeError, TypeError):
+            return {k: float(v) for k, v in data.items()}
+        if isinstance(data, list):
+            return {item["dimension"]: float(item["score"]) for item in data if "dimension" in item}
+    except (json.JSONDecodeError, TypeError, KeyError, ValueError):
         pass
     return None
 

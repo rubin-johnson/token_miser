@@ -201,7 +201,13 @@ def create_tune_session(conn: sqlite3.Connection, session: TuneSession) -> int:
     return row_id
 
 
+_TUNE_SESSION_COLUMNS = {"status", "tuned_package", "completed_at", "recommendations_json"}
+
+
 def update_tune_session(conn: sqlite3.Connection, session_id: int, **kwargs: str) -> None:
+    invalid = set(kwargs) - _TUNE_SESSION_COLUMNS
+    if invalid:
+        raise ValueError(f"Unknown tune_session columns: {invalid}")
     sets = ", ".join(f"{k} = ?" for k in kwargs)
     values = list(kwargs.values()) + [session_id]
     conn.execute(f"UPDATE tune_sessions SET {sets} WHERE id = ?", values)

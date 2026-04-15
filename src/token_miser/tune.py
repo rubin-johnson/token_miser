@@ -7,6 +7,7 @@ import shutil
 import sqlite3
 import sys
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 from token_miser.checker import check_all_criteria
@@ -309,8 +310,7 @@ def run_tune(
             if not recommendations:
                 print("No recommendations — your config looks efficient already.")
                 update_tune_session(conn, session_id, status="completed",
-                                    completed_at=__import__("datetime").datetime.now(
-                                        __import__("datetime").timezone.utc).isoformat())
+                                    completed_at=datetime.now(timezone.utc).isoformat())
                 return 0
 
             print(f"\nRecommendations ({len(recommendations)}):")
@@ -355,8 +355,7 @@ def run_tune(
         _print_comparison(baseline_runs, tuned_runs)
 
         update_tune_session(conn, session_id, status="completed",
-                            completed_at=__import__("datetime").datetime.now(
-                                __import__("datetime").timezone.utc).isoformat())
+                            completed_at=datetime.now(timezone.utc).isoformat())
 
         # Cleanup temp baseline
         shutil.rmtree(baseline_dir, ignore_errors=True)
