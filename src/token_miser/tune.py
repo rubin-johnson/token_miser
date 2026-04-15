@@ -207,6 +207,24 @@ def run_tune(
         return 1
 
     suite = load_suite(suite_file, tasks_dir)
+
+    # Resolve repo_ids to local paths
+    from token_miser.repos import ensure_repo, load_repos_config
+
+    repos_yaml = benchmarks / "repos.yaml"
+    repo_specs = load_repos_config(repos_yaml) if repos_yaml.exists() else {}
+    cache_dir = Path.home() / ".token_miser" / "repo_cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    repo_paths: dict[str, str] = {}
+    for bt in suite.tasks:
+        if bt.repo_id and bt.repo_id not in repo_paths:
+            if bt.repo_id in repo_specs:
+                path = ensure_repo(repo_specs[bt.repo_id], cache_dir, benchmarks_dir=benchmarks)
+                repo_paths[bt.repo_id] = str(path)
+            else:
+                print(f"WARNING: repo_id '{bt.repo_id}' not in repos.yaml", file=sys.stderr)
+
     conn = init_db()
 
     try:
@@ -247,7 +265,7 @@ def run_tune(
         if not skip_baseline:
             print(f"\nRunning baseline benchmarks ({active_name})...")
             for i, bt in enumerate(suite.tasks, 1):
-                task = _benchmark_task_to_task(bt, "")  # repo resolved by suite runner
+                task = _benchmark_task_to_task(bt, repo_paths.get(bt.repo_id, ""))
                 try:
                     run = _run_single_task(task, baseline_profile, model, timeout, conn)
                     link_tune_run(conn, session_id, run.id, "baseline")
@@ -312,7 +330,7 @@ def run_tune(
         print(f"\nRunning tuned benchmarks ({tuned_profile.name})...")
         tuned_runs: list[Run] = []
         for i, bt in enumerate(suite.tasks, 1):
-            task = _benchmark_task_to_task(bt, "")
+            task = _benchmark_task_to_task(bt, repo_paths.get(bt.repo_id, ""))
             try:
                 run = _run_single_task(task, tuned_profile, model, timeout, conn)
                 link_tune_run(conn, session_id, run.id, "tuned")
