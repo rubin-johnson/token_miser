@@ -1,0 +1,23 @@
+id: bm-feat-003
+name: "Add health check endpoint to Flask app"
+repo_id: flask
+starting_commit: "3.1.0"
+category: feature
+difficulty: medium
+setup_commands:
+  - "python -m venv .venv"
+  - ".venv/bin/pip install -e '.[dev]'"
+prompt: |
+  In the Flask examples/tutorial directory, add a health check endpoint to the flaskr app:
+  - GET /health should return JSON {"status": "ok", "version": "1.0.0"}
+  - It should also check that the database is accessible and include "db": "ok" or "db": "error"
+  - Add a test for the health endpoint in tests/test_factory.py or a new test file
+  - Follow the existing code patterns in the tutorial app
+success_criteria:
+  - type: command_exits_zero
+    command: ".venv/bin/python -m pytest examples/tutorial/tests/ -q"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does the health endpoint correctly report app and database status?"
+  - dimension: minimal_change
+    prompt: "Were changes limited to the health check feature without modifying unrelated code?"

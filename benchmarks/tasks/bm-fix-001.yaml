@@ -1,0 +1,22 @@
+id: bm-fix-001
+name: "Fix off-by-one pagination bug"
+repo_id: tiny-api-buggy-pagination
+starting_commit: buggy-pagination
+category: bugfix
+difficulty: easy
+prompt: |
+  Users report that the GET /items endpoint returns incorrect results when paginating.
+  For example, with 12 items and per_page=5:
+  - Page 1 should return items 1-5 but seems off
+  - Page 2 should return items 6-10
+  - Page 3 should return items 11-12
+
+  Find and fix the pagination bug. Add a regression test that would catch this bug.
+success_criteria:
+  - type: command_exits_zero
+    command: "python -m pytest tests/ -q"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does the fix correctly resolve the off-by-one error and pass the regression test?"
+  - dimension: minimal_change
+    prompt: "Was only the buggy code changed, with a targeted regression test added?"

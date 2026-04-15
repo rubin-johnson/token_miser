@@ -1,0 +1,20 @@
+id: bm-fix-002
+name: "Fix circular import error"
+repo_id: tiny-cli-buggy-import
+starting_commit: buggy-import-cycle
+category: bugfix
+difficulty: easy
+prompt: |
+  Running the CLI fails with an ImportError about a circular import.
+  Diagnose the circular dependency, fix it without changing the public API
+  of any module, and verify all tests pass.
+success_criteria:
+  - type: command_exits_zero
+    command: "python -m pytest tests/ -q"
+  - type: command_exits_zero
+    command: "python -m tiny_cli greet World"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Is the circular import fully resolved? Does the CLI work?"
+  - dimension: minimal_change
+    prompt: "Was the fix minimal — moving an import, not restructuring the project?"

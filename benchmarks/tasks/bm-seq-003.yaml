@@ -1,0 +1,30 @@
+id: bm-seq-003
+name: "Debug, fix, test (3-step)"
+repo_id: tiny-api-buggy-500
+starting_commit: buggy-500
+category: sequential
+difficulty: hard
+type: sequential
+prompts:
+  - |
+    Users are reporting that POST /items sometimes returns a 500 Internal Server Error.
+    It seems to happen with certain price values. Investigate the issue:
+    - Read the application code
+    - Try to reproduce the error
+    - Write your findings (what causes the 500 and where the bug is) as a comment at the top of app.py
+  - |
+    Fix the bug you identified. The fix should handle the edge case gracefully
+    (return a proper 422 validation error, not a 500).
+  - |
+    Write regression tests that:
+    1. Reproduce the original 500 error scenario (which should now return 422)
+    2. Verify normal items still create successfully
+    3. Test boundary values around the problematic input
+success_criteria:
+  - type: command_exits_zero
+    command: "python -m pytest tests/ -q"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Is the root cause correctly identified? Does the fix handle the edge case properly?"
+  - dimension: minimal_change
+    prompt: "Was the fix targeted at the specific bug without unnecessary refactoring?"

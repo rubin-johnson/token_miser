@@ -29,6 +29,19 @@ class Run:
     result: str = ""
 
 
+@dataclass
+class TuneSession:
+    id: int = 0
+    suite_name: str = ""
+    suite_version: str = ""
+    baseline_profile: str = ""
+    tuned_profile: str = ""
+    started_at: str = ""
+    completed_at: str = ""
+    status: str = "running"
+    recommendations_json: str = ""
+
+
 def db_path() -> str:
     home = Path.home()
     return str(home / ".token_miser" / "results.db")
@@ -38,7 +51,8 @@ def init_db(path: str | None = None) -> sqlite3.Connection:
     """Initialize database connection and create tables."""
     if path is None:
         path = db_path()
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    if path != ":memory:":
+        os.makedirs(os.path.dirname(path), exist_ok=True)
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
     _create_tables(conn)
@@ -74,6 +88,27 @@ def _create_tables(conn: sqlite3.Connection) -> None:
             criterion_type TEXT,
             passed INTEGER,
             detail TEXT
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS tune_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            suite_name TEXT NOT NULL,
+            suite_version TEXT NOT NULL DEFAULT '',
+            baseline_profile TEXT NOT NULL DEFAULT '',
+            tuned_profile TEXT DEFAULT '',
+            started_at TEXT DEFAULT '',
+            completed_at TEXT DEFAULT '',
+            status TEXT DEFAULT 'running',
+            recommendations_json TEXT DEFAULT ''
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS tune_runs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER REFERENCES tune_sessions(id),
+            run_id INTEGER REFERENCES runs(id),
+            phase TEXT NOT NULL
         )
     """)
     conn.commit()
@@ -137,4 +172,97 @@ def _row_to_run(row: sqlite3.Row) -> Run:
         criteria_total=row["criteria_total"],
         quality_scores=row["quality_scores"],
         result=row["result"],
+    )
+
+
+def create_tune_session(conn: sqlite3.Connection, session: TuneSession) -> int:
+    now = datetime.now(timezone.utc).isoformat()
+    cursor = conn.execute(
+        """INSERT INTO tune_sessions (suite_name, suite_version, baseline_profile,
+            tuned_profile, started_at, status, recommendations_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (session.suite_name, session.suite_version, session.baseline_profile,
+         session.tuned_profile, now, session.status, session.recommendations_json),
+    )
+    conn.commit()
+    row_id = cursor.lastrowid
+    if row_id is None:
+        raise RuntimeError("INSERT did not return a row ID")
+    return row_id
+
+
+def update_tune_session(conn: sqlite3.Connection, session_id: int, **kwargs: str) -> None:
+    sets = ", ".join(f"{k} = ?" for k in kwargs)
+    values = list(kwargs.values()) + [session_id]
+    conn.execute(f"UPDATE tune_sessions SET {sets} WHERE id = ?", values)
+    conn.commit()
+
+
+def link_tune_run(conn: sqlite3.Connection, session_id: int, run_id: int, phase: str) -> None:
+    conn.execute(
+        "INSERT INTO tune_runs (session_id, run_id, phase) VALUES (?, ?, ?)",
+        (session_id, run_id, phase),
+    )
+    conn.commit()
+
+
+def get_tune_session(conn: sqlite3.Connection, session_id: int) -> TuneSession | None:
+    row = conn.execute("SELECT * FROM tune_sessions WHERE id = ?", (session_id,)).fetchone()
+    if not row:
+        return None
+    return TuneSession(
+        id=row["id"],
+        suite_name=row["suite_name"],
+        suite_version=row["suite_version"],
+        baseline_profile=row["baseline_profile"],
+        tuned_profile=row["tuned_profile"],
+        started_at=row["started_at"],
+        completed_at=row["completed_at"],
+        status=row["status"],
+        recommendations_json=row["recommendations_json"],
+    )
+
+
+def get_tune_session_runs(conn: sqlite3.Connection, session_id: int, phase: str = "") -> list[Run]:
+    if phase:
+        rows = conn.execute(
+            """SELECT r.* FROM runs r
+               JOIN tune_runs tr ON r.id = tr.run_id
+               WHERE tr.session_id = ? AND tr.phase = ?
+               ORDER BY r.started_at""",
+            (session_id, phase),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            """SELECT r.* FROM runs r
+               JOIN tune_runs tr ON r.id = tr.run_id
+               WHERE tr.session_id = ?
+               ORDER BY r.started_at""",
+            (session_id,),
+        ).fetchall()
+    return [_row_to_run(r) for r in rows]
+
+
+def get_latest_tune_session(conn: sqlite3.Connection, suite_name: str = "") -> TuneSession | None:
+    if suite_name:
+        row = conn.execute(
+            "SELECT * FROM tune_sessions WHERE suite_name = ? ORDER BY started_at DESC LIMIT 1",
+            (suite_name,),
+        ).fetchone()
+    else:
+        row = conn.execute(
+            "SELECT * FROM tune_sessions ORDER BY started_at DESC LIMIT 1"
+        ).fetchone()
+    if not row:
+        return None
+    return TuneSession(
+        id=row["id"],
+        suite_name=row["suite_name"],
+        suite_version=row["suite_version"],
+        baseline_profile=row["baseline_profile"],
+        tuned_profile=row["tuned_profile"],
+        started_at=row["started_at"],
+        completed_at=row["completed_at"],
+        status=row["status"],
+        recommendations_json=row["recommendations_json"],
     )

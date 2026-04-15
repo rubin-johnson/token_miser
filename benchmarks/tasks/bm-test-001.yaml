@@ -1,0 +1,24 @@
+id: bm-test-001
+name: "Write tests for untested utility functions"
+repo_id: tiny-cli
+starting_commit: v1.0
+category: test
+difficulty: easy
+prompt: |
+  The utils.py module has 5 functions but only 3 are tested (truncate_string, pluralize,
+  is_python_file). Write comprehensive tests for the untested functions:
+  - read_lines: test with normal file, empty file, nonexistent file
+  - format_table: test with various column widths, empty rows, single row
+
+  Add the tests to tests/test_utils.py. All tests should pass.
+success_criteria:
+  - type: command_exits_zero
+    command: "python -m pytest tests/test_utils.py -q"
+  - type: output_contains
+    command: "python -m pytest tests/test_utils.py -v --tb=no"
+    contains: ["read_lines", "format_table"]
+quality_rubric:
+  - dimension: correctness
+    prompt: "Do the tests cover both happy paths and edge cases for read_lines and format_table?"
+  - dimension: minimal_change
+    prompt: "Were only test additions made, without modifying source code?"

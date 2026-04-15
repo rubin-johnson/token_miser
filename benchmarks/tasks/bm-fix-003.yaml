@@ -1,0 +1,25 @@
+id: bm-fix-003
+name: "Fix httpx retry transport bug"
+repo_id: httpx
+starting_commit: "0.28.1"
+category: bugfix
+difficulty: hard
+setup_commands:
+  - "python -m venv .venv"
+  - ".venv/bin/pip install -e '.[dev]'"
+prompt: |
+  There's a bug in httpx where the retry logic in the transport layer doesn't properly
+  reset the request body stream position on retries. When a POST request with a streaming
+  body is retried after a connection error, the retry sends an empty body because the
+  stream was already consumed.
+
+  Find the relevant code in the transport layer, fix the stream reset logic, and add
+  a test that reproduces the bug and verifies the fix.
+success_criteria:
+  - type: command_exits_zero
+    command: ".venv/bin/python -m pytest tests/ -x -q --timeout=60"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does the fix properly handle stream position reset for retried requests?"
+  - dimension: minimal_change
+    prompt: "Was the change focused on the stream reset without unnecessary refactoring?"

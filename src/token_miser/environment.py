@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from token_miser.arm import Arm
+from token_miser.config_manager import apply_profile
 from token_miser.task import Task
 
 
@@ -60,12 +61,8 @@ def setup_env(task: Task, arm: Arm) -> EnvironmentContext:
 
         # For treatment arm, apply loadout
         if arm.loadout_path:
-            claude_dir = os.path.join(home_dir, ".claude")
-            subprocess.run(
-                ["loadout", "apply", "--target", claude_dir, "--yes", arm.loadout_path],
-                check=True,
-                capture_output=True,
-            )
+            claude_dir = Path(home_dir) / ".claude"
+            apply_profile(Path(arm.loadout_path), claude_dir)
 
     except Exception:
         env.teardown()

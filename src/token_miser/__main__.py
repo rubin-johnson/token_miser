@@ -194,6 +194,138 @@ def cmd_migrate(args: argparse.Namespace) -> int:
         conn.close()
 
 
+def cmd_tune(args: argparse.Namespace) -> int:
+    from token_miser.tune import run_tune
+
+    return run_tune(
+        suite_name=args.suite,
+        skip_baseline=args.skip_baseline,
+        profile_path=args.profile,
+        output_dir=args.output,
+        timeout=args.timeout,
+        model=args.model,
+        yes=args.yes,
+    )
+
+
+def cmd_suite(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from token_miser.suite import list_suites, load_suite
+    from token_miser.tune import _benchmarks_dir
+
+    benchmarks = _benchmarks_dir()
+    suites_dir = benchmarks / "suites"
+    tasks_dir = benchmarks / "tasks"
+
+    if args.suite_command == "list":
+        names = list_suites(suites_dir)
+        if not names:
+            print("No suites found.")
+            return 0
+        for name in names:
+            suite_file = suites_dir / f"{name}.yaml"
+            try:
+                suite = load_suite(suite_file, tasks_dir)
+                print(f"  {name:<16} {len(suite.tasks)} tasks  {suite.description}")
+            except Exception:
+                print(f"  {name:<16} (error loading)")
+        return 0
+
+    elif args.suite_command == "validate":
+        suite_name = args.suite or "standard"
+        suite_file = suites_dir / f"{suite_name}.yaml"
+        if not suite_file.exists():
+            print(f"Suite not found: {suite_name}", file=sys.stderr)
+            return 1
+        try:
+            suite = load_suite(suite_file, tasks_dir)
+            print(f"Suite '{suite.name}' v{suite.version}: {len(suite.tasks)} tasks — valid")
+            return 0
+        except Exception as e:
+            print(f"Validation failed: {e}", file=sys.stderr)
+            return 1
+
+    elif args.suite_command == "prep":
+        from token_miser.repos import ensure_repo, load_repos_config
+
+        suite_name = args.suite or "standard"
+        suite_file = suites_dir / f"{suite_name}.yaml"
+        if not suite_file.exists():
+            print(f"Suite not found: {suite_name}", file=sys.stderr)
+            return 1
+
+        suite = load_suite(suite_file, tasks_dir)
+        repos_yaml = benchmarks / "repos.yaml"
+        if repos_yaml.exists():
+            specs = load_repos_config(repos_yaml)
+            cache_dir = Path.home() / ".token_miser" / "repo_cache"
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            needed = {t.repo_id for t in suite.tasks if t.repo_id}
+            for repo_id in sorted(needed):
+                if repo_id in specs:
+                    print(f"  Preparing {repo_id}...", end=" ", flush=True)
+                    try:
+                        ensure_repo(specs[repo_id], cache_dir, benchmarks_dir=benchmarks)
+                        print("ok")
+                    except Exception as e:
+                        print(f"error: {e}")
+                else:
+                    print(f"  {repo_id}: not found in repos.yaml", file=sys.stderr)
+        print("Done.")
+        return 0
+
+    print(f"Unknown suite command: {args.suite_command}", file=sys.stderr)
+    return 1
+
+
+def cmd_digest(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from token_miser.digest import compare_digests, export_all, export_session, list_digests
+
+    if args.digest_command == "export":
+        conn = init_db()
+        try:
+            if args.all:
+                paths = export_all(conn)
+                for p in paths:
+                    print(f"  Exported: {p}")
+                print(f"{len(paths)} digests exported.")
+            else:
+                from token_miser.db import get_latest_tune_session
+                session = get_latest_tune_session(conn)
+                if not session:
+                    print("No tune sessions found.", file=sys.stderr)
+                    return 1
+                path = export_session(conn, session.id)
+                print(f"Exported: {path}")
+            return 0
+        finally:
+            conn.close()
+
+    elif args.digest_command == "history":
+        paths = list_digests()
+        if not paths:
+            print("No digests found.")
+            return 0
+        for p in paths:
+            print(f"  {p.name}")
+        return 0
+
+    elif args.digest_command == "compare":
+        p1 = Path(args.digest1)
+        p2 = Path(args.digest2)
+        if not p1.exists() or not p2.exists():
+            print("One or both digest files not found.", file=sys.stderr)
+            return 1
+        print(compare_digests(p1, p2))
+        return 0
+
+    print(f"Unknown digest command: {args.digest_command}", file=sys.stderr)
+    return 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     from token_miser import __version__
 
@@ -231,6 +363,35 @@ def build_parser() -> argparse.ArgumentParser:
     # migrate
     sub.add_parser("migrate", help="Initialize/migrate database")
 
+    # tune
+    p_tune = sub.add_parser("tune", help="Guided efficiency optimization")
+    p_tune.add_argument("--suite", default="standard", help="Benchmark suite name (default: standard)")
+    p_tune.add_argument("--skip-baseline", action="store_true", help="Reuse last baseline")
+    p_tune.add_argument("--profile", default=None, help="Test a specific profile path")
+    p_tune.add_argument("--output", default="tuned-profile", help="Output dir for generated profile")
+    p_tune.add_argument("--timeout", type=int, default=300, help="Per-task timeout in seconds")
+    p_tune.add_argument("--model", default="sonnet", help="Model identifier")
+    p_tune.add_argument("--yes", action="store_true", help="Skip confirmation prompts")
+
+    # suite
+    p_suite = sub.add_parser("suite", help="Manage benchmark suites")
+    suite_sub = p_suite.add_subparsers(dest="suite_command", required=True)
+    suite_sub.add_parser("list", help="List available suites")
+    p_suite_validate = suite_sub.add_parser("validate", help="Validate suite tasks")
+    p_suite_validate.add_argument("--suite", default=None, help="Suite name")
+    p_suite_prep = suite_sub.add_parser("prep", help="Pre-clone suite repos")
+    p_suite_prep.add_argument("--suite", default=None, help="Suite name")
+
+    # digest
+    p_digest = sub.add_parser("digest", help="Export run data for git tracking")
+    digest_sub = p_digest.add_subparsers(dest="digest_command", required=True)
+    p_digest_export = digest_sub.add_parser("export", help="Export sessions to digest files")
+    p_digest_export.add_argument("--all", action="store_true", help="Export all sessions")
+    digest_sub.add_parser("history", help="Show digest timeline")
+    p_digest_compare = digest_sub.add_parser("compare", help="Compare two digests")
+    p_digest_compare.add_argument("digest1", help="First digest file")
+    p_digest_compare.add_argument("digest2", help="Second digest file")
+
     return parser
 
 
@@ -246,6 +407,9 @@ def main() -> None:
         "show": cmd_show,
         "tasks": cmd_tasks,
         "migrate": cmd_migrate,
+        "tune": cmd_tune,
+        "suite": cmd_suite,
+        "digest": cmd_digest,
     }
 
     try:

@@ -1,0 +1,58 @@
+name: standard
+version: "0.1.0"
+description: "Full benchmark suite — fixtures plus real public repos"
+tasks:
+  # Feature implementation
+  - file: bm-feat-001.yaml
+    category: feature
+    difficulty: easy
+  - file: bm-feat-002.yaml
+    category: feature
+    difficulty: medium
+  - file: bm-feat-003.yaml
+    category: feature
+    difficulty: medium
+
+  # Bug fixes
+  - file: bm-fix-001.yaml
+    category: bugfix
+    difficulty: easy
+  - file: bm-fix-002.yaml
+    category: bugfix
+    difficulty: easy
+  - file: bm-fix-003.yaml
+    category: bugfix
+    difficulty: hard
+
+  # Refactoring
+  - file: bm-refactor-001.yaml
+    category: refactor
+    difficulty: easy
+  - file: bm-refactor-002.yaml
+    category: refactor
+    difficulty: medium
+  - file: bm-refactor-003.yaml
+    category: refactor
+    difficulty: hard
+
+  # Test writing
+  - file: bm-test-001.yaml
+    category: test
+    difficulty: easy
+  - file: bm-test-002.yaml
+    category: test
+    difficulty: medium
+  - file: bm-test-003.yaml
+    category: test
+    difficulty: hard
+
+  # Sequential / multi-step
+  - file: bm-seq-001.yaml
+    category: sequential
+    difficulty: easy
+  - file: bm-seq-002.yaml
+    category: sequential
+    difficulty: medium
+  - file: bm-seq-003.yaml
+    category: sequential
+    difficulty: hard

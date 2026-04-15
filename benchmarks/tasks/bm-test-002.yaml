@@ -1,0 +1,24 @@
+id: bm-test-002
+name: "Add edge case tests for API"
+repo_id: tiny-api
+starting_commit: v1.0
+category: test
+difficulty: medium
+prompt: |
+  The API has basic happy-path tests but no error handling or edge case tests. Add tests for:
+  1. POST /items with invalid data: missing name, negative price, empty name
+  2. GET /items/{id} with nonexistent ID (should return 404)
+  3. GET /items pagination edge cases: page beyond total, per_page=0, very large per_page
+  4. POST /items with extra unexpected fields
+
+  Add these to a new tests/test_edge_cases.py file. All tests should pass.
+success_criteria:
+  - type: file_exists
+    paths: ["tests/test_edge_cases.py"]
+  - type: command_exits_zero
+    command: "python -m pytest tests/ -q"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Do the edge case tests actually verify error behavior, not just that endpoints don't crash?"
+  - dimension: minimal_change
+    prompt: "Were only tests added? Was source code left unmodified?"

@@ -1,0 +1,28 @@
+id: bm-refactor-003
+name: "Split large module into package"
+repo_id: httpx
+starting_commit: "0.28.1"
+category: refactor
+difficulty: hard
+setup_commands:
+  - "python -m venv .venv"
+  - ".venv/bin/pip install -e '.[dev]'"
+prompt: |
+  The httpx/_utils.py module has grown large with many unrelated utility functions.
+  Split it into a _utils/ package with focused submodules:
+  1. _utils/__init__.py — re-exports everything for backward compatibility
+  2. _utils/urls.py — URL-related utilities
+  3. _utils/headers.py — header-related utilities
+  4. _utils/misc.py — remaining utilities
+
+  All existing tests and imports must continue to work without modification.
+success_criteria:
+  - type: file_exists
+    paths: ["httpx/_utils/__init__.py"]
+  - type: command_exits_zero
+    command: ".venv/bin/python -m pytest tests/ -x -q --timeout=120"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does the split maintain backward compatibility? Are all re-exports correct?"
+  - dimension: minimal_change
+    prompt: "Was the split clean without adding new functionality or changing signatures?"

@@ -1,0 +1,41 @@
+repos:
+  - id: tiny-cli
+    type: fixture
+    bundle: fixtures/tiny-cli/repo.bundle
+    commit: HEAD
+
+  - id: tiny-cli-buggy-import
+    type: fixture
+    bundle: fixtures/tiny-cli/repo.bundle
+    commit: buggy-import-cycle
+
+  - id: tiny-api
+    type: fixture
+    bundle: fixtures/tiny-api/repo.bundle
+    commit: HEAD
+
+  - id: tiny-api-buggy-pagination
+    type: fixture
+    bundle: fixtures/tiny-api/repo.bundle
+    commit: buggy-pagination
+
+  - id: tiny-api-buggy-500
+    type: fixture
+    bundle: fixtures/tiny-api/repo.bundle
+    commit: buggy-500
+
+  - id: flask
+    url: https://github.com/pallets/flask.git
+    commit: "3.1.0"
+    shallow: true
+    setup_commands:
+      - "python -m venv .venv"
+      - ".venv/bin/pip install -e '.[dev]'"
+
+  - id: httpx
+    url: https://github.com/encode/httpx.git
+    commit: "0.28.1"
+    shallow: true
+    setup_commands:
+      - "python -m venv .venv"
+      - ".venv/bin/pip install -e '.[dev]'"

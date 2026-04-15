@@ -1,0 +1,25 @@
+id: bm-refactor-002
+name: "Replace dict with dataclass"
+repo_id: tiny-api
+starting_commit: v1.0
+category: refactor
+difficulty: medium
+prompt: |
+  The schemas.py module builds response dicts manually. Replace the plain dict construction
+  with proper dataclasses or Pydantic models:
+  1. Define response models in schemas.py (ItemResponse, ItemListResponse, etc.)
+  2. Update app.py endpoints to use these models instead of raw dicts
+  3. All existing tests must continue to pass
+
+  Do not change the JSON response format — the API contract stays the same.
+success_criteria:
+  - type: command_exits_zero
+    command: "python -m pytest tests/ -q"
+  - type: output_contains
+    command: "grep -r 'dataclass\\|BaseModel' src/tiny_api/schemas.py"
+    contains: ["class"]
+quality_rubric:
+  - dimension: correctness
+    prompt: "Do the response models produce the same JSON output as the original dicts?"
+  - dimension: minimal_change
+    prompt: "Were changes limited to schemas.py and the endpoint return statements?"

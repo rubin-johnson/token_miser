@@ -1,0 +1,339 @@
+"""Tune workflow — guided efficiency optimization."""
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import sqlite3
+import sys
+import tempfile
+from pathlib import Path
+
+from token_miser.checker import check_all_criteria
+from token_miser.config_manager import capture_current_config, read_active_profile
+from token_miser.db import (
+    Run,
+    TuneSession,
+    create_tune_session,
+    init_db,
+    link_tune_run,
+    store_run,
+    update_tune_session,
+)
+from token_miser.environment import setup_env
+from token_miser.evaluator import score_quality
+from token_miser.executor import run_claude, run_claude_sequential
+from token_miser.profile_builder import build_tuned_profile
+from token_miser.recommend import Recommendation, analyze_results
+from token_miser.suite import BenchmarkTask, load_suite
+from token_miser.task import Criterion, RubricDimension, Task
+
+
+def _benchmarks_dir() -> Path:
+    """Locate the benchmarks directory shipped with token_miser."""
+    # Check relative to this file (installed package)
+    pkg_dir = Path(__file__).parent
+    candidates = [
+        pkg_dir.parent.parent / "benchmarks",  # dev: src/token_miser/../../benchmarks
+        pkg_dir / "benchmarks",                 # installed: token_miser/benchmarks
+    ]
+    for c in candidates:
+        if c.is_dir():
+            return c
+    raise FileNotFoundError("Cannot locate benchmarks directory")
+
+
+def _benchmark_task_to_task(bt: BenchmarkTask, repo_path: str) -> Task:
+    """Convert a BenchmarkTask to a Task for the existing executor pipeline."""
+    criteria = [
+        Criterion(
+            type=c.get("type", ""),
+            paths=c.get("paths", []),
+            command=c.get("command", ""),
+            contains=c.get("contains", []),
+        )
+        for c in bt.success_criteria
+    ]
+    rubric = [
+        RubricDimension(dimension=r["dimension"], prompt=r["prompt"])
+        for r in bt.quality_rubric
+    ]
+    return Task(
+        id=bt.id,
+        name=bt.name,
+        repo=repo_path,
+        starting_commit=bt.starting_commit,
+        prompt=bt.prompt,
+        prompts=bt.prompts,
+        type=bt.type,
+        success_criteria=criteria,
+        quality_rubric=rubric,
+        repo_id=bt.repo_id,
+        category=bt.category,
+    )
+
+
+def _run_single_task(
+    task: Task,
+    profile_path: Path | None,
+    model: str,
+    timeout: int,
+    conn: sqlite3.Connection,
+) -> Run:
+    """Run a single benchmark task and store the result."""
+    from token_miser.arm import Arm
+
+    if profile_path:
+        arm = Arm(name=profile_path.name, loadout_path=str(profile_path.resolve()))
+    else:
+        arm = Arm(name="vanilla")
+
+    env = setup_env(task, arm)
+    try:
+        if task.type == "sequential":
+            res = run_claude_sequential(task.prompts, env.home_dir, env.workspace_dir, timeout=timeout)
+        else:
+            res = run_claude(task.prompt, env.home_dir, env.workspace_dir, timeout=timeout)
+
+        checks = check_all_criteria(task.success_criteria, env)
+        passed = sum(1 for c in checks if c.passed)
+        total = len(checks)
+
+        quality_json = "{}"
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        if api_key and task.quality_rubric:
+            try:
+                scores = score_quality(
+                    task.prompt or task.prompts[-1], res.result, task.quality_rubric, api_key
+                )
+                quality_json = json.dumps(
+                    [{"dimension": s.dimension, "score": s.score, "reason": s.reason} for s in scores]
+                )
+            except Exception as e:
+                print(f"WARNING: quality scoring failed: {e}", file=sys.stderr)
+
+        run = Run(
+            task_id=task.id,
+            arm=arm.name,
+            loadout_name=arm.loadout_path.split("/")[-1] if arm.loadout_path else "",
+            model=model,
+            wall_seconds=res.wall_seconds,
+            input_tokens=res.usage.input_tokens,
+            output_tokens=res.usage.output_tokens,
+            cache_read_tokens=res.usage.cache_read_input_tokens,
+            cache_write_tokens=res.usage.cache_creation_input_tokens,
+            total_cost_usd=res.total_cost_usd,
+            criteria_pass=passed,
+            criteria_total=total,
+            quality_scores=quality_json,
+            result=res.result,
+        )
+        run_id = store_run(conn, run)
+        run.id = run_id
+        return run
+    finally:
+        env.teardown()
+
+
+def _print_run_line(idx: int, total: int, task_id: str, run: Run) -> None:
+    tokens = run.input_tokens + run.output_tokens
+    status = "ok" if run.criteria_pass == run.criteria_total else "FAIL"
+    criteria = f"{run.criteria_pass}/{run.criteria_total}"
+    print(
+        f"  [{idx}/{total}] {task_id:<24} {status:<4}  "
+        f"{tokens:>8,} tokens  ${run.total_cost_usd:.4f}  "
+        f"{run.wall_seconds:.1f}s  {criteria} criteria"
+    )
+
+
+def _print_summary(label: str, runs: list[Run]) -> None:
+    total_tokens = sum(r.input_tokens + r.output_tokens for r in runs)
+    total_cost = sum(r.total_cost_usd for r in runs)
+    total_pass = sum(r.criteria_pass for r in runs)
+    total_criteria = sum(r.criteria_total for r in runs)
+    pass_rate = total_pass / total_criteria * 100 if total_criteria else 0
+    print(f"\n{label}:")
+    print(f"  Total tokens: {total_tokens:,}")
+    print(f"  Total cost:   ${total_cost:.4f}")
+    print(f"  Pass rate:    {pass_rate:.1f}% ({total_pass}/{total_criteria})")
+
+
+def _print_comparison(baseline_runs: list[Run], tuned_runs: list[Run]) -> None:
+    b_tokens = sum(r.input_tokens + r.output_tokens for r in baseline_runs)
+    t_tokens = sum(r.input_tokens + r.output_tokens for r in tuned_runs)
+    b_cost = sum(r.total_cost_usd for r in baseline_runs)
+    t_cost = sum(r.total_cost_usd for r in tuned_runs)
+    b_pass = sum(r.criteria_pass for r in baseline_runs)
+    b_total = sum(r.criteria_total for r in baseline_runs)
+    t_pass = sum(r.criteria_pass for r in tuned_runs)
+    t_total = sum(r.criteria_total for r in tuned_runs)
+
+    token_delta = ((t_tokens - b_tokens) / b_tokens * 100) if b_tokens else 0
+    cost_delta = ((t_cost - b_cost) / b_cost * 100) if b_cost else 0
+    b_rate = b_pass / b_total * 100 if b_total else 0
+    t_rate = t_pass / t_total * 100 if t_total else 0
+
+    print("\n=== Tune Results ===\n")
+    print(f"{'':28} {'Baseline':>14} {'Tuned':>14} {'Delta':>10}")
+    print(f"  {'Total tokens':<24} {b_tokens:>14,} {t_tokens:>14,} {token_delta:>+9.1f}%")
+    print(f"  {'Total cost':<24} ${b_cost:>13.4f} ${t_cost:>13.4f} {cost_delta:>+9.1f}%")
+    print(f"  {'Pass rate':<24} {b_rate:>13.1f}% {t_rate:>13.1f}% {t_rate - b_rate:>+9.1f}pp")
+
+    if b_cost > 0:
+        b_ei = (b_pass / b_total) / b_cost if b_total else 0
+        t_ei = (t_pass / t_total) / t_cost if t_total and t_cost else 0
+        ei_delta = ((t_ei - b_ei) / b_ei * 100) if b_ei else 0
+        print(f"  {'Efficiency Index':<24} {b_ei:>14.1f} {t_ei:>14.1f} {ei_delta:>+9.1f}%")
+
+
+def run_tune(
+    suite_name: str = "standard",
+    skip_baseline: bool = False,
+    profile_path: str | None = None,
+    output_dir: str = "tuned-profile",
+    timeout: int = 300,
+    model: str = "sonnet",
+    yes: bool = False,
+) -> int:
+    """Execute the full tune workflow."""
+    benchmarks = _benchmarks_dir()
+    suites_dir = benchmarks / "suites"
+    tasks_dir = benchmarks / "tasks"
+
+    suite_file = suites_dir / f"{suite_name}.yaml"
+    if not suite_file.exists():
+        print(f"ERROR: Suite not found: {suite_name}", file=sys.stderr)
+        print(f"Available: {', '.join(p.stem for p in suites_dir.glob('*.yaml'))}", file=sys.stderr)
+        return 1
+
+    suite = load_suite(suite_file, tasks_dir)
+    conn = init_db()
+
+    try:
+        # Phase 1: Discovery
+        target = Path.home() / ".claude"
+        state = read_active_profile(target) if target.exists() else None
+        active_name = state.get("active", "none") if state else "none"
+
+        print(f"Current profile: {active_name}")
+        print(f"Suite: {suite.name} v{suite.version} ({len(suite.tasks)} tasks)")
+        print(f"Estimated time: ~{len(suite.tasks) * 3} minutes per pass\n")
+
+        if not yes:
+            answer = input("Proceed with baseline benchmark? [Y/n] ").strip().lower()
+            if answer and answer != "y":
+                print("Aborted.")
+                return 0
+
+        # Capture current config as baseline profile
+        baseline_dir = Path(tempfile.mkdtemp(prefix="tune-baseline-"))
+        capture_current_config(target, baseline_dir)
+        baseline_profile = baseline_dir
+
+        # Read current CLAUDE.md for recommendation analysis
+        claude_md_path = target / "CLAUDE.md"
+        current_claude_md = claude_md_path.read_text() if claude_md_path.exists() else ""
+
+        # Create tune session
+        session = TuneSession(
+            suite_name=suite.name,
+            suite_version=suite.version,
+            baseline_profile=active_name,
+        )
+        session_id = create_tune_session(conn, session)
+
+        # Phase 2: Baseline benchmark
+        baseline_runs: list[Run] = []
+        if not skip_baseline:
+            print(f"\nRunning baseline benchmarks ({active_name})...")
+            for i, bt in enumerate(suite.tasks, 1):
+                task = _benchmark_task_to_task(bt, "")  # repo resolved by suite runner
+                try:
+                    run = _run_single_task(task, baseline_profile, model, timeout, conn)
+                    link_tune_run(conn, session_id, run.id, "baseline")
+                    baseline_runs.append(run)
+                    _print_run_line(i, len(suite.tasks), bt.id, run)
+                except Exception as e:
+                    print(f"  [{i}/{len(suite.tasks)}] {bt.id:<24} ERROR: {e}", file=sys.stderr)
+
+            _print_summary("Baseline", baseline_runs)
+        else:
+            # Load baseline runs from last session
+            from token_miser.db import get_latest_tune_session, get_tune_session_runs
+            prev = get_latest_tune_session(conn, suite.name)
+            if prev:
+                baseline_runs = get_tune_session_runs(conn, prev.id, "baseline")
+                print(f"\nReusing baseline from session #{prev.id} ({len(baseline_runs)} runs)")
+            else:
+                print("ERROR: No previous baseline found. Run without --skip-baseline first.", file=sys.stderr)
+                return 1
+
+        # Phase 3: Analysis and recommendations
+        if profile_path:
+            # User supplied a specific profile to test
+            tuned_profile = Path(profile_path)
+            recommendations: list[Recommendation] = []
+            print(f"\nUsing supplied profile: {profile_path}")
+        else:
+            print("\nAnalyzing results...")
+            recommendations = analyze_results(baseline_runs, current_claude_md)
+
+            if not recommendations:
+                print("No recommendations — your config looks efficient already.")
+                update_tune_session(conn, session_id, status="completed",
+                                    completed_at=__import__("datetime").datetime.now(
+                                        __import__("datetime").timezone.utc).isoformat())
+                return 0
+
+            print(f"\nRecommendations ({len(recommendations)}):")
+            for r in recommendations:
+                print(f"  [{r.confidence:.0%}] {r.title}")
+                print(f"       {r.description}")
+
+            # Phase 4: Build tuned profile
+            output = Path(output_dir)
+            tuned_profile = build_tuned_profile(baseline_profile, recommendations, output)
+            print(f"\nGenerated tuned profile at: {output}")
+
+        update_tune_session(conn, session_id,
+                            tuned_profile=tuned_profile.name,
+                            recommendations_json=json.dumps(
+                                [{"title": r.title, "category": r.category,
+                                  "confidence": r.confidence} for r in recommendations]))
+
+        if not yes:
+            answer = input("\nRun benchmarks with tuned profile? [Y/n] ").strip().lower()
+            if answer and answer != "y":
+                print("Skipping tuned benchmark. Profile saved.")
+                update_tune_session(conn, session_id, status="partial")
+                return 0
+
+        # Phase 5: Tuned benchmark
+        print(f"\nRunning tuned benchmarks ({tuned_profile.name})...")
+        tuned_runs: list[Run] = []
+        for i, bt in enumerate(suite.tasks, 1):
+            task = _benchmark_task_to_task(bt, "")
+            try:
+                run = _run_single_task(task, tuned_profile, model, timeout, conn)
+                link_tune_run(conn, session_id, run.id, "tuned")
+                tuned_runs.append(run)
+                _print_run_line(i, len(suite.tasks), bt.id, run)
+            except Exception as e:
+                print(f"  [{i}/{len(suite.tasks)}] {bt.id:<24} ERROR: {e}", file=sys.stderr)
+
+        _print_summary("Tuned", tuned_runs)
+
+        # Phase 6: Comparison
+        _print_comparison(baseline_runs, tuned_runs)
+
+        update_tune_session(conn, session_id, status="completed",
+                            completed_at=__import__("datetime").datetime.now(
+                                __import__("datetime").timezone.utc).isoformat())
+
+        # Cleanup temp baseline
+        shutil.rmtree(baseline_dir, ignore_errors=True)
+
+        return 0
+
+    finally:
+        conn.close()

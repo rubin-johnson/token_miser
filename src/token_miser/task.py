@@ -33,6 +33,9 @@ class Task:
     type: str = "single_shot"
     success_criteria: list[Criterion] = field(default_factory=list)
     quality_rubric: list[RubricDimension] = field(default_factory=list)
+    repo_id: str = ""
+    category: str = ""
+    setup_commands: list[str] = field(default_factory=list)
 
 
 def load_task(filename: str | Path) -> Task:
@@ -85,4 +88,7 @@ def load_task(filename: str | Path) -> Task:
         type=task_type,
         success_criteria=criteria,
         quality_rubric=rubric,
+        repo_id=data.get("repo_id", ""),
+        category=data.get("category", ""),
+        setup_commands=data.get("setup_commands", []),
     )

@@ -1,0 +1,21 @@
+id: bm-feat-002
+name: "Add pagination to items endpoint"
+repo_id: tiny-api
+starting_commit: v1.0
+category: feature
+difficulty: medium
+prompt: |
+  The GET /items endpoint currently returns all items. Add proper pagination support:
+  - Accept query parameters: page (default 1) and per_page (default 10)
+  - Return a response with: items (list), total (count of all items), page, per_page, and pages (total page count)
+  - page=0 or negative should default to 1
+  - per_page > 100 should cap at 100
+  Update existing tests and add new pagination tests.
+success_criteria:
+  - type: command_exits_zero
+    command: "python -m pytest tests/ -q"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does pagination handle edge cases: empty results, last page with fewer items, invalid page numbers?"
+  - dimension: minimal_change
+    prompt: "Were changes scoped to pagination logic without unnecessary refactoring?"

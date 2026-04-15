@@ -1,0 +1,26 @@
+id: bm-refactor-001
+name: "Extract functions from God method"
+repo_id: tiny-cli
+starting_commit: v1.0
+category: refactor
+difficulty: easy
+prompt: |
+  The main() function in __main__.py is too long (~120 lines). It handles argument parsing,
+  validation, and command dispatch all inline. Refactor it into separate functions:
+  1. A function that builds and returns the argument parser
+  2. A function for each command's execution logic
+  3. main() should just parse args and dispatch
+
+  All existing tests must continue to pass. Do not change any public behavior.
+success_criteria:
+  - type: command_exits_zero
+    command: "python -m pytest tests/ -q"
+  - type: command_exits_zero
+    command: "python -m tiny_cli greet World"
+  - type: command_exits_zero
+    command: "python -m tiny_cli count ."
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does the refactored code produce identical behavior to the original?"
+  - dimension: minimal_change
+    prompt: "Was the refactoring focused on extraction without adding features or changing APIs?"

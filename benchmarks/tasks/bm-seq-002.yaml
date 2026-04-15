@@ -1,0 +1,35 @@
+id: bm-seq-002
+name: "Design, implement, integrate (3-step)"
+repo_id: tiny-api
+starting_commit: v1.0
+category: sequential
+difficulty: medium
+type: sequential
+prompts:
+  - |
+    Design a caching layer for the tiny-api application. Write a design document at
+    docs/caching-design.md that covers:
+    - What to cache (list endpoint results)
+    - Cache invalidation strategy (invalidate on create/delete)
+    - Interface design (what functions the cache module should expose)
+    - Keep it simple — in-memory dict cache, no external dependencies
+  - |
+    Implement the cache module at src/tiny_api/cache.py following the design document
+    you wrote. The module should have: get(key), set(key, value, ttl_seconds), invalidate(key),
+    and clear().
+  - |
+    Integrate the cache into the existing endpoints:
+    - Cache GET /items results with a 60-second TTL
+    - Invalidate the cache when items are created or deleted
+    - Add tests for the caching behavior
+    - All existing tests must still pass
+success_criteria:
+  - type: file_exists
+    paths: ["src/tiny_api/cache.py", "docs/caching-design.md"]
+  - type: command_exits_zero
+    command: "python -m pytest tests/ -q"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does the cache work correctly with proper invalidation on mutations?"
+  - dimension: minimal_change
+    prompt: "Was the implementation focused on the cache feature without unnecessary changes?"

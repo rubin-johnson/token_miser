@@ -1,0 +1,30 @@
+id: bm-test-003
+name: "Write integration tests for Flask tutorial"
+repo_id: flask
+starting_commit: "3.1.0"
+category: test
+difficulty: hard
+setup_commands:
+  - "python -m venv .venv"
+  - ".venv/bin/pip install -e '.[dev]'"
+prompt: |
+  Write an integration test for the Flask tutorial app (examples/tutorial/flaskr/) that
+  exercises the full request lifecycle:
+  1. Register a user
+  2. Login with that user
+  3. Create a blog post
+  4. Verify the post appears on the index page
+  5. Edit the post
+  6. Delete the post
+  7. Verify the post is gone
+
+  Use the existing test infrastructure (conftest.py app fixture). Add the test to
+  tests/test_integration.py. Follow the testing patterns already used in the tutorial.
+success_criteria:
+  - type: command_exits_zero
+    command: ".venv/bin/python -m pytest examples/tutorial/tests/ -q"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does the integration test exercise the full CRUD lifecycle end-to-end?"
+  - dimension: minimal_change
+    prompt: "Was only the test file added without modifying the application code?"

@@ -1,0 +1,28 @@
+id: bm-seq-001
+name: "Implement then test (2-step)"
+repo_id: tiny-cli
+starting_commit: v1.0
+category: sequential
+difficulty: easy
+type: sequential
+prompts:
+  - |
+    Add a "config" module to the CLI at src/tiny_cli/config.py with these functions:
+    - load_config(path) -> dict: loads a YAML config file, returns empty dict if not found
+    - save_config(path, data) -> None: writes dict as YAML
+    - validate_config(data) -> list[str]: returns list of error messages (empty = valid),
+      checks that required keys "name" and "version" exist
+  - |
+    Write a comprehensive test suite for the config module you just created in
+    tests/test_config.py. Cover: load existing file, load missing file, save and reload,
+    validate valid config, validate missing keys, validate empty dict.
+success_criteria:
+  - type: file_exists
+    paths: ["src/tiny_cli/config.py", "tests/test_config.py"]
+  - type: command_exits_zero
+    command: "python -m pytest tests/test_config.py -q"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does the config module work correctly? Do the tests cover all specified scenarios?"
+  - dimension: minimal_change
+    prompt: "Was only the config module and its tests added, without modifying existing code?"
