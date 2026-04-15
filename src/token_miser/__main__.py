@@ -11,7 +11,7 @@ from token_miser.checker import check_all_criteria
 from token_miser.db import Run, get_run, get_runs, init_db, store_run
 from token_miser.environment import setup_env
 from token_miser.evaluator import score_quality
-from token_miser.executor import run_claude, run_claude_sequential
+from token_miser.executor import load_claude_env, run_claude, run_claude_sequential
 from token_miser.report import analyze, compare
 from token_miser.task import load_task
 
@@ -19,6 +19,7 @@ from token_miser.task import load_task
 def cmd_run(args: argparse.Namespace) -> int:
     task = load_task(args.task)
     conn = init_db()
+    claude_env = load_claude_env()
     try:
         specs = [args.control]
         if args.treatment:
@@ -31,9 +32,15 @@ def cmd_run(args: argparse.Namespace) -> int:
             env = setup_env(task, arm)
             try:
                 if task.type == "sequential":
-                    res = run_claude_sequential(task.prompts, env.home_dir, env.workspace_dir, timeout=args.timeout)
+                    res = run_claude_sequential(
+                        task.prompts, env.home_dir, env.workspace_dir,
+                        timeout=args.timeout, extra_env=claude_env,
+                    )
                 else:
-                    res = run_claude(task.prompt, env.home_dir, env.workspace_dir, timeout=args.timeout)
+                    res = run_claude(
+                        task.prompt, env.home_dir, env.workspace_dir,
+                        timeout=args.timeout, extra_env=claude_env,
+                    )
 
                 checks = check_all_criteria(task.success_criteria, env)
                 passed = sum(1 for c in checks if c.passed)

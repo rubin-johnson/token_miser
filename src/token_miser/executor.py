@@ -6,6 +6,7 @@ import os
 import subprocess
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 
 DEFAULT_TIMEOUT = 600  # 10 minutes
 
@@ -42,24 +43,59 @@ def parse_claude_json(data: str | bytes) -> ExecutorResult:
     )
 
 
-def filter_env(home_dir: str) -> dict[str, str]:
+def _claude_env_path() -> Path:
+    return Path.home() / ".token_miser" / "claude.env"
+
+
+def load_claude_env(path: Path | None = None) -> dict[str, str]:
+    """Load KEY=VALUE pairs from the claude.env file.
+
+    These are injected into spawned claude processes but NOT into the
+    parent shell, so you can run token_miser under one provider (e.g.
+    Anthropic OAuth) while the benchmark processes use another (e.g. Bedrock).
+    """
+    p = path or _claude_env_path()
+    if not p.exists():
+        return {}
+    extra: dict[str, str] = {}
+    for line in p.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "=" not in line:
+            continue
+        key, _, val = line.partition("=")
+        extra[key.strip()] = val.strip()
+    return extra
+
+
+def filter_env(home_dir: str, extra: dict[str, str] | None = None) -> dict[str, str]:
     """Build a clean environment for the subprocess.
 
     Forwards auth tokens, strips session state, overrides HOME.
+    Merges in extra env vars (from claude.env) which override parent env.
     """
     env = {}
     for key, val in os.environ.items():
         if key == "CLAUDECODE":
             continue
         env[key] = val
+    if extra:
+        env.update(extra)
     env["HOME"] = home_dir
     return env
 
 
-def run_claude(prompt: str, home_dir: str, workspace_dir: str, timeout: int = DEFAULT_TIMEOUT) -> ExecutorResult:
+def run_claude(
+    prompt: str,
+    home_dir: str,
+    workspace_dir: str,
+    timeout: int = DEFAULT_TIMEOUT,
+    extra_env: dict[str, str] | None = None,
+) -> ExecutorResult:
     """Execute Claude CLI in an isolated environment."""
     start = time.monotonic()
-    env = filter_env(home_dir)
+    env = filter_env(home_dir, extra=extra_env)
 
     proc = subprocess.run(
         ["claude", "--print", "--dangerously-skip-permissions", "--output-format", "json", "--no-session-persistence"],
@@ -83,14 +119,18 @@ def run_claude(prompt: str, home_dir: str, workspace_dir: str, timeout: int = DE
 
 
 def run_claude_sequential(
-    prompts: list[str], home_dir: str, workspace_dir: str, timeout: int = DEFAULT_TIMEOUT
+    prompts: list[str],
+    home_dir: str,
+    workspace_dir: str,
+    timeout: int = DEFAULT_TIMEOUT,
+    extra_env: dict[str, str] | None = None,
 ) -> ExecutorResult:
     """Run multiple prompts sequentially, accumulating tokens and cost."""
     total = ExecutorResult()
     start = time.monotonic()
 
     for prompt in prompts:
-        res = run_claude(prompt, home_dir, workspace_dir, timeout=timeout)
+        res = run_claude(prompt, home_dir, workspace_dir, timeout=timeout, extra_env=extra_env)
         total.total_cost_usd += res.total_cost_usd
         total.usage.input_tokens += res.usage.input_tokens
         total.usage.output_tokens += res.usage.output_tokens

@@ -22,7 +22,7 @@ from token_miser.db import (
 )
 from token_miser.environment import setup_env
 from token_miser.evaluator import score_quality
-from token_miser.executor import run_claude, run_claude_sequential
+from token_miser.executor import load_claude_env, run_claude, run_claude_sequential
 from token_miser.profile_builder import build_tuned_profile
 from token_miser.recommend import Recommendation, analyze_results
 from token_miser.suite import BenchmarkTask, load_suite
@@ -79,6 +79,7 @@ def _run_single_task(
     model: str,
     timeout: int,
     conn: sqlite3.Connection,
+    claude_env: dict[str, str] | None = None,
 ) -> Run:
     """Run a single benchmark task and store the result."""
     from token_miser.arm import Arm
@@ -91,9 +92,15 @@ def _run_single_task(
     env = setup_env(task, arm)
     try:
         if task.type == "sequential":
-            res = run_claude_sequential(task.prompts, env.home_dir, env.workspace_dir, timeout=timeout)
+            res = run_claude_sequential(
+                task.prompts, env.home_dir, env.workspace_dir,
+                timeout=timeout, extra_env=claude_env,
+            )
         else:
-            res = run_claude(task.prompt, env.home_dir, env.workspace_dir, timeout=timeout)
+            res = run_claude(
+                task.prompt, env.home_dir, env.workspace_dir,
+                timeout=timeout, extra_env=claude_env,
+            )
 
         checks = check_all_criteria(task.success_criteria, env)
         passed = sum(1 for c in checks if c.passed)
@@ -207,6 +214,7 @@ def run_tune(
         return 1
 
     suite = load_suite(suite_file, tasks_dir)
+    claude_env = load_claude_env()
 
     # Resolve repo_ids to local paths
     from token_miser.repos import ensure_repo, load_repos_config
@@ -267,7 +275,7 @@ def run_tune(
             for i, bt in enumerate(suite.tasks, 1):
                 task = _benchmark_task_to_task(bt, repo_paths.get(bt.repo_id, ""))
                 try:
-                    run = _run_single_task(task, baseline_profile, model, timeout, conn)
+                    run = _run_single_task(task, baseline_profile, model, timeout, conn, claude_env)
                     link_tune_run(conn, session_id, run.id, "baseline")
                     baseline_runs.append(run)
                     _print_run_line(i, len(suite.tasks), bt.id, run)
@@ -332,7 +340,7 @@ def run_tune(
         for i, bt in enumerate(suite.tasks, 1):
             task = _benchmark_task_to_task(bt, repo_paths.get(bt.repo_id, ""))
             try:
-                run = _run_single_task(task, tuned_profile, model, timeout, conn)
+                run = _run_single_task(task, tuned_profile, model, timeout, conn, claude_env)
                 link_tune_run(conn, session_id, run.id, "tuned")
                 tuned_runs.append(run)
                 _print_run_line(i, len(suite.tasks), bt.id, run)
