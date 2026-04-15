@@ -84,6 +84,8 @@ def analyze(task_id: str, conn: sqlite3.Connection) -> str:
 
 
 def _calculate_arm_stats(name: str, runs: list) -> ArmStats:
+    if not runs:
+        return ArmStats(name=name)
     n = len(runs)
     total_cost = sum(r.total_cost_usd for r in runs)
     total_tokens = sum(r.input_tokens + r.output_tokens for r in runs)
@@ -93,8 +95,10 @@ def _calculate_arm_stats(name: str, runs: list) -> ArmStats:
 
     avg_cost = total_cost / n
     costs = [r.total_cost_usd for r in runs]
-    variance = sum((c - avg_cost) ** 2 for c in costs) / n
-    stdev = math.sqrt(variance)
+    stdev = 0.0
+    if n >= 2:
+        variance = sum((c - avg_cost) ** 2 for c in costs) / (n - 1)
+        stdev = math.sqrt(variance)
     sorted_costs = sorted(costs)
     mid = n // 2
     median = (sorted_costs[mid - 1] + sorted_costs[mid]) / 2 if n % 2 == 0 else sorted_costs[mid]

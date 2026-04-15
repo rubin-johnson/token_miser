@@ -14,7 +14,7 @@ def test_parse_claude_json():
             "cache_creation_input_tokens": 10,
             "cache_read_input_tokens": 5,
         },
-    }).encode()
+    })
     result = parse_claude_json(data)
     assert result.result == "Hello world"
     assert result.total_cost_usd == 0.0042
@@ -25,7 +25,7 @@ def test_parse_claude_json():
 
 
 def test_parse_claude_json_missing_fields():
-    data = json.dumps({"result": "ok"}).encode()
+    data = json.dumps({"result": "ok"})
     result = parse_claude_json(data)
     assert result.result == "ok"
     assert result.total_cost_usd == 0.0

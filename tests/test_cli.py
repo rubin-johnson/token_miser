@@ -37,7 +37,7 @@ def test_history_empty(tmp_path, monkeypatch):
 
 
 def test_tasks_lists_yaml(tmp_path):
-    (tmp_path / "task.yaml").write_text("id: demo\nname: Demo\nprompt: hi\n")
+    (tmp_path / "task.yaml").write_text("id: demo\nname: Demo\nrepo: /tmp/r\nstarting_commit: abc\nprompt: hi\n")
     r = _cli("tasks", "--dir", str(tmp_path))
     assert r.returncode == 0
     assert "demo" in r.stdout

@@ -95,7 +95,10 @@ def store_run(conn: sqlite3.Connection, run: Run) -> int:
         ),
     )
     conn.commit()
-    return cursor.lastrowid
+    row_id = cursor.lastrowid
+    if row_id is None:
+        raise RuntimeError("INSERT did not return a row ID")
+    return row_id
 
 
 def get_runs(conn: sqlite3.Connection, task_id: str = "") -> list[Run]:

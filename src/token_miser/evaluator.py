@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 
 import anthropic
@@ -10,6 +11,7 @@ from token_miser.task import RubricDimension
 
 JUDGE_MODEL = "claude-haiku-4-5-20251001"
 MAX_TOKENS = 2000
+API_TIMEOUT = 120.0
 
 
 @dataclass
@@ -39,6 +41,7 @@ def score_quality(
     message = client.messages.create(
         model=JUDGE_MODEL,
         max_tokens=MAX_TOKENS,
+        timeout=API_TIMEOUT,
         messages=[{"role": "user", "content": judge_prompt}],
     )
 
@@ -72,9 +75,16 @@ Return ONLY the JSON array, no other text."""
 def _parse_scores(text: str, dimensions: list[RubricDimension]) -> list[DimensionScore]:
     # Extract JSON from possible markdown code fences
     cleaned = text.strip()
-    if cleaned.startswith("```"):
+    fence_match = re.search(r"```(?:json)?\s*\n(.*?)```", cleaned, re.DOTALL)
+    if fence_match:
+        cleaned = fence_match.group(1).strip()
+    elif cleaned.startswith("```"):
+        # Fallback: strip opening/closing fence lines
         lines = cleaned.split("\n")
-        lines = [line for line in lines if not line.strip().startswith("```")]
+        if lines and lines[0].strip().startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip().startswith("```"):
+            lines = lines[:-1]
         cleaned = "\n".join(lines)
 
     raw = json.loads(cleaned)

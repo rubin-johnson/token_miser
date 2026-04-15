@@ -26,7 +26,7 @@ class ExecutorResult:
     wall_seconds: float = 0.0
 
 
-def parse_claude_json(data: bytes) -> ExecutorResult:
+def parse_claude_json(data: str | bytes) -> ExecutorResult:
     """Parse Claude CLI JSON output into ExecutorResult."""
     raw = json.loads(data)
     usage_raw = raw.get("usage", {})
@@ -77,7 +77,7 @@ def run_claude(prompt: str, home_dir: str, workspace_dir: str, timeout: int = DE
         details = stderr or stdout_hint or "(no output)"
         raise RuntimeError(f"claude exited {proc.returncode}: {details}")
 
-    result = parse_claude_json(proc.stdout.encode())
+    result = parse_claude_json(proc.stdout)
     result.wall_seconds = time.monotonic() - start
     return result
 

@@ -19,153 +19,153 @@ from token_miser.task import load_task
 def cmd_run(args: argparse.Namespace) -> int:
     task = load_task(args.task)
     conn = init_db()
+    try:
+        specs = [args.control]
+        if args.treatment:
+            specs.append(args.treatment)
 
-    specs = []
-    if args.control:
-        specs.append(args.control)
-    if args.treatment:
-        specs.append(args.treatment)
-    if not specs:
-        print("ERROR: at least --control is required", file=sys.stderr)
-        return 1
+        results = []
+        for spec in specs:
+            arm = parse_arm(spec)
+            print(f"Running arm: {arm.name}...", file=sys.stderr)
+            env = setup_env(task, arm)
+            try:
+                if task.type == "sequential":
+                    res = run_claude_sequential(task.prompts, env.home_dir, env.workspace_dir, timeout=args.timeout)
+                else:
+                    res = run_claude(task.prompt, env.home_dir, env.workspace_dir, timeout=args.timeout)
 
-    results = []
-    for spec in specs:
-        arm = parse_arm(spec)
-        print(f"Running arm: {arm.name}...", file=sys.stderr)
-        env = setup_env(task, arm)
-        try:
-            if task.type == "sequential":
-                res = run_claude_sequential(task.prompts, env.home_dir, env.workspace_dir, timeout=args.timeout)
-            else:
-                res = run_claude(task.prompt, env.home_dir, env.workspace_dir, timeout=args.timeout)
+                checks = check_all_criteria(task.success_criteria, env)
+                passed = sum(1 for c in checks if c.passed)
+                total = len(checks)
 
-            checks = check_all_criteria(task.success_criteria, env)
-            passed = sum(1 for c in checks if c.passed)
-            total = len(checks)
+                quality_json = "{}"
+                api_key = os.environ.get("ANTHROPIC_API_KEY")
+                if api_key and task.quality_rubric:
+                    try:
+                        scores = score_quality(
+                            task.prompt or task.prompts[-1], res.result, task.quality_rubric, api_key
+                        )
+                        quality_json = json.dumps(
+                            [{"dimension": s.dimension, "score": s.score, "reason": s.reason} for s in scores]
+                        )
+                    except Exception as e:
+                        print(f"WARNING: quality scoring failed: {e}", file=sys.stderr)
 
-            quality_json = "{}"
-            api_key = os.environ.get("ANTHROPIC_API_KEY")
-            if api_key and task.quality_rubric:
-                try:
-                    scores = score_quality(task.prompt or task.prompts[-1], res.result, task.quality_rubric, api_key)
-                    quality_json = json.dumps(
-                        [{"dimension": s.dimension, "score": s.score, "reason": s.reason} for s in scores]
-                    )
-                except Exception as e:
-                    print(f"WARNING: quality scoring failed: {e}", file=sys.stderr)
+                run = Run(
+                    task_id=task.id,
+                    arm=arm.name,
+                    loadout_name=arm.loadout_path.split("/")[-1] if arm.loadout_path else "",
+                    model=args.model,
+                    wall_seconds=res.wall_seconds,
+                    input_tokens=res.usage.input_tokens,
+                    output_tokens=res.usage.output_tokens,
+                    cache_read_tokens=res.usage.cache_read_input_tokens,
+                    cache_write_tokens=res.usage.cache_creation_input_tokens,
+                    total_cost_usd=res.total_cost_usd,
+                    criteria_pass=passed,
+                    criteria_total=total,
+                    quality_scores=quality_json,
+                    result=res.result,
+                )
+                run_id = store_run(conn, run)
+                results.append((arm.name, res, passed, total, run_id))
+            finally:
+                env.teardown()
 
-            run = Run(
-                task_id=task.id,
-                arm=arm.name,
-                loadout_name=arm.name,
-                model=args.model,
-                wall_seconds=res.wall_seconds,
-                input_tokens=res.usage.input_tokens,
-                output_tokens=res.usage.output_tokens,
-                cache_read_tokens=res.usage.cache_read_input_tokens,
-                cache_write_tokens=res.usage.cache_creation_input_tokens,
-                total_cost_usd=res.total_cost_usd,
-                criteria_pass=passed,
-                criteria_total=total,
-                quality_scores=quality_json,
-                result=res.result,
+        print("\n=== Run Summary ===")
+        for name, res, passed, total, run_id in results:
+            print(
+                f"Arm: {name} | Input: {res.usage.input_tokens:,} | Output: {res.usage.output_tokens:,} | "
+                f"Cost: ${res.total_cost_usd:.6f} | Wall: {res.wall_seconds:.1f}s | "
+                f"Criteria: {passed}/{total} | Run ID: {run_id}"
             )
-            run_id = store_run(conn, run)
-            results.append((arm.name, res, passed, total, run_id))
-        finally:
-            env.teardown()
-
-    print("\n=== Run Summary ===")
-    for name, res, passed, total, run_id in results:
-        print(
-            f"Arm: {name} | Input: {res.usage.input_tokens:,} | Output: {res.usage.output_tokens:,} | "
-            f"Cost: ${res.total_cost_usd:.6f} | Wall: {res.wall_seconds:.1f}s | "
-            f"Criteria: {passed}/{total} | Run ID: {run_id}"
-        )
-
-    conn.close()
-    return 0
+        return 0
+    finally:
+        conn.close()
 
 
 def cmd_compare(args: argparse.Namespace) -> int:
     conn = init_db()
-    print(compare(args.task, conn))
-    conn.close()
-    return 0
+    try:
+        print(compare(args.task, conn))
+        return 0
+    finally:
+        conn.close()
 
 
 def cmd_analyze(args: argparse.Namespace) -> int:
     conn = init_db()
-    print(analyze(args.task, conn))
-    conn.close()
-    return 0
+    try:
+        print(analyze(args.task, conn))
+        return 0
+    finally:
+        conn.close()
 
 
 def cmd_history(args: argparse.Namespace) -> int:
     conn = init_db()
-    runs = get_runs(conn)
-    if not runs:
-        print("No runs recorded.")
-        conn.close()
+    try:
+        runs = get_runs(conn)
+        if not runs:
+            print("No runs recorded.")
+            return 0
+
+        print(f"{'ID':>4}  {'Task':<16}  {'Arm':<20}  {'Tokens':>10}  {'Wall':>8}  {'Cost':>12}  {'Criteria':>10}")
+        for r in runs:
+            tokens = r.input_tokens + r.output_tokens
+            wall = f"{r.wall_seconds:.1f}s" if r.wall_seconds > 0 else "-"
+            criteria = f"{r.criteria_pass}/{r.criteria_total}" if r.criteria_total else "-"
+            print(
+                f"{r.id:>4}  {r.task_id:<16}  {r.arm:<20}  {tokens:>10,}  "
+                f"{wall:>8}  ${r.total_cost_usd:>11.6f}  {criteria:>10}"
+            )
         return 0
-
-    print(f"{'ID':>4}  {'Task':<16}  {'Arm':<20}  {'Tokens':>10}  {'Wall':>8}  {'Cost':>12}  {'Criteria':>10}")
-    for r in runs:
-        tokens = r.input_tokens + r.output_tokens
-        wall = f"{r.wall_seconds:.1f}s" if r.wall_seconds > 0 else "-"
-        criteria = f"{r.criteria_pass}/{r.criteria_total}" if r.criteria_total else "-"
-        print(
-            f"{r.id:>4}  {r.task_id:<16}  {r.arm:<20}  {tokens:>10,}  "
-            f"{wall:>8}  ${r.total_cost_usd:>11.6f}  {criteria:>10}"
-        )
-
-    conn.close()
-    return 0
+    finally:
+        conn.close()
 
 
 def cmd_show(args: argparse.Namespace) -> int:
     conn = init_db()
-    run = get_run(conn, args.run_id)
-    if not run:
-        print(f"Run {args.run_id} not found.", file=sys.stderr)
+    try:
+        run = get_run(conn, args.run_id)
+        if not run:
+            print(f"Run {args.run_id} not found.", file=sys.stderr)
+            return 1
+
+        print(f"Run #{run.id}")
+        print(f"  Task:       {run.task_id}")
+        print(f"  Arm:        {run.arm}")
+        print(f"  Model:      {run.model}")
+        print(f"  Started:    {run.started_at}")
+        print(f"  Wall time:  {run.wall_seconds:.1f}s")
+        print(f"  Input:      {run.input_tokens:,} tokens")
+        print(f"  Output:     {run.output_tokens:,} tokens")
+        print(f"  Cost:       ${run.total_cost_usd:.6f}")
+        print(f"  Criteria:   {run.criteria_pass}/{run.criteria_total}")
+
+        if run.quality_scores and run.quality_scores != "{}":
+            print("  Quality:")
+            try:
+                scores = json.loads(run.quality_scores)
+                if isinstance(scores, list):
+                    for s in scores:
+                        print(f"    {s['dimension']}: {s['score']:.2f} — {s.get('reason', '')}")
+                elif isinstance(scores, dict):
+                    for k, v in scores.items():
+                        print(f"    {k}: {v}")
+            except json.JSONDecodeError:
+                print(f"    (unparseable: {run.quality_scores})")
+
+        if run.result:
+            print("\n--- Claude Output ---")
+            text = run.result
+            if len(text) > 2000:
+                text = text[:2000] + "\n... (truncated)"
+            print(text)
+        return 0
+    finally:
         conn.close()
-        return 1
-
-    print(f"Run #{run.id}")
-    print(f"  Task:       {run.task_id}")
-    print(f"  Arm:        {run.arm}")
-    print(f"  Model:      {run.model}")
-    print(f"  Started:    {run.started_at}")
-    print(f"  Wall time:  {run.wall_seconds:.1f}s")
-    print(f"  Input:      {run.input_tokens:,} tokens")
-    print(f"  Output:     {run.output_tokens:,} tokens")
-    print(f"  Cost:       ${run.total_cost_usd:.6f}")
-    print(f"  Criteria:   {run.criteria_pass}/{run.criteria_total}")
-
-    if run.quality_scores and run.quality_scores != "{}":
-        print("  Quality:")
-        try:
-            scores = json.loads(run.quality_scores)
-            if isinstance(scores, list):
-                for s in scores:
-                    print(f"    {s['dimension']}: {s['score']:.2f} — {s.get('reason', '')}")
-            elif isinstance(scores, dict):
-                for k, v in scores.items():
-                    print(f"    {k}: {v}")
-        except json.JSONDecodeError:
-            print(f"    (unparseable: {run.quality_scores})")
-
-    if run.result:
-        print("\n--- Claude Output ---")
-        # Truncate very long output
-        text = run.result
-        if len(text) > 2000:
-            text = text[:2000] + "\n... (truncated)"
-        print(text)
-
-    conn.close()
-    return 0
 
 
 def cmd_tasks(args: argparse.Namespace) -> int:
@@ -187,9 +187,11 @@ def cmd_tasks(args: argparse.Namespace) -> int:
 
 def cmd_migrate(args: argparse.Namespace) -> int:
     conn = init_db()
-    print("Database initialized and migrations applied.")
-    conn.close()
-    return 0
+    try:
+        print("Database initialized and migrations applied.")
+        return 0
+    finally:
+        conn.close()
 
 
 def build_parser() -> argparse.ArgumentParser:

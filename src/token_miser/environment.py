@@ -37,9 +37,8 @@ def setup_env(task: Task, arm: Arm) -> EnvironmentContext:
     env = EnvironmentContext(home_dir=home_dir, workspace_dir=workspace_dir)
 
     try:
-        # Clone repo with --shared for speed
         subprocess.run(
-            ["git", "clone", "--shared", task.repo, workspace_dir],
+            ["git", "clone", task.repo, workspace_dir],
             check=True,
             capture_output=True,
         )
