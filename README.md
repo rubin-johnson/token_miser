@@ -116,11 +116,30 @@ For each arm in an experiment:
 7. Optionally score quality via Claude-as-judge (requires `ANTHROPIC_API_KEY`)
 8. Store results in SQLite (`~/.token_miser/results.db`)
 
+## Loadout bundles
+
+Three loadout bundles ship with this repo, each representing a different Claude Code philosophy:
+
+| Bundle | Philosophy |
+|--------|-----------|
+| `loadouts/token-miser/` | Minimize tokens -- terse output, lazy reads, no extras |
+| `loadouts/thorough/` | Maximize correctness -- read everything, explain reasoning |
+| `loadouts/tdd-strict/` | Strict TDD -- failing test first, always |
+
+Each is a valid loadout bundle with a `manifest.yaml` and `CLAUDE.md`.
+
 ## Relationship with loadout and kanon
 
 **[loadout](https://github.com/rubin-johnson/loadout)** manages Claude Code configuration bundles. token-miser uses loadout to deploy treatment arms into isolated test environments.
 
-**[kanon](https://github.com/caylent-solutions/kanon)** distributes versioned packages across teams. Loadout bundles can be distributed as kanon packages, giving teams a pipeline: kanon distributes versioned bundles, loadout applies them, token-miser measures whether they improve performance.
+**[kanon](https://github.com/caylent-solutions/kanon)** distributes versioned packages across teams. Loadout bundles can be distributed as kanon packages, giving teams a pipeline:
+
+```
+kanon distributes  ->  loadout applies  ->  token-miser measures
+(versioned bundles)    (local config)       (A/B comparison)
+```
+
+This repo includes a `.kanon` file that configures kanon to sync loadout bundles from a manifest repository. See [docs/kanon-integration.md](docs/kanon-integration.md) for details.
 
 ## Data
 

@@ -1,0 +1,23 @@
+id: quick-001
+name: "Add a utility function"
+# A fast task for demo purposes — adds one function to an existing Python project.
+repo: "${EXPERIMENT_REPO}"
+starting_commit: "v0.1.0"
+prompt: |
+  Add a function `format_bundle_info(name: str, version: str) -> str` to
+  src/loadout/manifest.py that returns a one-line summary like "name v1.0.0".
+
+  Write a test for it in tests/test_manifest.py. Run the tests to confirm
+  everything passes. Do not change any existing code or tests.
+success_criteria:
+  - type: command_exits_zero
+    command: "uv sync -q && uv run pytest tests/test_manifest.py -q"
+  - type: command_exits_zero
+    command: "uv sync -q && uv run python -c \"from loadout.manifest import format_bundle_info; assert format_bundle_info('x', '1.0.0') == 'x v1.0.0'\""
+quality_rubric:
+  - dimension: "correctness"
+    prompt: "Does the function return the expected format? Do all tests pass?"
+  - dimension: "minimal_change"
+    prompt: "Did Claude add only the requested function and test, without modifying existing code? Score 1.0 for minimal changes, lower for unnecessary edits."
+  - dimension: "code_quality"
+    prompt: "Is the code clean, idiomatic Python? No unnecessary imports, comments, or complexity?"

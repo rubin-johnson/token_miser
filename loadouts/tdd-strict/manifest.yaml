@@ -1,0 +1,7 @@
+name: tdd-strict
+version: 0.1.0
+author: rubin-johnson
+description: Strict TDD — write failing test first, then make it pass, never skip the red step
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md

@@ -1,0 +1,21 @@
+# token-miser Kanon Configuration
+#
+# This .kanon file shows how kanon distributes loadout bundles to the team.
+# kanon syncs versioned bundles from a manifest repo into .packages/,
+# then token-miser can reference them as experiment arms.
+#
+# Pipeline: kanon distributes -> loadout applies -> token-miser measures
+
+# Shared variables
+GITBASE=https://github.com/rubin-johnson/
+CLAUDE_MARKETPLACES_DIR=${HOME}/.claude-marketplaces
+
+# Marketplace install disabled (loadout handles config, not plugins)
+KANON_MARKETPLACE_INSTALL=false
+
+# Source: loadout bundles manifest repository
+# After 'kanon install', bundles appear in .packages/ as symlinks.
+# token-miser references them: --treatment .packages/token-miser
+KANON_SOURCE_loadouts_URL=https://github.com/rubin-johnson/loadout-bundles.git
+KANON_SOURCE_loadouts_REVISION=main
+KANON_SOURCE_loadouts_PATH=repo-specs/loadout-manifest.xml

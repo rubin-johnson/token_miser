@@ -28,6 +28,10 @@ venv/
 # Personal loadout configs — commit only shared/example loadouts
 loadouts/my-config/
 
+# Kanon managed directories (synced from manifest repos)
+.packages/
+.kanon-data/
+
 # Agent execution artifacts
 .ralphael/
 .worktrees/

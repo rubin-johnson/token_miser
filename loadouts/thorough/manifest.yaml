@@ -1,0 +1,7 @@
+name: thorough
+version: 0.1.0
+author: rubin-johnson
+description: Maximize correctness — read everything, explain reasoning, verify before claiming done
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md

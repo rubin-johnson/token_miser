@@ -1,7 +1,0 @@
-name: experiment-config
-version: 0.1.0
-author: rubin-johnson
-description: Token-optimized Claude Code configuration for cost-conscious experiments
-targets:
-  - path: CLAUDE.md
-    dest: CLAUDE.md
