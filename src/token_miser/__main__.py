@@ -335,6 +335,70 @@ def cmd_digest(args: argparse.Namespace) -> int:
     return 1
 
 
+def cmd_publish(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from token_miser.publish import generate_manifest_snippet, publish_package
+
+    pkg_path = Path(args.package_dir)
+    if not pkg_path.is_dir():
+        print(f"ERROR: {args.package_dir} is not a directory", file=sys.stderr)
+        return 1
+
+    try:
+        result = publish_package(
+            pkg_path, args.repo,
+            name=args.name, version=args.version,
+        )
+    except ValueError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        return 1
+
+    print(f"Published {result['package_name']} v{result['version']}")
+    print(f"Tag: {result['tag']}")
+    print("\nKanon manifest snippet:")
+    print(f"  {generate_manifest_snippet(result['package_name'], result['version'])}")
+    return 0
+
+
+def cmd_packages(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    import yaml
+
+    from token_miser.package_adapter import discover_kanon_packages
+
+    # Check for .kanon file
+    kanonenv = Path.cwd() / ".kanon"
+    packages = discover_kanon_packages(kanonenv)
+
+    if not packages:
+        # Also check .packages/ directly
+        packages_dir = Path.cwd() / ".packages"
+        if packages_dir.is_dir():
+            packages = sorted(
+                p for p in packages_dir.iterdir()
+                if p.is_dir() and (p / "manifest.yaml").exists()
+            )
+
+    if not packages:
+        print("No kanon packages found. Run 'kanon install' first, or check .packages/ directory.")
+        return 0
+
+    print(f"{'Package':<24} {'Version':<12} {'Description'}")
+    print("-" * 70)
+    for pkg_path in packages:
+        try:
+            manifest = yaml.safe_load((pkg_path / "manifest.yaml").read_text())
+            name = manifest.get("name", pkg_path.name)
+            version = manifest.get("version", "?")
+            desc = manifest.get("description", "")[:40]
+            print(f"  {name:<22} {version:<12} {desc}")
+        except Exception:
+            print(f"  {pkg_path.name:<22} (error reading manifest)")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     from token_miser import __version__
 
@@ -406,6 +470,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_digest_compare.add_argument("digest1", help="First digest file")
     p_digest_compare.add_argument("digest2", help="Second digest file")
 
+    # publish
+    p_publish = sub.add_parser("publish", help="Publish a package to a git repo for kanon")
+    p_publish.add_argument("package_dir", help="Path to the package directory")
+    p_publish.add_argument("--repo", required=True, help="Target git repo path")
+    p_publish.add_argument("--name", default=None, help="Package name (default: from manifest)")
+    p_publish.add_argument("--version", default=None, help="Package version (default: from manifest)")
+
+    # packages
+    sub.add_parser("packages", help="List kanon-distributed packages")
+
     return parser
 
 
@@ -422,6 +496,8 @@ def main() -> None:
         "tasks": cmd_tasks,
         "migrate": cmd_migrate,
         "tune": cmd_tune,
+        "publish": cmd_publish,
+        "packages": cmd_packages,
         "suite": cmd_suite,
         "digest": cmd_digest,
     }
