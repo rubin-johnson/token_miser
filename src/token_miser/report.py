@@ -10,7 +10,7 @@ from token_miser.db import get_runs
 
 
 @dataclass
-class ArmStats:
+class PackageStats:
     name: str
     run_count: int = 0
     avg_tokens: float = 0.0
@@ -29,12 +29,12 @@ def compare(task_id: str, conn: sqlite3.Connection) -> str:
     if not runs:
         return f"No runs found for task {task_id!r}\n"
 
-    # Group by arm, preserving insertion order
-    by_arm: dict[str, list] = {}
+    # Group by package, preserving insertion order
+    by_pkg: dict[str, list] = {}
     for run in runs:
-        by_arm.setdefault(run.arm, []).append(run)
+        by_pkg.setdefault(run.package_name, []).append(run)
 
-    stats = [_calculate_arm_stats(name, arm_runs) for name, arm_runs in by_arm.items()]
+    stats = [_calculate_package_stats(name, pkg_runs) for name, pkg_runs in by_pkg.items()]
 
     if len(stats) == 2:
         return _format_side_by_side(task_id, stats)
@@ -47,20 +47,20 @@ def analyze(task_id: str, conn: sqlite3.Connection) -> str:
     if not runs:
         return f"No runs found for task {task_id!r}\n"
 
-    by_arm: dict[str, list] = {}
+    by_pkg: dict[str, list] = {}
     for run in runs:
-        by_arm.setdefault(run.arm, []).append(run)
+        by_pkg.setdefault(run.package_name, []).append(run)
 
-    stats = [_calculate_arm_stats(name, arm_runs) for name, arm_runs in by_arm.items()]
+    stats = [_calculate_package_stats(name, pkg_runs) for name, pkg_runs in by_pkg.items()]
     stats.sort(key=lambda s: s.avg_cost)
 
     # Find baseline (vanilla if present, else cheapest)
     baseline = next((s for s in stats if s.name == "vanilla"), stats[0])
 
     total_runs = sum(s.run_count for s in stats)
-    lines = [f"Task: {task_id}  ({total_runs} runs across {len(stats)} arms)\n"]
+    lines = [f"Task: {task_id}  ({total_runs} runs across {len(stats)} packages)\n"]
     lines.append(
-        f"{'Arm':<20} {'Runs':>4}  {'Avg Cost':>10}  {'Stdev':>8}  {'Median':>8}  "
+        f"{'Package':<20} {'Runs':>4}  {'Avg Cost':>10}  {'Stdev':>8}  {'Median':>8}  "
         f"{'Avg Tok':>10}  {'Criteria':>8}  {'vs baseline':>12}"
     )
     lines.append("-" * 90)
@@ -83,9 +83,9 @@ def analyze(task_id: str, conn: sqlite3.Connection) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _calculate_arm_stats(name: str, runs: list) -> ArmStats:
+def _calculate_package_stats(name: str, runs: list) -> PackageStats:
     if not runs:
-        return ArmStats(name=name)
+        return PackageStats(name=name)
     n = len(runs)
     total_cost = sum(r.total_cost_usd for r in runs)
     total_tokens = sum(r.input_tokens + r.output_tokens for r in runs)
@@ -120,7 +120,7 @@ def _calculate_arm_stats(name: str, runs: list) -> ArmStats:
 
     avg_quality = {k: sum(v) / len(v) for k, v in quality.items()}
 
-    return ArmStats(
+    return PackageStats(
         name=name,
         run_count=n,
         avg_tokens=total_tokens / n,
@@ -134,7 +134,7 @@ def _calculate_arm_stats(name: str, runs: list) -> ArmStats:
     )
 
 
-def _format_side_by_side(task_id: str, stats: list[ArmStats]) -> str:
+def _format_side_by_side(task_id: str, stats: list[PackageStats]) -> str:
     a, b = stats
     lines = [f"=== Compare: {task_id} ===\n"]
 
@@ -161,8 +161,8 @@ def _format_side_by_side(task_id: str, stats: list[ArmStats]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _format_stacked(task_id: str, stats: list[ArmStats]) -> str:
-    lines = [f"=== Compare: {task_id} ({len(stats)} arms) ===\n"]
+def _format_stacked(task_id: str, stats: list[PackageStats]) -> str:
+    lines = [f"=== Compare: {task_id} ({len(stats)} packages) ===\n"]
     for s in stats:
         criteria = f"{s.criteria_pass}/{s.criteria_total}" if s.criteria_total else "-"
         lines.append(f"  {s.name}")

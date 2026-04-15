@@ -6,12 +6,12 @@ import json
 import os
 import sys
 
-from token_miser.arm import parse_arm
 from token_miser.checker import check_all_criteria
 from token_miser.db import Run, get_run, get_runs, init_db, store_run
 from token_miser.environment import setup_env
 from token_miser.evaluator import score_quality
 from token_miser.executor import load_claude_env, run_claude, run_claude_sequential
+from token_miser.package_ref import parse_package_ref
 from token_miser.report import analyze, compare
 from token_miser.task import load_task
 
@@ -21,15 +21,15 @@ def cmd_run(args: argparse.Namespace) -> int:
     conn = init_db()
     claude_env = load_claude_env()
     try:
-        specs = [args.control]
-        if args.treatment:
-            specs.append(args.treatment)
+        specs = [args.baseline]
+        if args.package:
+            specs.append(args.package)
 
         results = []
         for spec in specs:
-            arm = parse_arm(spec)
-            print(f"Running arm: {arm.name}...", file=sys.stderr)
-            env = setup_env(task, arm)
+            package_ref = parse_package_ref(spec)
+            print(f"Running package: {package_ref.name}...", file=sys.stderr)
+            env = setup_env(task, package_ref)
             try:
                 if task.type == "sequential":
                     res = run_claude_sequential(
@@ -61,8 +61,8 @@ def cmd_run(args: argparse.Namespace) -> int:
 
                 run = Run(
                     task_id=task.id,
-                    arm=arm.name,
-                    loadout_name=arm.loadout_path.split("/")[-1] if arm.loadout_path else "",
+                    package_name=package_ref.name,
+                    loadout_name=package_ref.package_path.split("/")[-1] if package_ref.package_path else "",
                     model=args.model,
                     wall_seconds=res.wall_seconds,
                     input_tokens=res.usage.input_tokens,
@@ -76,14 +76,14 @@ def cmd_run(args: argparse.Namespace) -> int:
                     result=res.result,
                 )
                 run_id = store_run(conn, run)
-                results.append((arm.name, res, passed, total, run_id))
+                results.append((package_ref.name, res, passed, total, run_id))
             finally:
                 env.teardown()
 
         print("\n=== Run Summary ===")
         for name, res, passed, total, run_id in results:
             print(
-                f"Arm: {name} | Input: {res.usage.input_tokens:,} | Output: {res.usage.output_tokens:,} | "
+                f"Package: {name} | Input: {res.usage.input_tokens:,} | Output: {res.usage.output_tokens:,} | "
                 f"Cost: ${res.total_cost_usd:.6f} | Wall: {res.wall_seconds:.1f}s | "
                 f"Criteria: {passed}/{total} | Run ID: {run_id}"
             )
@@ -118,13 +118,13 @@ def cmd_history(args: argparse.Namespace) -> int:
             print("No runs recorded.")
             return 0
 
-        print(f"{'ID':>4}  {'Task':<16}  {'Arm':<20}  {'Tokens':>10}  {'Wall':>8}  {'Cost':>12}  {'Criteria':>10}")
+        print(f"{'ID':>4}  {'Task':<16}  {'Package':<20}  {'Tokens':>10}  {'Wall':>8}  {'Cost':>12}  {'Criteria':>10}")
         for r in runs:
             tokens = r.input_tokens + r.output_tokens
             wall = f"{r.wall_seconds:.1f}s" if r.wall_seconds > 0 else "-"
             criteria = f"{r.criteria_pass}/{r.criteria_total}" if r.criteria_total else "-"
             print(
-                f"{r.id:>4}  {r.task_id:<16}  {r.arm:<20}  {tokens:>10,}  "
+                f"{r.id:>4}  {r.task_id:<16}  {r.package_name:<20}  {tokens:>10,}  "
                 f"{wall:>8}  ${r.total_cost_usd:>11.6f}  {criteria:>10}"
             )
         return 0
@@ -142,7 +142,7 @@ def cmd_show(args: argparse.Namespace) -> int:
 
         print(f"Run #{run.id}")
         print(f"  Task:       {run.task_id}")
-        print(f"  Arm:        {run.arm}")
+        print(f"  Package:    {run.package_name}")
         print(f"  Model:      {run.model}")
         print(f"  Started:    {run.started_at}")
         print(f"  Wall time:  {run.wall_seconds:.1f}s")
@@ -207,7 +207,7 @@ def cmd_tune(args: argparse.Namespace) -> int:
     return run_tune(
         suite_name=args.suite,
         skip_baseline=args.skip_baseline,
-        profile_path=args.profile,
+        package_path=args.package,
         output_dir=args.output,
         timeout=args.timeout,
         model=args.model,
@@ -336,15 +336,17 @@ def cmd_digest(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     from token_miser import __version__
 
-    parser = argparse.ArgumentParser(prog="token-miser", description="A/B test Claude Code configurations")
+    parser = argparse.ArgumentParser(prog="token-miser", description="Benchmark Claude Code configuration packages")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
     # run
     p_run = sub.add_parser("run", help="Run an experiment")
     p_run.add_argument("--task", required=True, help="Path to task YAML")
-    p_run.add_argument("--control", required=True, help="Control arm spec ('vanilla' or loadout path)")
-    p_run.add_argument("--treatment", default=None, help="Treatment arm spec (loadout path)")
+    p_run.add_argument("--baseline", required=True, help="Baseline spec ('vanilla' or package path)")
+    p_run.add_argument("--control", dest="baseline", help=argparse.SUPPRESS)
+    p_run.add_argument("--package", default=None, help="Package path to benchmark")
+    p_run.add_argument("--treatment", dest="package", help=argparse.SUPPRESS)
     p_run.add_argument("--model", default="sonnet", help="Model identifier (default: sonnet)")
     p_run.add_argument("--timeout", type=int, default=600, help="Per-invocation timeout in seconds (default: 600)")
 
@@ -374,8 +376,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_tune = sub.add_parser("tune", help="Guided efficiency optimization")
     p_tune.add_argument("--suite", default="standard", help="Benchmark suite name (default: standard)")
     p_tune.add_argument("--skip-baseline", action="store_true", help="Reuse last baseline")
-    p_tune.add_argument("--profile", default=None, help="Test a specific profile path")
-    p_tune.add_argument("--output", default="tuned-profile", help="Output dir for generated profile")
+    p_tune.add_argument("--package", default=None, help="Test a specific package path")
+    p_tune.add_argument("--profile", dest="package", help=argparse.SUPPRESS)
+    p_tune.add_argument("--output", default="tuned-package", help="Output dir for generated package")
     p_tune.add_argument("--timeout", type=int, default=300, help="Per-task timeout in seconds")
     p_tune.add_argument("--model", default="sonnet", help="Model identifier")
     p_tune.add_argument("--yes", action="store_true", help="Skip confirmation prompts")

@@ -9,40 +9,40 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from loadout.apply import apply_bundle
-from loadout.capture import capture_bundle
-from loadout.restore import restore_bundle
+from loadout.apply import apply_package as _loadout_apply
+from loadout.pack import pack as _loadout_pack
+from loadout.restore import restore_package as _loadout_restore
 from loadout.state import read_state
-from loadout.validate import validate_bundle
+from loadout.validate import validate_package as _loadout_validate
 
 
-def read_active_profile(target: Path) -> dict[str, Any] | None:
-    """Read the currently active loadout profile state."""
+def read_active_state(target: Path) -> dict[str, Any] | None:
+    """Read the currently active loadout package state."""
     return read_state(target)
 
 
-def validate_profile(bundle_path: Path) -> list[str]:
-    """Validate a loadout bundle, returning a list of errors (empty = valid)."""
-    return validate_bundle(bundle_path)
+def validate_package(bundle_path: Path) -> list[str]:
+    """Validate a loadout package, returning a list of errors (empty = valid)."""
+    return _loadout_validate(bundle_path)
 
 
-def apply_profile(bundle_path: Path, target: Path) -> None:
-    """Apply a loadout bundle to the target directory."""
-    apply_bundle(bundle_path, target, yes=True)
+def apply_package(bundle_path: Path, target: Path) -> None:
+    """Apply a loadout package to the target directory."""
+    _loadout_apply(bundle_path, target, yes=True)
 
 
-def restore_profile(target: Path) -> None:
+def restore_package(target: Path) -> None:
     """Restore the target directory from its most recent backup."""
-    restore_bundle(target, yes=True)
+    _loadout_restore(target, yes=True)
 
 
-def capture_current_config(source: Path, output: Path) -> Path:
-    """Capture the current config at source as a loadout bundle."""
-    capture_bundle(source, output, yes=True)
+def pack_current_config(source: Path, output: Path) -> Path:
+    """Capture the current config at source as a loadout package."""
+    _loadout_pack(source, output, yes=True)
     return output
 
 
-def create_profile_bundle(
+def create_package(
     name: str,
     version: str,
     author: str,
@@ -50,7 +50,7 @@ def create_profile_bundle(
     files: dict[str, str],
     output_dir: Path,
 ) -> Path:
-    """Programmatically create a loadout bundle from file contents."""
+    """Programmatically create a loadout package from file contents."""
     output_dir.mkdir(parents=True, exist_ok=True)
 
     targets = []
@@ -71,8 +71,8 @@ def create_profile_bundle(
     return output_dir
 
 
-def discover_kanon_profiles(kanonenv_path: Path) -> list[Path]:
-    """Discover loadout bundles available via kanon's .packages/ directory.
+def discover_kanon_packages(kanonenv_path: Path) -> list[Path]:
+    """Discover loadout packages available via kanon's .packages/ directory.
 
     Looks for a .packages/ sibling directory next to the .kanon file and
     returns paths to any subdirectories that contain a manifest.yaml.
@@ -84,8 +84,8 @@ def discover_kanon_profiles(kanonenv_path: Path) -> list[Path]:
     if not packages_dir.is_dir():
         return []
 
-    profiles = []
+    packages = []
     for item in sorted(packages_dir.iterdir()):
         if item.is_dir() and (item / "manifest.yaml").exists():
-            profiles.append(item)
-    return profiles
+            packages.append(item)
+    return packages

@@ -8,8 +8,8 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from token_miser.arm import Arm
-from token_miser.config_manager import apply_profile
+from token_miser.package_adapter import apply_package
+from token_miser.package_ref import PackageRef
 from token_miser.task import Task
 
 
@@ -23,14 +23,14 @@ class EnvironmentContext:
             shutil.rmtree(self.home_dir, ignore_errors=True)
 
 
-def setup_env(task: Task, arm: Arm) -> EnvironmentContext:
+def setup_env(task: Task, package_ref: PackageRef) -> EnvironmentContext:
     """Create an isolated experiment environment.
 
     1. Create a temp directory as HOME
     2. Clone the task repo into HOME/workspace
     3. Checkout the starting commit
     4. Copy Claude credentials into the isolated HOME
-    5. If treatment arm, apply loadout bundle
+    5. If treatment package, apply loadout package
     """
     home_dir = tempfile.mkdtemp(prefix="experiment-")
     workspace_dir = os.path.join(home_dir, "workspace")
@@ -64,10 +64,10 @@ def setup_env(task: Task, arm: Arm) -> EnvironmentContext:
         if aws_dir.is_dir():
             os.symlink(str(aws_dir), os.path.join(home_dir, ".aws"))
 
-        # For treatment arm, apply loadout
-        if arm.loadout_path:
+        # For treatment package, apply loadout
+        if package_ref.package_path:
             claude_dir = Path(home_dir) / ".claude"
-            apply_profile(Path(arm.loadout_path), claude_dir)
+            apply_package(Path(package_ref.package_path), claude_dir)
 
     except Exception:
         env.teardown()

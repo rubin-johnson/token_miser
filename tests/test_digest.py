@@ -29,16 +29,16 @@ def session_with_runs(conn):
     session = TuneSession(
         suite_name="quick",
         suite_version="0.1.0",
-        baseline_profile="vanilla",
-        tuned_profile="tuned-v1",
+        baseline_package="vanilla",
+        tuned_package="tuned-v1",
         status="completed",
         recommendations_json='[{"title": "Add grep rule", "category": "token_efficiency", "confidence": 0.9}]',
     )
     sid = create_tune_session(conn, session)
 
-    run_b = Run(task_id="bm-feat-001", arm="vanilla", input_tokens=3000, output_tokens=500,
+    run_b = Run(task_id="bm-feat-001", package_name="vanilla", input_tokens=3000, output_tokens=500,
                 total_cost_usd=0.002, wall_seconds=5.0, criteria_pass=2, criteria_total=2)
-    run_t = Run(task_id="bm-feat-001", arm="tuned-v1", input_tokens=2000, output_tokens=400,
+    run_t = Run(task_id="bm-feat-001", package_name="tuned-v1", input_tokens=2000, output_tokens=400,
                 total_cost_usd=0.0015, wall_seconds=4.0, criteria_pass=2, criteria_total=2)
     rid_b = store_run(conn, run_b)
     rid_t = store_run(conn, run_t)
@@ -90,7 +90,7 @@ class TestExportSession:
 class TestExportAll:
     def test_exports_all_sessions(self, conn, session_with_runs, tmp_path: Path) -> None:
         # Add a second session
-        s2 = TuneSession(suite_name="standard", suite_version="0.1.0", baseline_profile="v2")
+        s2 = TuneSession(suite_name="standard", suite_version="0.1.0", baseline_package="v2")
         create_tune_session(conn, s2)
 
         paths = export_all(conn, tmp_path)
@@ -115,7 +115,7 @@ class TestCompareDigests:
     def test_compare_two_digests(self, tmp_path: Path) -> None:
         d1 = {
             "suite": "quick",
-            "baseline_profile": "vanilla",
+            "baseline_package": "vanilla",
             "summary": {
                 "baseline": {"total_tokens": 5000, "total_cost": 0.003},
                 "tuned": {"total_tokens": 3500, "total_cost": 0.002},
@@ -124,7 +124,7 @@ class TestCompareDigests:
         }
         d2 = {
             "suite": "quick",
-            "baseline_profile": "slim-rubin",
+            "baseline_package": "slim-rubin",
             "summary": {
                 "baseline": {"total_tokens": 4000, "total_cost": 0.0025},
                 "tuned": {"total_tokens": 2800, "total_cost": 0.0018},

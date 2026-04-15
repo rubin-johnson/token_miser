@@ -21,8 +21,8 @@ def test_compare_no_runs(tmp_path):
 
 def test_compare_two_arms(tmp_path):
     runs = [
-        Run(task_id="t1", arm="vanilla", input_tokens=100, output_tokens=50, total_cost_usd=0.01),
-        Run(task_id="t1", arm="treatment", input_tokens=80, output_tokens=40, total_cost_usd=0.008),
+        Run(task_id="t1", package_name="vanilla", input_tokens=100, output_tokens=50, total_cost_usd=0.01),
+        Run(task_id="t1", package_name="treatment", input_tokens=80, output_tokens=40, total_cost_usd=0.008),
     ]
     conn = _setup_db(tmp_path, runs)
     result = compare("t1", conn)
@@ -34,9 +34,9 @@ def test_compare_two_arms(tmp_path):
 
 def test_compare_three_arms(tmp_path):
     runs = [
-        Run(task_id="t1", arm="a", total_cost_usd=0.01),
-        Run(task_id="t1", arm="b", total_cost_usd=0.02),
-        Run(task_id="t1", arm="c", total_cost_usd=0.03),
+        Run(task_id="t1", package_name="a", total_cost_usd=0.01),
+        Run(task_id="t1", package_name="b", total_cost_usd=0.02),
+        Run(task_id="t1", package_name="c", total_cost_usd=0.03),
     ]
     conn = _setup_db(tmp_path, runs)
     result = compare("t1", conn)
@@ -55,11 +55,11 @@ def test_analyze_no_runs(tmp_path):
 
 def test_analyze_with_runs(tmp_path):
     runs = [
-        Run(task_id="t1", arm="vanilla", input_tokens=100, output_tokens=50,
+        Run(task_id="t1", package_name="vanilla", input_tokens=100, output_tokens=50,
             total_cost_usd=0.01, criteria_pass=3, criteria_total=5),
-        Run(task_id="t1", arm="vanilla", input_tokens=120, output_tokens=60,
+        Run(task_id="t1", package_name="vanilla", input_tokens=120, output_tokens=60,
             total_cost_usd=0.012, criteria_pass=4, criteria_total=5),
-        Run(task_id="t1", arm="treatment", input_tokens=80, output_tokens=40,
+        Run(task_id="t1", package_name="treatment", input_tokens=80, output_tokens=40,
             total_cost_usd=0.008, criteria_pass=5, criteria_total=5),
     ]
     conn = _setup_db(tmp_path, runs)
@@ -73,7 +73,7 @@ def test_analyze_with_runs(tmp_path):
 def test_analyze_with_quality_scores(tmp_path):
     scores = json.dumps([{"dimension": "correctness", "score": 0.9, "reason": "good"}])
     runs = [
-        Run(task_id="t1", arm="vanilla", total_cost_usd=0.01, quality_scores=scores),
+        Run(task_id="t1", package_name="vanilla", total_cost_usd=0.01, quality_scores=scores),
     ]
     conn = _setup_db(tmp_path, runs)
     result = analyze("t1", conn)

@@ -1,4 +1,4 @@
-"""Profile builder: creates tuned loadout bundles from recommendations."""
+"""Tune builder: creates tuned loadout packages from recommendations."""
 from __future__ import annotations
 
 import shutil
@@ -18,7 +18,7 @@ def _bump_patch(version: str) -> str:
     return version
 
 
-def build_tuned_profile(
+def build_tuned_package(
     base_bundle_path: Path,
     recommendations: list[Recommendation],
     output_dir: Path,
@@ -45,7 +45,7 @@ def build_tuned_profile(
     manifest = yaml.safe_load(manifest_path.read_text())
     manifest["name"] = name if name else f"tuned-{date.today().isoformat()}"
     manifest["version"] = _bump_patch(manifest.get("version", "0.0.0"))
-    manifest["description"] = f"Tuned profile with {len(recommendations)} recommendations"
+    manifest["description"] = f"Tuned package with {len(recommendations)} recommendations"
     with open(manifest_path, "w") as f:
         yaml.dump(manifest, f, default_flow_style=False, sort_keys=False)
 

@@ -16,7 +16,7 @@ from token_miser.recommend import (
 
 def _run(**kwargs) -> Run:
     defaults = dict(
-        task_id="t1", arm="a", input_tokens=10000, output_tokens=10000,
+        task_id="t1", package_name="a", input_tokens=10000, output_tokens=10000,
         criteria_pass=9, criteria_total=10, wall_seconds=60.0,
         quality_scores=json.dumps({"minimal_change": 0.9, "correctness": 0.9}),
     )

@@ -26,12 +26,12 @@ def conn():
 
 class TestTuneSessionDB:
     def test_create_session(self, conn) -> None:
-        session = TuneSession(suite_name="quick", suite_version="0.1.0", baseline_profile="vanilla")
+        session = TuneSession(suite_name="quick", suite_version="0.1.0", baseline_package="vanilla")
         sid = create_tune_session(conn, session)
         assert sid > 0
 
     def test_get_session(self, conn) -> None:
-        session = TuneSession(suite_name="quick", suite_version="0.1.0", baseline_profile="vanilla")
+        session = TuneSession(suite_name="quick", suite_version="0.1.0", baseline_package="vanilla")
         sid = create_tune_session(conn, session)
         result = get_tune_session(conn, sid)
         assert result is not None
@@ -39,13 +39,13 @@ class TestTuneSessionDB:
         assert result.status == "running"
 
     def test_update_session(self, conn) -> None:
-        session = TuneSession(suite_name="quick", suite_version="0.1.0", baseline_profile="vanilla")
+        session = TuneSession(suite_name="quick", suite_version="0.1.0", baseline_package="vanilla")
         sid = create_tune_session(conn, session)
-        update_tune_session(conn, sid, status="completed", tuned_profile="tuned-v1")
+        update_tune_session(conn, sid, status="completed", tuned_package="tuned-v1")
         result = get_tune_session(conn, sid)
         assert result is not None
         assert result.status == "completed"
-        assert result.tuned_profile == "tuned-v1"
+        assert result.tuned_package == "tuned-v1"
 
     def test_get_nonexistent_session(self, conn) -> None:
         assert get_tune_session(conn, 999) is None
@@ -53,11 +53,11 @@ class TestTuneSessionDB:
 
 class TestTuneRunLinking:
     def test_link_and_retrieve_runs(self, conn) -> None:
-        session = TuneSession(suite_name="quick", suite_version="0.1.0", baseline_profile="vanilla")
+        session = TuneSession(suite_name="quick", suite_version="0.1.0", baseline_package="vanilla")
         sid = create_tune_session(conn, session)
 
-        run1 = Run(task_id="bm-feat-001", arm="vanilla", input_tokens=1000, output_tokens=500)
-        run2 = Run(task_id="bm-fix-001", arm="vanilla", input_tokens=2000, output_tokens=800)
+        run1 = Run(task_id="bm-feat-001", package_name="vanilla", input_tokens=1000, output_tokens=500)
+        run2 = Run(task_id="bm-fix-001", package_name="vanilla", input_tokens=2000, output_tokens=800)
         rid1 = store_run(conn, run1)
         rid2 = store_run(conn, run2)
 
@@ -68,11 +68,11 @@ class TestTuneRunLinking:
         assert len(runs) == 2
 
     def test_filter_by_phase(self, conn) -> None:
-        session = TuneSession(suite_name="quick", suite_version="0.1.0", baseline_profile="vanilla")
+        session = TuneSession(suite_name="quick", suite_version="0.1.0", baseline_package="vanilla")
         sid = create_tune_session(conn, session)
 
-        run_b = Run(task_id="bm-feat-001", arm="vanilla", input_tokens=1000, output_tokens=500)
-        run_t = Run(task_id="bm-feat-001", arm="tuned", input_tokens=800, output_tokens=400)
+        run_b = Run(task_id="bm-feat-001", package_name="vanilla", input_tokens=1000, output_tokens=500)
+        run_t = Run(task_id="bm-feat-001", package_name="tuned", input_tokens=800, output_tokens=400)
         rid_b = store_run(conn, run_b)
         rid_t = store_run(conn, run_t)
 
@@ -88,10 +88,10 @@ class TestTuneRunLinking:
         assert len(all_runs) == 2
 
     def test_get_all_runs_without_phase(self, conn) -> None:
-        session = TuneSession(suite_name="quick", suite_version="0.1.0", baseline_profile="vanilla")
+        session = TuneSession(suite_name="quick", suite_version="0.1.0", baseline_package="vanilla")
         sid = create_tune_session(conn, session)
 
-        run = Run(task_id="bm-feat-001", arm="vanilla", input_tokens=1000, output_tokens=500)
+        run = Run(task_id="bm-feat-001", package_name="vanilla", input_tokens=1000, output_tokens=500)
         rid = store_run(conn, run)
         link_tune_run(conn, sid, rid, "baseline")
 
@@ -101,18 +101,18 @@ class TestTuneRunLinking:
 
 class TestGetLatestTuneSession:
     def test_returns_latest(self, conn) -> None:
-        s1 = TuneSession(suite_name="quick", suite_version="0.1.0", baseline_profile="v1")
-        s2 = TuneSession(suite_name="quick", suite_version="0.1.0", baseline_profile="v2")
+        s1 = TuneSession(suite_name="quick", suite_version="0.1.0", baseline_package="v1")
+        s2 = TuneSession(suite_name="quick", suite_version="0.1.0", baseline_package="v2")
         create_tune_session(conn, s1)
         create_tune_session(conn, s2)
 
         latest = get_latest_tune_session(conn, "quick")
         assert latest is not None
-        assert latest.baseline_profile == "v2"
+        assert latest.baseline_package == "v2"
 
     def test_filters_by_suite(self, conn) -> None:
-        s1 = TuneSession(suite_name="quick", suite_version="0.1.0", baseline_profile="v1")
-        s2 = TuneSession(suite_name="standard", suite_version="0.1.0", baseline_profile="v2")
+        s1 = TuneSession(suite_name="quick", suite_version="0.1.0", baseline_package="v1")
+        s2 = TuneSession(suite_name="standard", suite_version="0.1.0", baseline_package="v2")
         create_tune_session(conn, s1)
         create_tune_session(conn, s2)
 

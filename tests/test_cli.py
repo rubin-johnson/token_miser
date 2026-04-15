@@ -14,7 +14,7 @@ def _cli(*args):
 def test_help():
     r = _cli("--help")
     assert r.returncode == 0
-    assert "A/B test" in r.stdout
+    assert "Benchmark" in r.stdout
 
 
 def test_version():

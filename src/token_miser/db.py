@@ -12,7 +12,7 @@ from pathlib import Path
 class Run:
     id: int = 0
     task_id: str = ""
-    arm: str = ""
+    package_name: str = ""
     loadout_name: str = ""
     model: str = ""
     started_at: str = ""
@@ -34,8 +34,8 @@ class TuneSession:
     id: int = 0
     suite_name: str = ""
     suite_version: str = ""
-    baseline_profile: str = ""
-    tuned_profile: str = ""
+    baseline_package: str = ""
+    tuned_package: str = ""
     started_at: str = ""
     completed_at: str = ""
     status: str = "running"
@@ -64,7 +64,7 @@ def _create_tables(conn: sqlite3.Connection) -> None:
         CREATE TABLE IF NOT EXISTS runs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             task_id TEXT NOT NULL,
-            arm TEXT NOT NULL,
+            package_name TEXT NOT NULL,
             loadout_name TEXT NOT NULL DEFAULT '',
             model TEXT NOT NULL DEFAULT '',
             started_at TEXT DEFAULT '',
@@ -95,8 +95,8 @@ def _create_tables(conn: sqlite3.Connection) -> None:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             suite_name TEXT NOT NULL,
             suite_version TEXT NOT NULL DEFAULT '',
-            baseline_profile TEXT NOT NULL DEFAULT '',
-            tuned_profile TEXT DEFAULT '',
+            baseline_package TEXT NOT NULL DEFAULT '',
+            tuned_package TEXT DEFAULT '',
             started_at TEXT DEFAULT '',
             completed_at TEXT DEFAULT '',
             status TEXT DEFAULT 'running',
@@ -113,17 +113,27 @@ def _create_tables(conn: sqlite3.Connection) -> None:
     """)
     conn.commit()
 
+    # Migrate v1 -> v2 column names
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(runs)").fetchall()}
+    if "arm" in cols:
+        conn.execute("ALTER TABLE runs RENAME COLUMN arm TO package_name")
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(tune_sessions)").fetchall()}
+    if "baseline_profile" in cols:
+        conn.execute("ALTER TABLE tune_sessions RENAME COLUMN baseline_profile TO baseline_package")
+        conn.execute("ALTER TABLE tune_sessions RENAME COLUMN tuned_profile TO tuned_package")
+    conn.commit()
+
 
 def store_run(conn: sqlite3.Connection, run: Run) -> int:
     """Insert a run and return its ID."""
     now = datetime.now(timezone.utc).isoformat()
     cursor = conn.execute(
-        """INSERT INTO runs (task_id, arm, loadout_name, model, started_at, wall_seconds,
+        """INSERT INTO runs (task_id, package_name, loadout_name, model, started_at, wall_seconds,
             input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
             total_cost_usd, exit_code, criteria_pass, criteria_total, quality_scores, result)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
-            run.task_id, run.arm, run.loadout_name, run.model, now,
+            run.task_id, run.package_name, run.loadout_name, run.model, now,
             run.wall_seconds, run.input_tokens, run.output_tokens,
             run.cache_read_tokens, run.cache_write_tokens, run.total_cost_usd,
             run.exit_code, run.criteria_pass, run.criteria_total, run.quality_scores, run.result,
@@ -157,7 +167,7 @@ def _row_to_run(row: sqlite3.Row) -> Run:
     return Run(
         id=row["id"],
         task_id=row["task_id"],
-        arm=row["arm"],
+        package_name=row["package_name"],
         loadout_name=row["loadout_name"],
         model=row["model"],
         started_at=row["started_at"],
@@ -178,11 +188,11 @@ def _row_to_run(row: sqlite3.Row) -> Run:
 def create_tune_session(conn: sqlite3.Connection, session: TuneSession) -> int:
     now = datetime.now(timezone.utc).isoformat()
     cursor = conn.execute(
-        """INSERT INTO tune_sessions (suite_name, suite_version, baseline_profile,
-            tuned_profile, started_at, status, recommendations_json)
+        """INSERT INTO tune_sessions (suite_name, suite_version, baseline_package,
+            tuned_package, started_at, status, recommendations_json)
         VALUES (?, ?, ?, ?, ?, ?, ?)""",
-        (session.suite_name, session.suite_version, session.baseline_profile,
-         session.tuned_profile, now, session.status, session.recommendations_json),
+        (session.suite_name, session.suite_version, session.baseline_package,
+         session.tuned_package, now, session.status, session.recommendations_json),
     )
     conn.commit()
     row_id = cursor.lastrowid
@@ -214,8 +224,8 @@ def get_tune_session(conn: sqlite3.Connection, session_id: int) -> TuneSession |
         id=row["id"],
         suite_name=row["suite_name"],
         suite_version=row["suite_version"],
-        baseline_profile=row["baseline_profile"],
-        tuned_profile=row["tuned_profile"],
+        baseline_package=row["baseline_package"],
+        tuned_package=row["tuned_package"],
         started_at=row["started_at"],
         completed_at=row["completed_at"],
         status=row["status"],
@@ -259,8 +269,8 @@ def get_latest_tune_session(conn: sqlite3.Connection, suite_name: str = "") -> T
         id=row["id"],
         suite_name=row["suite_name"],
         suite_version=row["suite_version"],
-        baseline_profile=row["baseline_profile"],
-        tuned_profile=row["tuned_profile"],
+        baseline_package=row["baseline_package"],
+        tuned_package=row["tuned_package"],
         started_at=row["started_at"],
         completed_at=row["completed_at"],
         status=row["status"],

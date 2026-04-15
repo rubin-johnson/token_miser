@@ -1,8 +1,8 @@
-"""Tests for profile builder."""
+"""Tests for tune builder."""
 import yaml
 
-from token_miser.profile_builder import build_tuned_profile
 from token_miser.recommend import Recommendation
+from token_miser.tune_builder import build_tuned_package
 
 
 def _base_bundle(tmp_path):
@@ -43,11 +43,11 @@ def _sample_recs():
     ]
 
 
-class TestBuildTunedProfile:
+class TestBuildTunedPackage:
     def test_builds_valid_bundle(self, tmp_path):
         base = _base_bundle(tmp_path)
         out = tmp_path / "tuned"
-        result = build_tuned_profile(base, _sample_recs(), out, name="my-tuned")
+        result = build_tuned_package(base, _sample_recs(), out, name="my-tuned")
         assert result == out
         assert (out / "CLAUDE.md").exists()
         assert (out / "manifest.yaml").exists()
@@ -55,7 +55,7 @@ class TestBuildTunedProfile:
     def test_appends_recommendations_to_claude_md(self, tmp_path):
         base = _base_bundle(tmp_path)
         out = tmp_path / "tuned"
-        build_tuned_profile(base, _sample_recs(), out)
+        build_tuned_package(base, _sample_recs(), out)
         content = (out / "CLAUDE.md").read_text()
         assert "## Token Miser Recommendations" in content
         assert "grep/glob before reading full files" in content
@@ -66,42 +66,42 @@ class TestBuildTunedProfile:
         base = _base_bundle(tmp_path)
         (base / "CLAUDE.md").unlink()
         out = tmp_path / "tuned"
-        build_tuned_profile(base, _sample_recs(), out)
+        build_tuned_package(base, _sample_recs(), out)
         content = (out / "CLAUDE.md").read_text()
         assert "## Token Miser Recommendations" in content
 
     def test_updates_manifest_name(self, tmp_path):
         base = _base_bundle(tmp_path)
         out = tmp_path / "tuned"
-        build_tuned_profile(base, _sample_recs(), out, name="custom-name")
+        build_tuned_package(base, _sample_recs(), out, name="custom-name")
         manifest = yaml.safe_load((out / "manifest.yaml").read_text())
         assert manifest["name"] == "custom-name"
 
     def test_updates_manifest_version(self, tmp_path):
         base = _base_bundle(tmp_path)
         out = tmp_path / "tuned"
-        build_tuned_profile(base, _sample_recs(), out)
+        build_tuned_package(base, _sample_recs(), out)
         manifest = yaml.safe_load((out / "manifest.yaml").read_text())
         assert manifest["version"] == "0.1.1"
 
     def test_updates_manifest_description(self, tmp_path):
         base = _base_bundle(tmp_path)
         out = tmp_path / "tuned"
-        build_tuned_profile(base, _sample_recs(), out)
+        build_tuned_package(base, _sample_recs(), out)
         manifest = yaml.safe_load((out / "manifest.yaml").read_text())
         assert "2 recommendations" in manifest["description"]
 
     def test_default_name_when_not_provided(self, tmp_path):
         base = _base_bundle(tmp_path)
         out = tmp_path / "tuned"
-        build_tuned_profile(base, _sample_recs(), out)
+        build_tuned_package(base, _sample_recs(), out)
         manifest = yaml.safe_load((out / "manifest.yaml").read_text())
         assert manifest["name"].startswith("tuned-")
 
     def test_empty_recommendations_copies_unchanged(self, tmp_path):
         base = _base_bundle(tmp_path)
         out = tmp_path / "tuned"
-        build_tuned_profile(base, [], out)
+        build_tuned_package(base, [], out)
         content = (out / "CLAUDE.md").read_text()
         assert content == "# My Config\nBe concise.\n"
         manifest = yaml.safe_load((out / "manifest.yaml").read_text())
@@ -113,6 +113,6 @@ class TestBuildTunedProfile:
         out = tmp_path / "tuned"
         out.mkdir()
         (out / "stale.txt").write_text("old stuff")
-        build_tuned_profile(base, _sample_recs(), out, name="fresh")
+        build_tuned_package(base, _sample_recs(), out, name="fresh")
         assert not (out / "stale.txt").exists()
         assert (out / "CLAUDE.md").exists()

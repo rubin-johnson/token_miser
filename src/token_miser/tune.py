@@ -10,7 +10,6 @@ import tempfile
 from pathlib import Path
 
 from token_miser.checker import check_all_criteria
-from token_miser.config_manager import capture_current_config, read_active_profile
 from token_miser.db import (
     Run,
     TuneSession,
@@ -23,10 +22,11 @@ from token_miser.db import (
 from token_miser.environment import setup_env
 from token_miser.evaluator import score_quality
 from token_miser.executor import load_claude_env, run_claude, run_claude_sequential
-from token_miser.profile_builder import build_tuned_profile
+from token_miser.package_adapter import pack_current_config, read_active_state
 from token_miser.recommend import Recommendation, analyze_results
 from token_miser.suite import BenchmarkTask, load_suite
 from token_miser.task import Criterion, RubricDimension, Task
+from token_miser.tune_builder import build_tuned_package
 
 
 def _benchmarks_dir() -> Path:
@@ -75,31 +75,32 @@ def _benchmark_task_to_task(bt: BenchmarkTask, repo_path: str) -> Task:
 
 def _run_single_task(
     task: Task,
-    profile_path: Path | None,
+    package_path: Path | None,
     model: str,
     timeout: int,
     conn: sqlite3.Connection,
     claude_env: dict[str, str] | None = None,
+    bare: bool = False,
 ) -> Run:
     """Run a single benchmark task and store the result."""
-    from token_miser.arm import Arm
+    from token_miser.package_ref import PackageRef
 
-    if profile_path:
-        arm = Arm(name=profile_path.name, loadout_path=str(profile_path.resolve()))
+    if package_path:
+        package_ref = PackageRef(name=package_path.name, package_path=str(package_path.resolve()))
     else:
-        arm = Arm(name="vanilla")
+        package_ref = PackageRef(name="vanilla")
 
-    env = setup_env(task, arm)
+    env = setup_env(task, package_ref)
     try:
         if task.type == "sequential":
             res = run_claude_sequential(
                 task.prompts, env.home_dir, env.workspace_dir,
-                timeout=timeout, extra_env=claude_env,
+                timeout=timeout, extra_env=claude_env, bare=bare,
             )
         else:
             res = run_claude(
                 task.prompt, env.home_dir, env.workspace_dir,
-                timeout=timeout, extra_env=claude_env,
+                timeout=timeout, extra_env=claude_env, bare=bare,
             )
 
         checks = check_all_criteria(task.success_criteria, env)
@@ -121,8 +122,8 @@ def _run_single_task(
 
         run = Run(
             task_id=task.id,
-            arm=arm.name,
-            loadout_name=arm.loadout_path.split("/")[-1] if arm.loadout_path else "",
+            package_name=package_ref.name,
+            loadout_name=package_ref.package_path.split("/")[-1] if package_ref.package_path else "",
             model=model,
             wall_seconds=res.wall_seconds,
             input_tokens=res.usage.input_tokens,
@@ -196,11 +197,12 @@ def _print_comparison(baseline_runs: list[Run], tuned_runs: list[Run]) -> None:
 def run_tune(
     suite_name: str = "standard",
     skip_baseline: bool = False,
-    profile_path: str | None = None,
-    output_dir: str = "tuned-profile",
+    package_path: str | None = None,
+    output_dir: str = "tuned-package",
     timeout: int = 300,
     model: str = "sonnet",
     yes: bool = False,
+    bare: bool = False,
 ) -> int:
     """Execute the full tune workflow."""
     benchmarks = _benchmarks_dir()
@@ -238,10 +240,10 @@ def run_tune(
     try:
         # Phase 1: Discovery
         target = Path.home() / ".claude"
-        state = read_active_profile(target) if target.exists() else None
+        state = read_active_state(target) if target.exists() else None
         active_name = state.get("active", "none") if state else "none"
 
-        print(f"Current profile: {active_name}")
+        print(f"Current package: {active_name}")
         print(f"Suite: {suite.name} v{suite.version} ({len(suite.tasks)} tasks)")
         print(f"Estimated time: ~{len(suite.tasks) * 3} minutes per pass\n")
 
@@ -251,10 +253,10 @@ def run_tune(
                 print("Aborted.")
                 return 0
 
-        # Capture current config as baseline profile
+        # Capture current config as baseline package
         baseline_dir = Path(tempfile.mkdtemp(prefix="tune-baseline-"))
-        capture_current_config(target, baseline_dir)
-        baseline_profile = baseline_dir
+        pack_current_config(target, baseline_dir)
+        baseline_pkg = baseline_dir
 
         # Read current CLAUDE.md for recommendation analysis
         claude_md_path = target / "CLAUDE.md"
@@ -264,7 +266,7 @@ def run_tune(
         session = TuneSession(
             suite_name=suite.name,
             suite_version=suite.version,
-            baseline_profile=active_name,
+            baseline_package=active_name,
         )
         session_id = create_tune_session(conn, session)
 
@@ -275,7 +277,7 @@ def run_tune(
             for i, bt in enumerate(suite.tasks, 1):
                 task = _benchmark_task_to_task(bt, repo_paths.get(bt.repo_id, ""))
                 try:
-                    run = _run_single_task(task, baseline_profile, model, timeout, conn, claude_env)
+                    run = _run_single_task(task, baseline_pkg, model, timeout, conn, claude_env, bare)
                     link_tune_run(conn, session_id, run.id, "baseline")
                     baseline_runs.append(run)
                     _print_run_line(i, len(suite.tasks), bt.id, run)
@@ -295,11 +297,11 @@ def run_tune(
                 return 1
 
         # Phase 3: Analysis and recommendations
-        if profile_path:
-            # User supplied a specific profile to test
-            tuned_profile = Path(profile_path)
+        if package_path:
+            # User supplied a specific package to test
+            tuned_pkg = Path(package_path)
             recommendations: list[Recommendation] = []
-            print(f"\nUsing supplied profile: {profile_path}")
+            print(f"\nUsing supplied package: {package_path}")
         else:
             print("\nAnalyzing results...")
             recommendations = analyze_results(baseline_runs, current_claude_md)
@@ -316,31 +318,31 @@ def run_tune(
                 print(f"  [{r.confidence:.0%}] {r.title}")
                 print(f"       {r.description}")
 
-            # Phase 4: Build tuned profile
+            # Phase 4: Build tuned package
             output = Path(output_dir)
-            tuned_profile = build_tuned_profile(baseline_profile, recommendations, output)
-            print(f"\nGenerated tuned profile at: {output}")
+            tuned_pkg = build_tuned_package(baseline_pkg, recommendations, output)
+            print(f"\nGenerated tuned package at: {output}")
 
         update_tune_session(conn, session_id,
-                            tuned_profile=tuned_profile.name,
+                            tuned_package=tuned_pkg.name,
                             recommendations_json=json.dumps(
                                 [{"title": r.title, "category": r.category,
                                   "confidence": r.confidence} for r in recommendations]))
 
         if not yes:
-            answer = input("\nRun benchmarks with tuned profile? [Y/n] ").strip().lower()
+            answer = input("\nRun benchmarks with tuned package? [Y/n] ").strip().lower()
             if answer and answer != "y":
-                print("Skipping tuned benchmark. Profile saved.")
+                print("Skipping tuned benchmark. Package saved.")
                 update_tune_session(conn, session_id, status="partial")
                 return 0
 
         # Phase 5: Tuned benchmark
-        print(f"\nRunning tuned benchmarks ({tuned_profile.name})...")
+        print(f"\nRunning tuned benchmarks ({tuned_pkg.name})...")
         tuned_runs: list[Run] = []
         for i, bt in enumerate(suite.tasks, 1):
             task = _benchmark_task_to_task(bt, repo_paths.get(bt.repo_id, ""))
             try:
-                run = _run_single_task(task, tuned_profile, model, timeout, conn, claude_env)
+                run = _run_single_task(task, tuned_pkg, model, timeout, conn, claude_env, bare)
                 link_tune_run(conn, session_id, run.id, "tuned")
                 tuned_runs.append(run)
                 _print_run_line(i, len(suite.tasks), bt.id, run)

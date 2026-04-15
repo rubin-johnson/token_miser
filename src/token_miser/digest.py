@@ -35,7 +35,7 @@ def _summarize_runs(runs: list[Run]) -> dict:
 def _run_digest(run: Run) -> dict:
     return {
         "task_id": run.task_id,
-        "arm": run.arm,
+        "package": run.package_name,
         "tokens": run.input_tokens + run.output_tokens,
         "cost": round(run.total_cost_usd, 6),
         "wall_seconds": round(run.wall_seconds, 1),
@@ -67,8 +67,8 @@ def export_session(conn: sqlite3.Connection, session_id: int, output_dir: Path |
         "suite": session.suite_name,
         "suite_version": session.suite_version,
         "timestamp": session.started_at,
-        "baseline_profile": session.baseline_profile,
-        "tuned_profile": session.tuned_profile or "",
+        "baseline_package": session.baseline_package,
+        "tuned_package": session.tuned_package or "",
         "status": session.status,
         "summary": {
             "baseline": baseline_summary,
@@ -129,7 +129,7 @@ def compare_digests(path1: Path, path2: Path) -> str:
         "",
         f"{'':28} {'Session 1':>14} {'Session 2':>14}",
         f"  {'Suite':<24} {d1['suite']:>14} {d2['suite']:>14}",
-        f"  {'Baseline profile':<24} {d1['baseline_profile']:>14} {d2['baseline_profile']:>14}",
+        f"  {'Baseline package':<24} {d1['baseline_package']:>14} {d2['baseline_package']:>14}",
     ]
 
     s1 = d1.get("summary", {}).get("baseline", {})
