@@ -59,6 +59,11 @@ def setup_env(task: Task, arm: Arm) -> EnvironmentContext:
             claude_dir.mkdir(mode=0o700, exist_ok=True)
             shutil.copy2(cred_src, claude_dir / ".credentials.json")
 
+        # Symlink AWS config so Bedrock/SSO credentials work in the isolated HOME
+        aws_dir = real_home / ".aws"
+        if aws_dir.is_dir():
+            os.symlink(str(aws_dir), os.path.join(home_dir, ".aws"))
+
         # For treatment arm, apply loadout
         if arm.loadout_path:
             claude_dir = Path(home_dir) / ".claude"
