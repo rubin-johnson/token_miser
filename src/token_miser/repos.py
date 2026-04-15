@@ -69,15 +69,12 @@ def ensure_repo(spec: RepoSpec, cache_dir: Path, benchmarks_dir: Path | None = N
         clone_cmd = ["git", "clone"]
         if spec.shallow:
             clone_cmd.extend(["--depth", "1"])
+            if spec.commit and spec.commit != "HEAD":
+                clone_cmd.extend(["--branch", spec.commit])
         clone_cmd.extend([spec.url, str(dest)])
         subprocess.run(clone_cmd, check=True, capture_output=True)
 
-        if spec.commit and spec.commit != "HEAD":
-            if spec.shallow:
-                subprocess.run(
-                    ["git", "-C", str(dest), "fetch", "--depth", "1", "origin", spec.commit],
-                    check=True, capture_output=True,
-                )
+        if spec.commit and spec.commit != "HEAD" and not spec.shallow:
             subprocess.run(
                 ["git", "-C", str(dest), "checkout", spec.commit],
                 check=True, capture_output=True,
