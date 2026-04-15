@@ -32,6 +32,10 @@ loadouts/my-config/
 .packages/
 .kanon-data/
 
+# Token miser generated output
+tuned-profile/
+.token_miser/
+
 # Agent execution artifacts
 .ralphael/
 .worktrees/
