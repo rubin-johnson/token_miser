@@ -16,6 +16,6 @@ KANON_MARKETPLACE_INSTALL=false
 # Source: loadout packages manifest repository
 # After 'kanon install', packages appear in .packages/ as symlinks.
 # token-miser references them: --package .packages/token-miser
-KANON_SOURCE_loadouts_URL=https://github.com/rubin-johnson/loadout-bundles.git
-KANON_SOURCE_loadouts_REVISION=main
-KANON_SOURCE_loadouts_PATH=repo-specs/loadout-manifest.xml
+KANON_SOURCE_packages_URL=https://github.com/rubin-johnson/loadout-packages.git
+KANON_SOURCE_packages_REVISION=refs/tags/0.1.0
+KANON_SOURCE_packages_PATH=repo-specs/meta.xml

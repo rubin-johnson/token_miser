@@ -193,6 +193,117 @@ def rule_high_wall_low_quality(runs: list[Run], current_claude_md: str) -> Recom
     )
 
 
+def rule_high_output_ratio(runs: list[Run], current_claude_md: str) -> Recommendation | None:
+    """Fires when output tokens are disproportionately high relative to input."""
+    if not runs:
+        return None
+    total_input = sum(r.input_tokens for r in runs)
+    total_output = sum(r.output_tokens for r in runs)
+    if total_input == 0:
+        return None
+    ratio = total_output / total_input
+    if ratio <= 0.15:
+        return None
+    md_lower = current_claude_md.lower()
+    if "no unsolicited summaries" in md_lower or "no preamble" in md_lower:
+        return None
+    return Recommendation(
+        category="token_efficiency",
+        title="Reduce output verbosity",
+        description="High output-to-input token ratio suggests verbose responses. "
+                    "Output tokens cost 5x more than input tokens.",
+        claude_md_block=(
+            "## Output Efficiency\n"
+            "- No unsolicited summaries, no trailing questions, no preamble\n"
+            "- Lead with the answer, explain after\n"
+            "- One tool call per step when possible"
+        ),
+        confidence=0.82,
+        evidence=f"output/input ratio: {ratio:.2f} (threshold: 0.15)",
+    )
+
+
+def rule_no_parallel_guidance(runs: list[Run], current_claude_md: str) -> Recommendation | None:
+    """Fires when high wall time and no parallel execution guidance."""
+    if not runs:
+        return None
+    avg_wall = sum(r.wall_seconds for r in runs) / len(runs)
+    if avg_wall <= 90:
+        return None
+    md_lower = current_claude_md.lower()
+    if "parallel" in md_lower:
+        return None
+    return Recommendation(
+        category="token_efficiency",
+        title="Add parallel execution guidance",
+        description="High average wall time without parallel execution guidance. "
+                    "Independent tool calls can run concurrently.",
+        claude_md_block=(
+            "## Execution\n"
+            "- Prefer parallel execution when dispatching agents or running independent tasks\n"
+            "- Don't speculatively read files you might not need"
+        ),
+        confidence=0.72,
+        evidence=f"avg wall_seconds: {avg_wall:.0f} (threshold: 90)",
+    )
+
+
+def rule_high_cache_miss(runs: list[Run], current_claude_md: str) -> Recommendation | None:
+    """Fires when cache read tokens are low relative to total input, suggesting repeated full reads."""
+    if not runs:
+        return None
+    total_input = sum(r.input_tokens for r in runs)
+    total_cache_read = sum(r.cache_read_tokens for r in runs)
+    if total_input == 0:
+        return None
+    cache_rate = total_cache_read / (total_input + total_cache_read) if (total_input + total_cache_read) else 0
+    if cache_rate >= 0.3:
+        return None
+    if len(runs) < 3:
+        return None
+    return Recommendation(
+        category="token_efficiency",
+        title="Improve context reuse",
+        description="Low cache hit rate suggests the agent re-reads context on each tool call. "
+                    "Structuring prompts for cache-friendly patterns reduces cost.",
+        claude_md_block=(
+            "## Context Efficiency\n"
+            "- Read a file once and remember its contents; don't re-read between tool calls\n"
+            "- Batch related operations to avoid context thrashing"
+        ),
+        confidence=0.7,
+        evidence=f"cache read rate: {cache_rate:.1%} (threshold: 30%)",
+    )
+
+
+def rule_excessive_tokens_per_criterion(runs: list[Run], current_claude_md: str) -> Recommendation | None:
+    """Fires when token cost per passing criterion is very high."""
+    total_tokens = sum(r.input_tokens + r.output_tokens for r in runs)
+    total_pass = sum(r.criteria_pass for r in runs)
+    if total_pass == 0:
+        return None
+    tokens_per_pass = total_tokens / total_pass
+    if tokens_per_pass <= 5000:
+        return None
+    md_lower = current_claude_md.lower()
+    if "simple > clever" in md_lower and "grep" in md_lower:
+        return None
+    return Recommendation(
+        category="token_efficiency",
+        title="Reduce tokens per successful criterion",
+        description="High token expenditure per passing criterion suggests over-engineering or "
+                    "exploratory approaches where a direct approach would suffice.",
+        claude_md_block=(
+            "## Approach\n"
+            "- Simple > clever; match existing project patterns\n"
+            "- Solve what was asked, not the generalized version; no side quests\n"
+            "- Use grep/glob before reading full files"
+        ),
+        confidence=0.78,
+        evidence=f"tokens per passing criterion: {tokens_per_pass:.0f} (threshold: 5000)",
+    )
+
+
 RuleFunc = Callable[[list[Run], str], Recommendation | None]
 
 ALL_RULES: list[RuleFunc] = [
@@ -202,6 +313,10 @@ ALL_RULES: list[RuleFunc] = [
     rule_low_criteria_pass_rate,
     rule_empty_claude_md,
     rule_high_wall_low_quality,
+    rule_high_output_ratio,
+    rule_no_parallel_guidance,
+    rule_high_cache_miss,
+    rule_excessive_tokens_per_criterion,
 ]
 
 

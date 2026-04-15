@@ -6,11 +6,15 @@ from token_miser.recommend import (
     Recommendation,
     analyze_results,
     rule_empty_claude_md,
+    rule_excessive_tokens_per_criterion,
+    rule_high_cache_miss,
+    rule_high_output_ratio,
     rule_high_tokens_no_grep,
     rule_high_variance_feature_tasks,
     rule_high_wall_low_quality,
     rule_low_criteria_pass_rate,
     rule_low_minimal_change,
+    rule_no_parallel_guidance,
 )
 
 
@@ -228,13 +232,14 @@ class TestAnalyzeResults:
     def test_returns_empty_when_no_issues(self):
         runs = [
             _run(
-                input_tokens=5000, output_tokens=5000,
+                input_tokens=10000, output_tokens=1000,
                 criteria_pass=10, criteria_total=10,
-                wall_seconds=30,
+                wall_seconds=30, cache_read_tokens=5000,
                 quality_scores=json.dumps({"minimal_change": 0.95, "correctness": 0.95}),
             ),
         ]
         long_md = "\n".join(f"rule {i}: Use grep before reading" for i in range(20))
+        long_md += "\nPrefer parallel execution"
         recs = analyze_results(runs, long_md)
         assert recs == []
 
@@ -248,3 +253,67 @@ class TestAnalyzeResults:
         recs = analyze_results([], "")
         # Should still trigger empty CLAUDE.md rule
         assert any(r.category == "structure" for r in recs)
+
+
+class TestRuleHighOutputRatio:
+    def test_triggers_on_high_ratio(self):
+        runs = [_run(input_tokens=10000, output_tokens=2000)]
+        assert rule_high_output_ratio(runs, "") is not None
+
+    def test_no_trigger_on_low_ratio(self):
+        runs = [_run(input_tokens=10000, output_tokens=1000)]
+        assert rule_high_output_ratio(runs, "") is None
+
+    def test_no_trigger_when_guidance_present(self):
+        runs = [_run(input_tokens=10000, output_tokens=2000)]
+        assert rule_high_output_ratio(runs, "no unsolicited summaries") is None
+
+
+class TestRuleNoParallelGuidance:
+    def test_triggers_on_high_wall_no_guidance(self):
+        runs = [_run(wall_seconds=120)]
+        assert rule_no_parallel_guidance(runs, "") is not None
+
+    def test_no_trigger_on_low_wall(self):
+        runs = [_run(wall_seconds=60)]
+        assert rule_no_parallel_guidance(runs, "") is None
+
+    def test_no_trigger_when_parallel_mentioned(self):
+        runs = [_run(wall_seconds=120)]
+        assert rule_no_parallel_guidance(runs, "Prefer parallel execution") is None
+
+
+class TestRuleHighCacheMiss:
+    def test_triggers_on_low_cache(self):
+        runs = [
+            _run(input_tokens=5000, cache_read_tokens=100),
+            _run(input_tokens=5000, cache_read_tokens=100),
+            _run(input_tokens=5000, cache_read_tokens=100),
+        ]
+        assert rule_high_cache_miss(runs, "") is not None
+
+    def test_no_trigger_on_good_cache(self):
+        runs = [
+            _run(input_tokens=5000, cache_read_tokens=5000),
+            _run(input_tokens=5000, cache_read_tokens=5000),
+            _run(input_tokens=5000, cache_read_tokens=5000),
+        ]
+        assert rule_high_cache_miss(runs, "") is None
+
+    def test_needs_minimum_runs(self):
+        runs = [_run(input_tokens=5000, cache_read_tokens=100)]
+        assert rule_high_cache_miss(runs, "") is None
+
+
+class TestRuleExcessiveTokensPerCriterion:
+    def test_triggers_on_high_cost(self):
+        runs = [_run(input_tokens=15000, output_tokens=5000, criteria_pass=2, criteria_total=3)]
+        assert rule_excessive_tokens_per_criterion(runs, "") is not None
+
+    def test_no_trigger_on_efficient_runs(self):
+        runs = [_run(input_tokens=3000, output_tokens=1000, criteria_pass=3, criteria_total=3)]
+        assert rule_excessive_tokens_per_criterion(runs, "") is None
+
+    def test_no_trigger_when_guidance_present(self):
+        runs = [_run(input_tokens=15000, output_tokens=5000, criteria_pass=2, criteria_total=3)]
+        assert rule_excessive_tokens_per_criterion(runs, "Simple > clever\ngrep before reading") is None
