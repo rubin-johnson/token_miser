@@ -31,15 +31,16 @@ def cmd_run(args: argparse.Namespace) -> int:
             print(f"Running package: {package_ref.name}...", file=sys.stderr)
             env = setup_env(task, package_ref)
             try:
+                bare = getattr(args, "bare", False)
                 if task.type == "sequential":
                     res = run_claude_sequential(
                         task.prompts, env.home_dir, env.workspace_dir,
-                        timeout=args.timeout, extra_env=claude_env,
+                        timeout=args.timeout, extra_env=claude_env, bare=bare,
                     )
                 else:
                     res = run_claude(
                         task.prompt, env.home_dir, env.workspace_dir,
-                        timeout=args.timeout, extra_env=claude_env,
+                        timeout=args.timeout, extra_env=claude_env, bare=bare,
                     )
 
                 checks = check_all_criteria(task.success_criteria, env)
@@ -212,6 +213,7 @@ def cmd_tune(args: argparse.Namespace) -> int:
         timeout=args.timeout,
         model=args.model,
         yes=args.yes,
+        bare=args.bare,
     )
 
 
@@ -349,6 +351,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("--treatment", dest="package", help=argparse.SUPPRESS)
     p_run.add_argument("--model", default="sonnet", help="Model identifier (default: sonnet)")
     p_run.add_argument("--timeout", type=int, default=600, help="Per-invocation timeout in seconds (default: 600)")
+    p_run.add_argument("--bare", action="store_true", help="Skip hooks/plugins (cheaper, less realistic)")
 
     # compare
     p_compare = sub.add_parser("compare", help="Compare runs for a task")
@@ -382,6 +385,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_tune.add_argument("--timeout", type=int, default=300, help="Per-task timeout in seconds")
     p_tune.add_argument("--model", default="sonnet", help="Model identifier")
     p_tune.add_argument("--yes", action="store_true", help="Skip confirmation prompts")
+    p_tune.add_argument("--bare", action="store_true", help="Skip hooks/plugins (cheaper, less realistic)")
 
     # suite
     p_suite = sub.add_parser("suite", help="Manage benchmark suites")

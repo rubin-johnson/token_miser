@@ -92,6 +92,7 @@ def run_claude(
     workspace_dir: str,
     timeout: int = DEFAULT_TIMEOUT,
     extra_env: dict[str, str] | None = None,
+    bare: bool = False,
 ) -> ExecutorResult:
     """Execute Claude CLI in an isolated environment."""
     start = time.monotonic()
@@ -100,10 +101,12 @@ def run_claude(
     claude_dir = os.path.join(home_dir, ".claude")
     cmd = [
         "claude", "--print", "--dangerously-skip-permissions",
-        "--output-format", "json", "--no-session-persistence", "--bare",
+        "--output-format", "json", "--no-session-persistence",
     ]
-    if os.path.isdir(claude_dir):
-        cmd.extend(["--add-dir", claude_dir])
+    if bare:
+        cmd.append("--bare")
+        if os.path.isdir(claude_dir):
+            cmd.extend(["--add-dir", claude_dir])
 
     proc = subprocess.run(
         cmd,
@@ -132,13 +135,14 @@ def run_claude_sequential(
     workspace_dir: str,
     timeout: int = DEFAULT_TIMEOUT,
     extra_env: dict[str, str] | None = None,
+    bare: bool = False,
 ) -> ExecutorResult:
     """Run multiple prompts sequentially, accumulating tokens and cost."""
     total = ExecutorResult()
     start = time.monotonic()
 
     for prompt in prompts:
-        res = run_claude(prompt, home_dir, workspace_dir, timeout=timeout, extra_env=extra_env)
+        res = run_claude(prompt, home_dir, workspace_dir, timeout=timeout, extra_env=extra_env, bare=bare)
         total.total_cost_usd += res.total_cost_usd
         total.usage.input_tokens += res.usage.input_tokens
         total.usage.output_tokens += res.usage.output_tokens
