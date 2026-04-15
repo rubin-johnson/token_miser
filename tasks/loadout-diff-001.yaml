@@ -1,0 +1,54 @@
+id: loadout-diff-001
+name: "Add loadout diff command"
+repo: "${EXPERIMENT_REPO_LOADOUT}"
+starting_commit: "v0.1.0"
+prompt: |
+  You are working in the loadout Python project — a CLI tool that manages Claude Code
+  configuration bundles (CLAUDE.md, settings.json, hooks, bin scripts).
+
+  Read the existing source code to understand the architecture. The key modules are in
+  src/loadout/ and tests are in tests/.
+
+  Your task: add a `loadout diff <bundle>` command that compares a bundle against
+  whatever is currently applied at the target directory, and shows what would change.
+
+  Requirements:
+  1. Create src/loadout/diff.py with a `diff_bundle(bundle_path, target)` function that:
+     - Loads the bundle manifest
+     - For each target entry, compares the bundle file against the file at the target path
+     - Returns a list of DiffEntry objects (or dicts) with: path, status (added/modified/unchanged/removed), and optionally a unified diff for modified files
+  2. Wire it into the CLI as `loadout diff <bundle> [--target <dir>]`
+     - Print each entry: status and path
+     - For modified files, show a unified diff (like git diff)
+     - Exit 0 if no changes, exit 1 if there are changes (like diff convention)
+  3. Write tests in tests/test_diff.py covering:
+     - Bundle with new files (not yet in target) -> status "added"
+     - Bundle file identical to target -> status "unchanged"
+     - Bundle file differs from target -> status "modified" with diff output
+     - Target has files not in bundle -> not shown (diff only shows bundle's targets)
+  4. All existing tests must still pass.
+
+  Use the existing patterns: look at how apply.py resolves dest paths and how
+  __main__.py wires subcommands. Don't reinvent — reuse.
+success_criteria:
+  - type: file_exists
+    paths: ["src/loadout/diff.py", "tests/test_diff.py"]
+  - type: command_exits_zero
+    command: "uv sync -q && uv run pytest tests/ -q"
+  - type: command_exits_zero
+    command: "uv sync -q && uv run python -m loadout diff --help"
+  - type: command_exits_zero
+    command: |
+      uv sync -q && uv run python -c "
+      from loadout.diff import diff_bundle
+      print('import OK')
+      "
+quality_rubric:
+  - dimension: "correctness"
+    prompt: "Does diff_bundle correctly identify added, modified, and unchanged files? Does it produce valid unified diffs for modified files? Do all tests pass including pre-existing ones?"
+  - dimension: "code_reuse"
+    prompt: "Does the implementation reuse existing modules (manifest loading, dest resolution from apply.py) rather than reimplementing? Score 1.0 for clean reuse, lower for duplication."
+  - dimension: "minimal_change"
+    prompt: "Did Claude modify only what was necessary? No gratuitous refactoring, no changes to existing files beyond wiring the CLI command? Score 1.0 for minimal surgical changes."
+  - dimension: "test_quality"
+    prompt: "Are the tests thorough? Do they cover added/modified/unchanged cases with real file comparisons? Do they use proper fixtures (tmp_path, not mocks)?"
