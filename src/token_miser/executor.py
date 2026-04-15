@@ -97,8 +97,16 @@ def run_claude(
     start = time.monotonic()
     env = filter_env(home_dir, extra=extra_env)
 
+    claude_dir = os.path.join(home_dir, ".claude")
+    cmd = [
+        "claude", "--print", "--dangerously-skip-permissions",
+        "--output-format", "json", "--no-session-persistence", "--bare",
+    ]
+    if os.path.isdir(claude_dir):
+        cmd.extend(["--add-dir", claude_dir])
+
     proc = subprocess.run(
-        ["claude", "--print", "--dangerously-skip-permissions", "--output-format", "json", "--no-session-persistence"],
+        cmd,
         input=prompt,
         capture_output=True,
         text=True,
