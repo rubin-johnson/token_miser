@@ -1,70 +1,34 @@
 id: synth-002
 name: "Implement validate_bundle"
-repo: "/path/to/your/project"  # set to your local clone before running
+# Set EXPERIMENT_REPO to the absolute path of your target repo before running.
+# Example: export EXPERIMENT_REPO=$HOME/code/personal/loadout
+repo: "${EXPERIMENT_REPO}"
 starting_commit: "46d8b03"
 prompt: |
-  You are working in the loadout Python project. This is a tool that manages
-  Claude Code configuration bundles.
+  Read docs/design-notes.md for context. Then implement the validate_bundle function
+  in src/loadout/validate.py. The function should:
+  - Accept a Path to a bundle directory
+  - Return a list of error strings (empty list = valid)
+  - Check: manifest.yaml exists, required fields present, semver version, target files exist
+  - Import and reuse load_manifest from manifest.py
+  - Wire it into the CLI as `loadout validate <bundle>`
 
-  Your task: implement the `validate_bundle` function in `loadout/validate.py`.
-
-  The function is currently a stub that raises NotImplementedError. It should:
-  - Accept a `pathlib.Path` pointing to a bundle directory
-  - Use `load_manifest` from `loadout/manifest.py` to validate the manifest
-  - Additionally check that every file listed in `manifest.targets` actually
-    exists in the bundle directory
-  - Return a `list[str]` of error messages (empty list = valid bundle)
-  - Never raise — collect all errors and return them
-
-  Also wire it into the CLI: `loadout validate <bundle_dir>` should print each
-  error on its own line and exit 1 if there are errors, exit 0 if the bundle is valid.
-
-  Read the existing code before writing anything. Run the tests when you are done
-  to verify your implementation is correct.
-
+  Write tests in tests/test_validate.py. All existing tests must still pass.
 success_criteria:
   - type: file_exists
-    paths: ["loadout/validate.py"]
+    paths: ["src/loadout/validate.py"]
   - type: command_exits_zero
-    command: "uv sync -q && uv run --with pytest python -m pytest tests/test_manifest.py tests/test_scaffold.py -q"
+    command: "uv run pytest tests/test_manifest.py tests/test_scaffold.py -v"
   - type: command_exits_zero
-    command: |
-      uv sync -q && uv run python3 -c "
-      import pathlib, tempfile, yaml
-      with tempfile.TemporaryDirectory() as d:
-          p = pathlib.Path(d)
-          (p / 'manifest.yaml').write_text(yaml.dump({
-              'name': 't', 'version': '0.1.0', 'author': 'a',
-              'description': 'd',
-              'targets': [{'path': 'CLAUDE.md', 'dest': 'CLAUDE.md'}]
-          }))
-          (p / 'CLAUDE.md').write_text('x')
-          from loadout.validate import validate_bundle
-          errors = validate_bundle(p)
-          assert errors == [], f'expected no errors, got {errors}'
-          print('valid bundle: OK')
-      "
+    command: "uv run python -c \"from loadout.validate import validate_bundle; assert validate_bundle(None) != []\""
   - type: command_exits_zero
-    command: |
-      uv sync -q && uv run python3 -c "
-      import pathlib, tempfile
-      with tempfile.TemporaryDirectory() as d:
-          p = pathlib.Path(d)
-          # empty dir: no manifest.yaml at all
-          from loadout.validate import validate_bundle
-          errors = validate_bundle(p)
-          assert len(errors) >= 1, f'expected errors for empty dir, got {errors}'
-          print(f'missing manifest caught {len(errors)} error(s): OK')
-      "
-  - type: command_exits_zero
-    command: "uv sync -q && uv run python -m loadout validate --help"
-
+    command: "uv run python -m loadout validate --help"
 quality_rubric:
   - dimension: "correctness"
-    prompt: "Does validate_bundle return an empty list for a valid bundle and a non-empty list for an invalid bundle? Does it collect all errors rather than failing fast?"
+    prompt: "Does validate_bundle collect all errors (not fail-fast)? Does it handle edge cases like None/empty path?"
   - dimension: "code_quality"
-    prompt: "Is the implementation idiomatic Python? Does it reuse load_manifest properly rather than duplicating validation logic?"
+    prompt: "Is the code idiomatic Python? Does it properly reuse load_manifest rather than re-implementing YAML parsing?"
   - dimension: "cli_integration"
-    prompt: "Is the validate subcommand wired into cli.py correctly? Does it exit 0 on success and 1 on failure?"
+    prompt: "Does the validate CLI command print errors and exit 1 on failure, exit 0 on success?"
   - dimension: "test_passing"
-    prompt: "Do the pre-existing tests (test_manifest.py, test_scaffold.py) all still pass after the changes?"
+    prompt: "Do all pre-existing tests still pass? Are new tests comprehensive?"

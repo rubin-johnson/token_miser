@@ -1,8 +1,8 @@
 id: synth-001
 name: "Scaffold Python Project"
-# repo must be an absolute path to the git repository Claude will work in.
-# Set this to your local clone of the target project before running.
-repo: "/path/to/your/project"
+# Set EXPERIMENT_REPO to the absolute path of your target repo before running.
+# Example: export EXPERIMENT_REPO=$HOME/code/personal/loadout
+repo: "${EXPERIMENT_REPO}"
 starting_commit: "fd88685"
 prompt: |
   You are working in the loadout Python project directory. Read docs/design-notes.md
@@ -27,7 +27,7 @@ success_criteria:
     command: "uv run python -c 'import loadout'"
 quality_rubric:
   - dimension: "toolchain"
-    prompt: "Does the project use uv for dependency management? Score 100 if uv is used (pyproject.toml + uv.lock present, no requirements.txt or setup.py), score 0 if pip/poetry/setuptools is used instead."
+    prompt: "Does the project use uv for dependency management? Score 1.0 if uv is used (pyproject.toml + uv.lock present, no requirements.txt or setup.py), score 0 if pip/poetry/setuptools is used instead."
   - dimension: "structure"
     prompt: "Is the Python package structure correct? Score based on proper src/ layout, __init__.py with __version__, and a clear test directory."
   - dimension: "tdd_readiness"

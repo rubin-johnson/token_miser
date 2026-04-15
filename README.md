@@ -6,77 +6,89 @@ token-miser runs identical tasks under different Claude Code "arms" (configurati
 
 ## Concepts
 
-- **Task** — A YAML file describing work for Claude to do: a prompt, a target repo, success criteria, and a quality rubric.
-- **Arm** — A Claude Code configuration bundle (a [loadout](https://github.com/rubin-johnson/loadout)) used to execute the task.
-- **Run** — A single execution of a task under one arm.
-- **Experiment** — A pair of runs (control + treatment arm) on the same task.
+- **Task** -- A YAML file describing work for Claude to do: a prompt, a target repo, success criteria, and a quality rubric.
+- **Arm** -- A Claude Code configuration bundle (a [loadout](https://github.com/rubin-johnson/loadout)) used to execute the task.
+- **Run** -- A single execution of a task under one arm.
+- **Experiment** -- A pair of runs (control + treatment arm) on the same task.
 
 ## Requirements
 
-- Go 1.24+
-- [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) installed and authenticated
-- SQLite (bundled via CGo-free driver — no system install needed)
+- Python 3.11+
+- [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) installed and authenticated (`claude auth status`)
+- [loadout](https://github.com/rubin-johnson/loadout) installed (`uv tool install loadout`)
 
-## Installation
+## Install
 
 ```bash
-go install github.com/rubin-johnson/token_miser/cmd/token-miser@latest
+uv tool install .
 ```
 
-Initialize the database:
+Or run directly:
 
 ```bash
+uv run token-miser --help
+```
+
+## Quick start
+
+```bash
+# Set the target repo for tasks
+export EXPERIMENT_REPO=$HOME/code/personal/loadout
+
+# Initialize the database
 token-miser migrate
+
+# Run an experiment: vanilla (no config) vs. a loadout bundle
+token-miser run \
+  --task tasks/synth-001.yaml \
+  --control vanilla \
+  --treatment loadouts/experiment-config
+
+# Compare the results
+token-miser compare --task synth-001
+
+# Statistical analysis
+token-miser analyze --task synth-001
 ```
 
-## Usage
+## Commands
 
-### Run an experiment
+| Command | Purpose |
+|---------|---------|
+| `run` | Execute a task under control and/or treatment arms |
+| `compare` | Side-by-side comparison of runs for a task |
+| `analyze` | Statistical summary (mean, stdev, median per arm) |
+| `history` | List all recorded runs |
+| `show <id>` | Inspect a specific run in detail |
+| `tasks` | List available task YAML files |
+| `migrate` | Initialize or migrate the database |
+
+### run
 
 ```bash
 token-miser run \
   --task tasks/synth-001.yaml \
-  --control loadouts/experiment-config \
-  --treatment loadouts/my-config \
-  --model sonnet
+  --control vanilla \
+  --treatment loadouts/experiment-config \
+  --model sonnet \
+  --timeout 600
 ```
 
-Each arm executes the task in sequence. Results are stored in `~/.token_miser/results.db`.
-
-### Compare results
-
-```bash
-# Side-by-side token/cost/quality comparison for a task
-token-miser compare --task synth-001
-
-# Statistical summary (mean, stddev, min/max per arm)
-token-miser analyze --task synth-001
-```
-
-### Browse history
-
-```bash
-# List all runs
-token-miser history
-
-# Inspect a specific run
-token-miser show <run-id>
-```
-
-### Manage tasks
-
-```bash
-# List task YAML files in a directory
-token-miser tasks --dir tasks/
-```
+| Flag | Default | Purpose |
+|------|---------|---------|
+| `--task` | (required) | Path to task YAML |
+| `--control` | (required) | Control arm: `vanilla` or path to loadout bundle |
+| `--treatment` | (optional) | Treatment arm: path to loadout bundle |
+| `--model` | `sonnet` | Model identifier for metadata |
+| `--timeout` | `600` | Per-invocation timeout in seconds |
 
 ## Task format
 
 ```yaml
 id: my-task
 name: "Human-readable name"
-repo: "/absolute/path/to/target/repo"   # Claude works here
-starting_commit: "abc1234"              # repo is reset to this commit before each run
+repo: "${EXPERIMENT_REPO}"        # resolved from environment
+starting_commit: "abc1234"
 prompt: |
   What you want Claude to do...
 success_criteria:
@@ -86,32 +98,38 @@ success_criteria:
     command: "uv run pytest"
 quality_rubric:
   - dimension: "correctness"
-    prompt: "Does the output satisfy the requirement? Score 0-100."
-  - dimension: "code_quality"
-    prompt: "Is the code idiomatic and clean? Score 0-100."
+    prompt: "Score 0-1 based on..."
 ```
 
-**Success criteria types**
+Task `repo` fields support `${VAR}` expansion from environment variables, so tasks are portable across machines.
 
-| Type | Fields |
-|------|--------|
-| `file_exists` | `paths` — list of paths that must exist |
-| `command_exits_zero` | `command` — shell command that must exit 0 |
+## How it works
 
-Quality dimensions are scored 0–100 by a Claude judge. Final quality score is the mean across dimensions.
+For each arm in an experiment:
 
-## Loadouts
+1. Create an isolated temp directory as `HOME`
+2. Clone the task's target repo and checkout the starting commit
+3. Copy Claude credentials into the isolated HOME
+4. If treatment arm: run `loadout apply` to deploy the configuration bundle
+5. Invoke `claude --print --dangerously-skip-permissions --output-format json`
+6. Check success criteria against the workspace
+7. Optionally score quality via Claude-as-judge (requires `ANTHROPIC_API_KEY`)
+8. Store results in SQLite (`~/.token_miser/results.db`)
 
-Loadouts are Claude Code configuration bundles stored under `loadouts/`. Each is a directory with a `manifest.yaml` declaring which files to deploy into the target project's `.claude/` directory before each run.
+## Relationship with loadout and kanon
 
-See [`loadouts/experiment-config/`](loadouts/experiment-config/) for a working example.
+**[loadout](https://github.com/rubin-johnson/loadout)** manages Claude Code configuration bundles. token-miser uses loadout to deploy treatment arms into isolated test environments.
 
-**Keep personal loadouts out of version control.** Add your own loadout directories to `.gitignore` — commit only shared/example configs.
+**[kanon](https://github.com/caylent-solutions/kanon)** distributes versioned packages across teams. Loadout bundles can be distributed as kanon packages, giving teams a pipeline: kanon distributes versioned bundles, loadout applies them, token-miser measures whether they improve performance.
 
 ## Data
 
-All results are stored locally in `~/.token_miser/results.db` (SQLite). Nothing is sent externally beyond the Claude API calls the experiment itself makes.
+All results stored locally in `~/.token_miser/results.db` (SQLite). Nothing is sent externally beyond the Claude API calls the experiment itself makes.
 
-## Status
+## Development
 
-Pre-alpha. The core experiment loop works. See [docs/plans/critique-and-roadmap.md](docs/plans/critique-and-roadmap.md) for a candid assessment of current limitations and planned roadmap.
+```bash
+uv sync
+uv run pytest tests/ -v
+uv run ruff check src/ tests/
+```

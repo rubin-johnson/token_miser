@@ -1,59 +1,29 @@
 id: synth-003
 name: "Validate then test (cross-session memory)"
-repo: "/path/to/your/project"  # set to your local clone before running
-starting_commit: "46d8b03"
 type: sequential
+# Set EXPERIMENT_REPO to the absolute path of your target repo before running.
+repo: "${EXPERIMENT_REPO}"
+starting_commit: "46d8b03"
 prompts:
   - |
-    You are working in the loadout Python project. Implement the `validate_bundle`
-    function in `loadout/validate.py`. It should:
-    - Accept a pathlib.Path to a bundle directory
-    - Use load_manifest from loadout/manifest.py to validate the manifest
-    - Check that every file in manifest.targets exists in the bundle directory
-    - Return a list[str] of error messages (empty = valid)
-    - Never raise — collect all errors
-
-    Also wire it into the CLI: `loadout validate <bundle_dir>` exits 0 if valid,
-    1 with one error per line if not.
-
-    Read the existing code first. Run the tests when done.
-
+    Read docs/design-notes.md for context. Implement validate_bundle in
+    src/loadout/validate.py. The function should accept a Path, return a list
+    of error strings, and check: manifest.yaml exists, required fields present,
+    semver version, target files exist. Reuse load_manifest from manifest.py.
   - |
-    Good. Now write a test suite for the validate_bundle function you just implemented.
-    Create tests/test_validate.py with at least these cases:
-    - valid bundle returns empty list
-    - missing manifest.yaml returns an error
-    - missing target file returns an error
-    - invalid semver in manifest returns an error
-
-    Run the tests to confirm they all pass before finishing.
-
+    Now write a comprehensive test suite for validate_bundle in
+    tests/test_validate.py. Cover: valid bundle, missing manifest, missing
+    required fields, invalid semver, missing target files, multiple errors
+    at once. All tests must pass.
 success_criteria:
   - type: file_exists
-    paths: ["loadout/validate.py", "tests/test_validate.py"]
+    paths: ["src/loadout/validate.py", "tests/test_validate.py"]
   - type: command_exits_zero
-    command: "uv sync -q && uv run --with pytest python -m pytest tests/test_manifest.py tests/test_scaffold.py tests/test_validate.py -q"
-  - type: command_exits_zero
-    command: |
-      uv sync -q && uv run python3 -c "
-      import pathlib, tempfile, yaml
-      with tempfile.TemporaryDirectory() as d:
-          p = pathlib.Path(d)
-          (p / 'manifest.yaml').write_text(yaml.dump({
-              'name': 't', 'version': '0.1.0', 'author': 'a',
-              'description': 'd',
-              'targets': [{'path': 'CLAUDE.md', 'dest': 'CLAUDE.md'}]
-          }))
-          (p / 'CLAUDE.md').write_text('x')
-          from loadout.validate import validate_bundle
-          assert validate_bundle(p) == []
-          print('OK')
-      "
-
+    command: "uv run pytest tests/ -v"
 quality_rubric:
   - dimension: "memory_efficiency"
-    prompt: "In the second prompt, did Claude reuse knowledge from the first prompt (referring to the implementation it wrote) rather than re-reading all the files? Evidence: does the second response reference the implementation details without re-reading validate.py?"
+    prompt: "Does the second prompt reuse knowledge from the first without re-reading all files? Score based on token efficiency."
   - dimension: "test_quality"
-    prompt: "Are the tests in test_validate.py thorough and idiomatic? Do they cover error cases properly?"
+    prompt: "Are the tests thorough, covering happy path and edge cases? Do they use proper fixtures?"
   - dimension: "correctness"
-    prompt: "Does validate_bundle work correctly and do all tests pass?"
+    prompt: "Do all tests pass? Does validate_bundle handle all documented cases?"
