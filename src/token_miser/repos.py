@@ -43,6 +43,11 @@ def ensure_repo(spec: RepoSpec, cache_dir: Path, benchmarks_dir: Path | None = N
     dest = cache_dir / spec.id
 
     if dest.exists() and (dest / ".git").exists():
+        if spec.commit and spec.commit != "HEAD":
+            subprocess.run(
+                ["git", "-C", str(dest), "checkout", spec.commit],
+                check=True, capture_output=True,
+            )
         return dest
     if dest.exists():
         shutil.rmtree(dest)  # stale partial clone
