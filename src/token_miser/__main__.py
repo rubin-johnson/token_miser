@@ -32,15 +32,16 @@ def cmd_run(args: argparse.Namespace) -> int:
             env = setup_env(task, package_ref)
             try:
                 bare = getattr(args, "bare", False)
+                model = getattr(args, "model", None)
                 if task.type == "sequential":
                     res = run_claude_sequential(
                         task.prompts, env.home_dir, env.workspace_dir,
-                        timeout=args.timeout, extra_env=claude_env, bare=bare,
+                        timeout=args.timeout, extra_env=claude_env, bare=bare, model=model,
                     )
                 else:
                     res = run_claude(
                         task.prompt, env.home_dir, env.workspace_dir,
-                        timeout=args.timeout, extra_env=claude_env, bare=bare,
+                        timeout=args.timeout, extra_env=claude_env, bare=bare, model=model,
                     )
 
                 checks = check_all_criteria(task.success_criteria, env)
@@ -288,6 +289,24 @@ def cmd_suite(args: argparse.Namespace) -> int:
     return 1
 
 
+def cmd_matrix(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from token_miser.db import init_db
+    from token_miser.matrix import build_matrix, export_matrix_json
+
+    conn = init_db()
+    try:
+        if args.json_out:
+            path = export_matrix_json(args.suite, Path(args.json_out), conn)
+            print(f"Matrix exported to {path}")
+        else:
+            print(build_matrix(args.suite, conn))
+    finally:
+        conn.close()
+    return 0
+
+
 def cmd_digest(args: argparse.Namespace) -> int:
     from pathlib import Path
 
@@ -470,6 +489,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_digest_compare.add_argument("digest1", help="First digest file")
     p_digest_compare.add_argument("digest2", help="Second digest file")
 
+    # matrix
+    p_matrix = sub.add_parser("matrix", help="Cross-package comparison matrix")
+    p_matrix.add_argument("--suite", default="axis", help="Suite name (default: axis)")
+    p_matrix.add_argument("--json", dest="json_out", default=None, help="Export matrix as JSON to this path")
+
     # publish
     p_publish = sub.add_parser("publish", help="Publish a package to a git repo for kanon")
     p_publish.add_argument("package_dir", help="Path to the package directory")
@@ -499,6 +523,7 @@ def main() -> None:
         "publish": cmd_publish,
         "packages": cmd_packages,
         "suite": cmd_suite,
+        "matrix": cmd_matrix,
         "digest": cmd_digest,
     }
 

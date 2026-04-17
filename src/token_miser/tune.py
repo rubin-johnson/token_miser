@@ -96,12 +96,12 @@ def _run_single_task(
         if task.type == "sequential":
             res = run_claude_sequential(
                 task.prompts, env.home_dir, env.workspace_dir,
-                timeout=timeout, extra_env=claude_env, bare=bare,
+                timeout=timeout, extra_env=claude_env, bare=bare, model=model,
             )
         else:
             res = run_claude(
                 task.prompt, env.home_dir, env.workspace_dir,
-                timeout=timeout, extra_env=claude_env, bare=bare,
+                timeout=timeout, extra_env=claude_env, bare=bare, model=model,
             )
 
         checks = check_all_criteria(task.success_criteria, env)
@@ -263,6 +263,10 @@ def run_tune(
         claude_md_path = target / "CLAUDE.md"
         current_claude_md = claude_md_path.read_text() if claude_md_path.exists() else ""
 
+        # Look up previous baseline BEFORE creating the new session
+        from token_miser.db import get_latest_tune_session, get_tune_session_runs
+        prev_session = get_latest_tune_session(conn, suite.name) if skip_baseline else None
+
         # Create tune session
         session = TuneSession(
             suite_name=suite.name,
@@ -287,12 +291,9 @@ def run_tune(
 
             _print_summary("Baseline", baseline_runs)
         else:
-            # Load baseline runs from last session
-            from token_miser.db import get_latest_tune_session, get_tune_session_runs
-            prev = get_latest_tune_session(conn, suite.name)
-            if prev:
-                baseline_runs = get_tune_session_runs(conn, prev.id, "baseline")
-                print(f"\nReusing baseline from session #{prev.id} ({len(baseline_runs)} runs)")
+            if prev_session:
+                baseline_runs = get_tune_session_runs(conn, prev_session.id, "baseline")
+                print(f"\nReusing baseline from session #{prev_session.id} ({len(baseline_runs)} runs)")
             else:
                 print("ERROR: No previous baseline found. Run without --skip-baseline first.", file=sys.stderr)
                 return 1
@@ -357,10 +358,8 @@ def run_tune(
         update_tune_session(conn, session_id, status="completed",
                             completed_at=datetime.now(timezone.utc).isoformat())
 
-        # Cleanup temp baseline
-        shutil.rmtree(baseline_dir, ignore_errors=True)
-
         return 0
 
     finally:
         conn.close()
+        shutil.rmtree(baseline_dir, ignore_errors=True)

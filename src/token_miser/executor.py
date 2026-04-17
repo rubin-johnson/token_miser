@@ -93,6 +93,7 @@ def run_claude(
     timeout: int = DEFAULT_TIMEOUT,
     extra_env: dict[str, str] | None = None,
     bare: bool = False,
+    model: str | None = None,
 ) -> ExecutorResult:
     """Execute Claude CLI in an isolated environment."""
     start = time.monotonic()
@@ -103,6 +104,8 @@ def run_claude(
         "claude", "--print", "--dangerously-skip-permissions",
         "--output-format", "json", "--no-session-persistence",
     ]
+    if model:
+        cmd.extend(["--model", model])
     if bare:
         cmd.append("--bare")
         if os.path.isdir(claude_dir):
@@ -136,13 +139,14 @@ def run_claude_sequential(
     timeout: int = DEFAULT_TIMEOUT,
     extra_env: dict[str, str] | None = None,
     bare: bool = False,
+    model: str | None = None,
 ) -> ExecutorResult:
     """Run multiple prompts sequentially, accumulating tokens and cost."""
     total = ExecutorResult()
     start = time.monotonic()
 
     for prompt in prompts:
-        res = run_claude(prompt, home_dir, workspace_dir, timeout=timeout, extra_env=extra_env, bare=bare)
+        res = run_claude(prompt, home_dir, workspace_dir, timeout=timeout, extra_env=extra_env, bare=bare, model=model)
         total.total_cost_usd += res.total_cost_usd
         total.usage.input_tokens += res.usage.input_tokens
         total.usage.output_tokens += res.usage.output_tokens
