@@ -1,4 +1,4 @@
-# Build artifacts (the CLI binary at repo root, not loadouts/token-miser/)
+# Build artifacts (the CLI binary at repo root, not packages/token-miser/)
 /token-miser
 
 # Claude Code session data
@@ -25,8 +25,8 @@ venv/
 .DS_Store
 .cursor/
 
-# Personal loadout configs — commit only shared/example loadouts
-loadouts/my-config/
+# Personal package configs — commit only shared/example packages
+packages/my-config/
 
 # Kanon managed directories (synced from manifest repos)
 .packages/

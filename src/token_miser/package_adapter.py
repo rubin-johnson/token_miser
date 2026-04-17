@@ -9,11 +9,18 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from loadout.apply import apply_package as _loadout_apply
-from loadout.pack import pack as _loadout_pack
-from loadout.restore import restore_package as _loadout_restore
-from loadout.state import read_state
-from loadout.validate import validate_package as _loadout_validate
+
+try:
+    from loadout.apply import apply_package as _loadout_apply
+    from loadout.pack import pack as _loadout_pack
+    from loadout.restore import restore_package as _loadout_restore
+    from loadout.state import read_state
+    from loadout.validate import validate_package as _loadout_validate
+except (ImportError, AttributeError) as e:
+    raise ImportError(
+        "Wrong 'loadout' package installed — PyPI has an unrelated package with the same name. "
+        "Install the correct one: pip install -e ../loadout (see pyproject.toml [tool.uv.sources])"
+    ) from e
 
 
 def read_active_state(target: Path) -> dict[str, Any] | None:

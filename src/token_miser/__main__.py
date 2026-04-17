@@ -11,7 +11,7 @@ from token_miser.db import Run, get_run, get_runs, init_db, store_run
 from token_miser.environment import setup_env
 from token_miser.evaluator import score_quality
 from token_miser.executor import load_claude_env, run_claude, run_claude_sequential
-from token_miser.package_ref import parse_package_ref
+from token_miser.package_ref import list_packages, parse_package_ref, resolve_packages_dir
 from token_miser.report import analyze, compare
 from token_miser.task import load_task
 
@@ -20,6 +20,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     task = load_task(args.task)
     conn = init_db()
     claude_env = load_claude_env()
+    packages_dir = getattr(args, "packages_dir", None)
     try:
         specs = [args.baseline]
         if args.package:
@@ -27,7 +28,7 @@ def cmd_run(args: argparse.Namespace) -> int:
 
         results = []
         for spec in specs:
-            package_ref = parse_package_ref(spec)
+            package_ref = parse_package_ref(spec, packages_dir=packages_dir)
             print(f"Running package: {package_ref.name}...", file=sys.stderr)
             env = setup_env(task, package_ref)
             try:
@@ -206,10 +207,16 @@ def cmd_migrate(args: argparse.Namespace) -> int:
 def cmd_tune(args: argparse.Namespace) -> int:
     from token_miser.tune import run_tune
 
+    packages_dir = getattr(args, "packages_dir", None)
+    package_path = args.package
+    if package_path and "/" not in package_path and "\\" not in package_path:
+        pkg = resolve_packages_dir(packages_dir) / package_path
+        package_path = str(pkg)
+
     return run_tune(
         suite_name=args.suite,
         skip_baseline=args.skip_baseline,
-        package_path=args.package,
+        package_path=package_path,
         output_dir=args.output,
         timeout=args.timeout,
         model=args.model,
@@ -380,6 +387,21 @@ def cmd_publish(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_list(args: argparse.Namespace) -> int:
+    packages_dir = getattr(args, "packages_dir", None)
+    resolved = resolve_packages_dir(packages_dir)
+    names = list_packages(packages_dir)
+
+    if not names:
+        print(f"No packages found in {resolved}/")
+        return 0
+
+    print(f"Packages in {resolved}/:")
+    for name in names:
+        print(f"  {name}")
+    return 0
+
+
 def cmd_packages(args: argparse.Namespace) -> int:
     from pathlib import Path
 
@@ -423,6 +445,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     parser = argparse.ArgumentParser(prog="token-miser", description="Benchmark Claude Code configuration packages")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    parser.add_argument(
+        "--packages-dir", default=None,
+        help="Directory containing packages (default: $TOKEN_MISER_PACKAGES_DIR or ./packages)",
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     # run
@@ -504,6 +530,9 @@ def build_parser() -> argparse.ArgumentParser:
     # packages
     sub.add_parser("packages", help="List kanon-distributed packages")
 
+    # list
+    sub.add_parser("list", help="List available packages from packages directory")
+
     return parser
 
 
@@ -525,6 +554,7 @@ def main() -> None:
         "suite": cmd_suite,
         "matrix": cmd_matrix,
         "digest": cmd_digest,
+        "list": cmd_list,
     }
 
     try:

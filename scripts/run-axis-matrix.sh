@@ -5,12 +5,12 @@ SUITE="axis"
 MODEL="opus"
 TIMEOUT=900
 PACKAGES=(
-    "loadouts/token-miser"
-    "loadouts/thorough"
-    "loadouts/tdd-strict"
-    "loadouts/slim-rubin"
-    "loadouts/full-rubin"
-    "loadouts/rtk"
+    "packages/token-miser"
+    "packages/thorough"
+    "packages/tdd-strict"
+    "packages/slim-rubin"
+    "packages/full-rubin"
+    "packages/rtk"
 )
 
 echo "=== Axis Matrix Benchmark ==="
