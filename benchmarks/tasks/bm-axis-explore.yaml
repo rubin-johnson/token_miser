@@ -1,0 +1,28 @@
+id: bm-axis-explore
+name: "Trace Flask request lifecycle"
+repo_id: flask
+starting_commit: "3.1.0"
+category: exploration
+difficulty: medium
+setup_commands:
+  - "python -m venv .venv"
+  - ".venv/bin/pip install -e '.[dev]'"
+prompt: |
+  Map the complete HTTP request lifecycle in Flask from WSGI entry to response.
+  Trace every function call in order by reading the source — start from Flask.__call__
+  and follow through wsgi_app, request context push, URL routing, view dispatch,
+  error handling, and response finalization.
+
+  Write a file LIFECYCLE.md that documents each step with the file path and function name.
+  Include at least 10 distinct functions in the chain.
+success_criteria:
+  - type: file_exists
+    paths: ["LIFECYCLE.md"]
+  - type: output_contains
+    command: "cat LIFECYCLE.md"
+    contains: ["wsgi_app", "dispatch_request", "finalize_request"]
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does the trace accurately follow the real call chain? Are file paths correct?"
+  - dimension: completeness
+    prompt: "Are at least 10 distinct functions documented in the correct order?"

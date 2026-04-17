@@ -1,0 +1,23 @@
+id: bm-axis-smallio
+name: "Add --version flag"
+repo_id: tiny-cli
+starting_commit: v1.0
+category: feature
+difficulty: easy
+prompt: |
+  Add a --version flag to the CLI. Running `python -m tiny_cli --version` should print
+  "tiny-cli 1.0.0" and exit. Read the existing argument parser, add the flag, and add
+  a test for it.
+success_criteria:
+  - type: command_exits_zero
+    command: "python -m tiny_cli --version"
+  - type: output_contains
+    command: "python -m tiny_cli --version"
+    contains: ["1.0.0"]
+  - type: command_exits_zero
+    command: "python -m pytest tests/ -q"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does --version print the expected string and exit cleanly?"
+  - dimension: minimal_change
+    prompt: "Was only the version flag added with minimal code changes?"

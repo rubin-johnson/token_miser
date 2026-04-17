@@ -1,0 +1,30 @@
+id: bm-axis-multiturn
+name: "Build, break, fix (3-step)"
+repo_id: tiny-api
+starting_commit: v1.0
+category: sequential
+difficulty: medium
+type: sequential
+prompts:
+  - |
+    Add a search endpoint: GET /items/search?q=<term> that filters items whose name
+    contains the search term (case-insensitive). Return the same response format as
+    GET /items. Add tests in tests/test_search.py.
+  - |
+    The search endpoint you just added has a performance problem — it loads all items
+    from the database and filters in Python. Refactor it to use a SQL LIKE query instead.
+    Make sure all the search tests still pass after refactoring.
+  - |
+    Now add fuzzy matching: if the exact search returns no results, fall back to matching
+    items where any word in the name starts with the search term. For example, searching
+    "wid" should match an item named "Blue Widget". Update tests to cover this fallback.
+success_criteria:
+  - type: file_exists
+    paths: ["tests/test_search.py"]
+  - type: command_exits_zero
+    command: "python -m pytest tests/ -q"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does the search endpoint work with exact and fuzzy matching? Are tests comprehensive?"
+  - dimension: coherence
+    prompt: "Does step 3 build cleanly on step 2's refactored SQL approach?"

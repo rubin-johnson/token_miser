@@ -1,0 +1,28 @@
+id: bm-axis-bigoutput
+name: "Parse full test suite output"
+repo_id: httpx
+starting_commit: "0.28.1"
+category: exploration
+difficulty: hard
+setup_commands:
+  - "python -m venv .venv"
+  - ".venv/bin/pip install -e '.[dev]'"
+prompt: |
+  Run the httpx test suite with `--tb=short -q` and capture the output. Then:
+  1. Parse the results to get pass/fail/skip/error counts per test file
+  2. Identify the 5 slowest test files (run with --durations=0 if needed)
+  3. For any failures, read the test source and explain the likely cause
+
+  Write a structured summary to TEST_ANALYSIS.md with tables for per-file counts
+  and a ranked list of slowest files.
+success_criteria:
+  - type: file_exists
+    paths: ["TEST_ANALYSIS.md"]
+  - type: output_contains
+    command: "cat TEST_ANALYSIS.md"
+    contains: ["pass", "slow"]
+quality_rubric:
+  - dimension: correctness
+    prompt: "Are the per-file counts accurate? Do they match actual pytest output?"
+  - dimension: completeness
+    prompt: "Are all three sections present: counts, slowest files, failure analysis?"

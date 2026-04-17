@@ -1,0 +1,23 @@
+id: bm-axis-reasoning
+name: "Code review with inline fixes"
+repo_id: tiny-api
+starting_commit: v1.0
+category: refactor
+difficulty: medium
+prompt: |
+  Review app.py for correctness and robustness issues. Look for:
+  - Missing input validation on POST endpoints
+  - Potential SQL injection (if using string formatting for queries)
+  - Missing error handling for database operations
+  - Type coercion issues (e.g., price as string vs float)
+
+  For each issue found, fix it directly in the code. Do not add comments explaining
+  the fix — the code should be self-documenting. All existing tests must still pass.
+success_criteria:
+  - type: command_exits_zero
+    command: "python -m pytest tests/ -q"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Were real issues identified and fixed, not imaginary ones?"
+  - dimension: minimal_change
+    prompt: "Were fixes surgical — only changing the problematic lines?"

@@ -1,0 +1,29 @@
+id: bm-axis-bashheavy
+name: "Create and verify Makefile"
+repo_id: tiny-cli
+starting_commit: v1.0
+category: feature
+difficulty: medium
+prompt: |
+  Create a Makefile with these targets:
+  - lint: run flake8 on src/ (install flake8 first via pip)
+  - test: run pytest tests/ -q
+  - coverage: run pytest --cov=tiny_cli tests/ (install pytest-cov first)
+  - clean: remove __pycache__ dirs, .pyc files, .coverage, and dist/
+  - build: run python -m build (install build first)
+  - all: run lint, test, build in sequence
+
+  After creating the Makefile, run each target to verify it works.
+  Fix any issues you find until all targets succeed.
+success_criteria:
+  - type: file_exists
+    paths: ["Makefile"]
+  - type: command_exits_zero
+    command: "make test"
+  - type: command_exits_zero
+    command: "make clean"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Do all Makefile targets work? Were dependencies installed?"
+  - dimension: minimal_change
+    prompt: "Was only the Makefile added without modifying existing source code?"

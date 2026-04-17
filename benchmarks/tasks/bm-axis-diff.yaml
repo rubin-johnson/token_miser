@@ -1,0 +1,28 @@
+id: bm-axis-diff
+name: "Audit changes via git diff"
+repo_id: httpx
+starting_commit: "0.28.1"
+category: exploration
+difficulty: medium
+setup_commands:
+  - "python -m venv .venv"
+  - ".venv/bin/pip install -e '.[dev]'"
+prompt: |
+  Review the last 20 commits using git log, then pick the 3 most impactful changes
+  (not docs/CI — actual code changes). For each one:
+  1. Run git show <hash> to read the full diff
+  2. Summarize what changed and why (infer from diff context)
+  3. Rate the change as bugfix, feature, refactor, or performance
+
+  Write your analysis to AUDIT.md with a section per commit.
+success_criteria:
+  - type: file_exists
+    paths: ["AUDIT.md"]
+  - type: output_contains
+    command: "cat AUDIT.md"
+    contains: ["bugfix", "refactor"]
+quality_rubric:
+  - dimension: correctness
+    prompt: "Are the commit hashes real? Do the summaries match what the diffs actually show?"
+  - dimension: completeness
+    prompt: "Were 3 commits analyzed with hash, summary, and classification?"

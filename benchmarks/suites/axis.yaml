@@ -1,0 +1,43 @@
+name: axis
+version: "0.1.0"
+description: "8 tasks isolating different tool-interaction axes — find/grep, multi-turn, diff reading, test output, bash-heavy, small-io, reasoning, big output"
+tasks:
+  # Exploration: heavy find/grep/cat across a real codebase
+  - file: bm-axis-explore.yaml
+    category: exploration
+    difficulty: medium
+
+  # Multi-turn: sequential prompts where context compounds
+  - file: bm-axis-multiturn.yaml
+    category: sequential
+    difficulty: medium
+
+  # Diff reading: git show/diff output interpretation
+  - file: bm-axis-diff.yaml
+    category: exploration
+    difficulty: medium
+
+  # Test run: run pytest, parse large output
+  - file: bm-axis-testrun.yaml
+    category: test
+    difficulty: medium
+
+  # Bash heavy: many shell tool calls (install, make, verify)
+  - file: bm-axis-bashheavy.yaml
+    category: feature
+    difficulty: medium
+
+  # Small IO: minimal tool output, quick task
+  - file: bm-axis-smallio.yaml
+    category: feature
+    difficulty: easy
+
+  # Reasoning: code review/edit, minimal bash
+  - file: bm-axis-reasoning.yaml
+    category: refactor
+    difficulty: medium
+
+  # Big output: consume large structured command output
+  - file: bm-axis-bigoutput.yaml
+    category: exploration
+    difficulty: hard

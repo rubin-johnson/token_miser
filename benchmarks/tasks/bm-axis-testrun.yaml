@@ -1,0 +1,27 @@
+id: bm-axis-testrun
+name: "Run and analyze test suite"
+repo_id: flask
+starting_commit: "3.1.0"
+category: test
+difficulty: medium
+setup_commands:
+  - "python -m venv .venv"
+  - ".venv/bin/pip install -e '.[dev]'"
+prompt: |
+  Run the full Flask test suite with verbose output. Then:
+  1. Count total tests, passes, failures, skips, and xfails
+  2. Identify the 3 test files with the most tests
+  3. Identify any tests that are skipped or xfail and explain why (read the skip reason or marker)
+
+  Write a test report to TEST_REPORT.md with these sections.
+success_criteria:
+  - type: file_exists
+    paths: ["TEST_REPORT.md"]
+  - type: output_contains
+    command: "cat TEST_REPORT.md"
+    contains: ["pass", "skip"]
+quality_rubric:
+  - dimension: correctness
+    prompt: "Are the counts accurate? Do they match what pytest actually reported?"
+  - dimension: completeness
+    prompt: "Are all three sections present with specific numbers and file names?"
