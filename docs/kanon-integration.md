@@ -34,9 +34,9 @@ After `kanon install`, packages appear in `.packages/`:
 
 ```
 .packages/
-  token-miser/     -> ../.kanon-data/sources/loadouts/.packages/token-miser
-  thorough/        -> ../.kanon-data/sources/loadouts/.packages/thorough
-  tdd-strict/      -> ../.kanon-data/sources/loadouts/.packages/tdd-strict
+  token-miser/     -> ../.kanon-data/sources/packages/.packages/token-miser
+  thorough/        -> ../.kanon-data/sources/packages/.packages/thorough
+  tdd-strict/      -> ../.kanon-data/sources/packages/.packages/tdd-strict
 ```
 
 ### 2. Loadout applies a package
@@ -46,7 +46,7 @@ After `kanon install`, packages appear in `.packages/`:
 loadout apply .packages/token-miser --yes
 
 # Or apply a local package during development
-loadout apply loadouts/token-miser --yes
+loadout apply packages/token-miser --yes
 
 # Swap to a different configuration
 loadout apply .packages/thorough --yes
@@ -77,14 +77,20 @@ token-miser analyze --task quick-001
 
 ## Local development (without kanon)
 
-During development, loadout packages live directly in `loadouts/`:
+During development, packages live in `packages/` and can be referenced by name:
 
 ```bash
 # Run experiment using local packages
 token-miser run \
   --task tasks/quick-001.yaml \
   --baseline vanilla \
-  --package loadouts/tdd-strict
+  --package tdd-strict
+
+# Or point to packages stored elsewhere
+TOKEN_MISER_PACKAGES_DIR=~/.claude/packages token-miser run \
+  --task tasks/quick-001.yaml \
+  --baseline vanilla \
+  --package slim-rubin
 ```
 
 ## .kanon configuration

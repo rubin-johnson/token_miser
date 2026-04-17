@@ -42,7 +42,7 @@ token-miser migrate
 token-miser run \
   --task tasks/synth-001.yaml \
   --baseline vanilla \
-  --package loadouts/experiment-config
+  --package token-miser
 
 # Compare the results
 token-miser compare --task synth-001
@@ -60,6 +60,7 @@ token-miser analyze --task synth-001
 | `analyze` | Statistical summary (mean, stdev, median per package) |
 | `history` | List all recorded runs |
 | `show <id>` | Inspect a specific run in detail |
+| `list` | List available packages from the packages directory |
 | `tasks` | List available task YAML files |
 | `migrate` | Initialize or migrate the database |
 
@@ -69,7 +70,7 @@ token-miser analyze --task synth-001
 token-miser run \
   --task tasks/synth-001.yaml \
   --baseline vanilla \
-  --package loadouts/experiment-config \
+  --package token-miser \
   --model sonnet \
   --timeout 600
 ```
@@ -77,10 +78,18 @@ token-miser run \
 | Flag | Default | Purpose |
 |------|---------|---------|
 | `--task` | (required) | Path to task YAML |
-| `--baseline` | (required) | Baseline: `vanilla` or path to loadout package |
-| `--package` | (optional) | Package to test: path to loadout package |
+| `--baseline` | (required) | Baseline: `vanilla`, package name, or path |
+| `--package` | (optional) | Package to test: name or path |
 | `--model` | `sonnet` | Model identifier for metadata |
 | `--timeout` | `600` | Per-invocation timeout in seconds |
+
+### Global flags
+
+| Flag | Default | Purpose |
+|------|---------|---------|
+| `--packages-dir` | `$TOKEN_MISER_PACKAGES_DIR` or `./packages` | Directory containing packages |
+
+Package names (no `/`) resolve to `{packages-dir}/{name}/`. Paths with `/` are used as-is.
 
 ## Task format
 
@@ -116,17 +125,25 @@ For each package in an experiment:
 7. Optionally score quality via Claude-as-judge (requires `ANTHROPIC_API_KEY`)
 8. Store results in SQLite (`~/.token_miser/results.db`)
 
-## Loadout packages
+## Packages
 
-Three loadout packages ship with this repo, each representing a different Claude Code philosophy:
+Packages ship in `packages/` and can be referenced by name:
 
 | Package | Philosophy |
 |---------|-----------|
-| `loadouts/token-miser/` | Minimize tokens -- terse output, lazy reads, no extras |
-| `loadouts/thorough/` | Maximize correctness -- read everything, explain reasoning |
-| `loadouts/tdd-strict/` | Strict TDD -- failing test first, always |
+| `token-miser` | Minimize tokens -- terse output, lazy reads, no extras |
+| `thorough` | Maximize correctness -- read everything, explain reasoning |
+| `tdd-strict` | Strict TDD -- failing test first, always |
 
 Each is a valid loadout package with a `manifest.yaml` and `CLAUDE.md`.
+
+To use packages from another directory (e.g. your dotfiles):
+
+```bash
+export TOKEN_MISER_PACKAGES_DIR=~/.claude/packages
+token-miser list           # show available packages
+token-miser tune --package slim-rubin   # resolve by name
+```
 
 ## Data
 
