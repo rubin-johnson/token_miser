@@ -1,0 +1,30 @@
+id: bm-iac-cost-review
+name: "Cost optimization review of VPC module"
+repo_id: terraform-aws-modules-vpc
+starting_commit: "v5.16.0"
+category: exploration
+difficulty: medium
+setup_commands: []
+prompt: |
+  Perform a cost optimization review of the terraform-aws-vpc module:
+
+  1. Identify all AWS resources this module can create (read every .tf file)
+  2. For each resource type, note whether it incurs hourly/monthly cost
+  3. Find the top 3 most expensive resource patterns and their controlling variables
+  4. Document cost-saving alternatives for each (e.g., single NAT vs per-AZ NAT,
+     VPC endpoints vs NAT for S3/DynamoDB traffic)
+  5. Write recommended variable configurations for: dev (cheapest), staging (balanced),
+     and production (HA) environments
+
+  Write your analysis to COST_REVIEW.md with cost estimates where possible.
+success_criteria:
+  - type: file_exists
+    paths: ["COST_REVIEW.md"]
+  - type: output_contains
+    command: "cat COST_REVIEW.md"
+    contains: ["NAT", "cost", "production"]
+quality_rubric:
+  - dimension: correctness
+    prompt: "Are the identified resources actually created by this module? Are cost estimates reasonable?"
+  - dimension: actionable
+    prompt: "Are the environment configurations specific variable settings, not just general advice?"

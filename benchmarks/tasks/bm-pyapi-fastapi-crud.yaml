@@ -1,0 +1,35 @@
+id: bm-pyapi-fastapi-crud
+name: "Add CRUD endpoints to FastAPI app"
+repo_id: tiny-api
+starting_commit: HEAD
+category: feature
+difficulty: medium
+setup_commands:
+  - "python -m venv .venv"
+  - ".venv/bin/pip install -e '.[dev]'"
+prompt: |
+  This is a small FastAPI application. Add a complete set of CRUD endpoints for a
+  "Project" resource under /api/projects. Each project has: id (int, auto), name (str),
+  description (str, optional), created_at (datetime, auto).
+
+  Requirements:
+  1. Use the existing database session pattern (check how other models/routes are set up)
+  2. POST /api/projects — create, return 201
+  3. GET /api/projects — list all
+  4. GET /api/projects/{id} — get one, 404 if missing
+  5. PUT /api/projects/{id} — update, 404 if missing
+  6. DELETE /api/projects/{id} — delete, return 204, 404 if missing
+  7. Use Pydantic models for request/response schemas
+  8. Add type hints on all function signatures
+success_criteria:
+  - type: output_contains
+    command: "grep -r '@router\\|@app' --include='*.py' -l"
+    contains: ["project"]
+  - type: output_contains
+    command: "grep -r 'class Project' --include='*.py'"
+    contains: ["Project"]
+quality_rubric:
+  - dimension: correctness
+    prompt: "Do all 5 CRUD endpoints exist with correct HTTP methods and status codes?"
+  - dimension: conventions
+    prompt: "Does it follow existing patterns — Pydantic models, dependency injection, proper status codes?"

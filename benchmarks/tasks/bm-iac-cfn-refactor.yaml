@@ -1,0 +1,30 @@
+id: bm-iac-cfn-refactor
+name: "Refactor CDK rule to L2 constructs"
+repo_id: cdk-nag
+starting_commit: "v2.34.0"
+category: refactor
+difficulty: hard
+setup_commands:
+  - "npm ci"
+prompt: |
+  Find a cdk-nag rule that inspects CloudFormation-level (L1) properties directly
+  using CfnResource or node.defaultChild patterns. Then refactor it to use L2
+  construct type checks where possible.
+
+  Steps:
+  1. Search src/rules/ for rules using CfnResource, .cfnOptions, or similar L1 patterns
+  2. Pick one that could be expressed with L2 construct type narrowing instead
+  3. Refactor it to check the L2 construct properties where available, falling back
+     to L1 only when the L2 doesn't expose the property
+  4. Maintain backward compatibility — the rule must still catch the same violations
+  5. Run the full test suite to verify no regressions
+
+  Document your reasoning in a comment at the top of the changed rule.
+success_criteria:
+  - type: command_succeeds
+    command: "npx jest --no-coverage 2>&1 | tail -5"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does the refactored rule still detect the same violations as before?"
+  - dimension: quality
+    prompt: "Is the code cleaner using L2 constructs while maintaining L1 fallback?"

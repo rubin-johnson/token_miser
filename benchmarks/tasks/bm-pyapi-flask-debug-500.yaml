@@ -1,0 +1,28 @@
+id: bm-pyapi-flask-debug-500
+name: "Debug and fix 500 error"
+repo_id: tiny-api-buggy-500
+starting_commit: buggy-500
+category: bugfix
+difficulty: medium
+setup_commands:
+  - "python -m venv .venv"
+  - ".venv/bin/pip install -e '.[dev]'"
+prompt: |
+  This API returns a 500 Internal Server Error on certain requests. Users report
+  that the /api/items endpoint crashes intermittently.
+
+  1. Reproduce the bug — run the test suite or hit the endpoint to see the 500
+  2. Read the traceback and trace it to the root cause in the source code
+  3. Fix the bug
+  4. Run the full test suite to confirm the fix and check for regressions
+  5. If no existing test covers this case, add one that would have caught it
+
+  Explain what caused the bug in a one-line comment next to the fix.
+success_criteria:
+  - type: command_succeeds
+    command: ".venv/bin/pytest -x -q 2>&1 | tail -3"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Was the actual root cause identified and fixed, not just the symptom?"
+  - dimension: testing
+    prompt: "Is there a test that specifically exercises the failure case?"

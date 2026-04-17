@@ -1,0 +1,35 @@
+name: domain-iac
+version: "0.1.0"
+description: "Infrastructure as Code — CDK stacks, Terraform modules, security review, compliance testing"
+tasks:
+  - file: bm-iac-cdk-vpc-stack.yaml
+    category: feature
+    difficulty: medium
+
+  - file: bm-iac-terraform-module.yaml
+    category: feature
+    difficulty: medium
+
+  - file: bm-iac-security-review.yaml
+    category: exploration
+    difficulty: hard
+
+  - file: bm-iac-cdk-test.yaml
+    category: test
+    difficulty: medium
+
+  - file: bm-iac-cfn-refactor.yaml
+    category: refactor
+    difficulty: hard
+
+  - file: bm-iac-terraform-explore.yaml
+    category: exploration
+    difficulty: medium
+
+  - file: bm-iac-cdk-nag.yaml
+    category: feature
+    difficulty: hard
+
+  - file: bm-iac-cost-review.yaml
+    category: exploration
+    difficulty: medium

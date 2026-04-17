@@ -1,0 +1,33 @@
+id: bm-iac-terraform-module
+name: "Add subnet module to Terraform VPC"
+repo_id: terraform-aws-modules-vpc
+starting_commit: "v5.16.0"
+category: feature
+difficulty: medium
+setup_commands: []
+prompt: |
+  This is the terraform-aws-vpc module. Study its structure — how variables, outputs,
+  and main.tf are organized.
+
+  Add a new submodule modules/database-subnet-group/ that:
+  1. Creates a DB subnet group from the VPC's private subnets
+  2. Accepts variables: name (string), subnet_ids (list(string)), tags (map(string))
+  3. Outputs: db_subnet_group_id, db_subnet_group_arn
+  4. Includes a README.md with usage example
+  5. Follow the exact variable/output naming conventions from existing submodules
+
+  Check modules/ for existing submodules to match the pattern exactly.
+success_criteria:
+  - type: file_exists
+    paths:
+      - "modules/database-subnet-group/main.tf"
+      - "modules/database-subnet-group/variables.tf"
+      - "modules/database-subnet-group/outputs.tf"
+  - type: output_contains
+    command: "cat modules/database-subnet-group/main.tf"
+    contains: ["aws_db_subnet_group"]
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does the module create a valid aws_db_subnet_group with proper variable references?"
+  - dimension: conventions
+    prompt: "Does it match the naming, structure, and style of existing submodules?"

@@ -1,0 +1,35 @@
+id: bm-fe-perf-optimize
+name: "Optimize React rendering performance"
+repo_id: bulletproof-react
+starting_commit: master
+category: refactor
+difficulty: hard
+setup_commands:
+  - "npm ci"
+prompt: |
+  Find and fix React performance issues in this project:
+
+  1. Search for components that could benefit from memoization — look for:
+     - Components receiving objects/arrays as props that are recreated each render
+     - Expensive computations in render bodies without useMemo
+     - Callback props without useCallback causing child re-renders
+  2. Pick the 3 most impactful cases
+  3. For each, apply the minimal fix:
+     - useMemo for expensive derived data
+     - useCallback for callbacks passed to memoized children
+     - React.memo for pure components receiving stable props
+  4. Do NOT add memo/useCallback everywhere — only where it matters
+  5. Run TypeScript checking and tests to verify no regressions
+
+  Document each change with a brief explanation of why it helps.
+success_criteria:
+  - type: output_contains
+    command: "grep -rn 'useMemo\\|useCallback\\|React.memo' --include='*.tsx' --include='*.ts' src/"
+    contains: ["useMemo"]
+  - type: command_succeeds
+    command: "npx tsc --noEmit 2>&1 | tail -5"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Are the optimizations targeting real performance issues, not premature micro-optimizations?"
+  - dimension: minimal
+    prompt: "Were exactly 3 cases addressed? No scatter-shot memoization?"

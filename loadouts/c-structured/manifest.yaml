@@ -1,0 +1,11 @@
+name: c-structured
+version: 0.1.0
+author: rubin-johnson
+description: Multi-file .claude/ layout inspired by adam-s/testing-claude-agent benchmark winner
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md
+  - path: rules/workflow.md
+    dest: .claude/rules/workflow.md
+  - path: rules/efficiency.md
+    dest: .claude/rules/efficiency.md

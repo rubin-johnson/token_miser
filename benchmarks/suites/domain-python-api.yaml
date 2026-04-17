@@ -1,0 +1,35 @@
+name: domain-python-api
+version: "0.1.0"
+description: "Python API development — endpoint creation, ORM queries, auth, debugging, testing across Flask and FastAPI"
+tasks:
+  - file: bm-pyapi-fastapi-crud.yaml
+    category: feature
+    difficulty: medium
+
+  - file: bm-pyapi-flask-n-plus-one.yaml
+    category: bugfix
+    difficulty: hard
+
+  - file: bm-pyapi-fastapi-auth.yaml
+    category: feature
+    difficulty: hard
+
+  - file: bm-pyapi-httpx-test.yaml
+    category: test
+    difficulty: medium
+
+  - file: bm-pyapi-fastapi-middleware.yaml
+    category: feature
+    difficulty: medium
+
+  - file: bm-pyapi-flask-debug-500.yaml
+    category: bugfix
+    difficulty: medium
+
+  - file: bm-pyapi-fastapi-openapi.yaml
+    category: exploration
+    difficulty: medium
+
+  - file: bm-pyapi-flask-test-integration.yaml
+    category: test
+    difficulty: hard

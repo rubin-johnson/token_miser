@@ -1,0 +1,37 @@
+id: bm-fe-api-integration
+name: "Add API integration with error handling"
+repo_id: bulletproof-react
+starting_commit: master
+category: feature
+difficulty: hard
+setup_commands:
+  - "npm ci"
+prompt: |
+  Add a new API integration following this project's data fetching patterns:
+
+  1. Study how existing API calls are structured (search for axios, fetch, react-query,
+     or similar in src/)
+  2. Add a "Teams" API layer:
+     - src/features/teams/api/get-teams.ts — fetch team list
+     - src/features/teams/api/create-team.ts — create a team (POST)
+     - src/features/teams/api/get-team.ts — fetch single team by ID
+  3. Each API function should:
+     - Use the project's existing HTTP client (axios instance, fetch wrapper, etc.)
+     - Have proper TypeScript types for request and response
+     - Use React Query hooks (or whatever the project uses) for caching/mutations
+  4. Handle errors: network errors, 404, 422 validation errors
+  5. Add optimistic updates for the create mutation if React Query is used
+  6. Run TypeScript checking to verify the types are correct
+
+  Match the exact file structure and patterns of an existing feature (like discussions).
+success_criteria:
+  - type: output_contains
+    command: "find src/features/teams -name '*.ts' -o -name '*.tsx' 2>/dev/null | head -10"
+    contains: ["teams"]
+  - type: command_succeeds
+    command: "npx tsc --noEmit 2>&1 | tail -5"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Do the API functions follow the project's data fetching patterns with proper types?"
+  - dimension: conventions
+    prompt: "Does the file structure mirror an existing feature like discussions?"

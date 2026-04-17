@@ -1,0 +1,34 @@
+id: bm-fe-custom-hook
+name: "Create useDebounce custom hook"
+repo_id: bulletproof-react
+starting_commit: master
+category: feature
+difficulty: medium
+setup_commands:
+  - "npm ci"
+prompt: |
+  Study the existing custom hooks in this React project (search for use*.ts files
+  in src/). Then create a new useDebounce hook:
+
+  1. Create src/hooks/use-debounce.ts with a useDebounce<T>(value: T, delay: number): T hook
+  2. It should return the debounced value that only updates after `delay` ms of no changes
+  3. Clean up the timeout on unmount and when value/delay changes
+  4. Export it from the hooks barrel file if one exists
+  5. Write a test file src/hooks/__tests__/use-debounce.test.ts that:
+     - Tests that the value doesn't update immediately
+     - Tests that it updates after the delay
+     - Tests cleanup on unmount
+     - Uses @testing-library/react-hooks or renderHook from @testing-library/react
+
+  Follow the project's TypeScript and file naming conventions.
+success_criteria:
+  - type: file_exists
+    paths: ["src/hooks/use-debounce.ts"]
+  - type: output_contains
+    command: "cat src/hooks/use-debounce.ts"
+    contains: ["useDebounce", "setTimeout", "useEffect"]
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does the hook properly debounce, clean up timeouts, and handle generic types?"
+  - dimension: testing
+    prompt: "Do the tests verify timing behavior using act() and fake timers?"

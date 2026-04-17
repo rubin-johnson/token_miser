@@ -1,0 +1,31 @@
+id: bm-iac-cdk-test
+name: "Write CDK snapshot and assertion tests"
+repo_id: cdk-nag
+starting_commit: "v2.34.0"
+category: test
+difficulty: medium
+setup_commands:
+  - "npm ci"
+prompt: |
+  Study the existing test patterns in this CDK project (check test/ directory and
+  look at how existing tests use assertions and snapshots).
+
+  Write a new test file test/example-nag-pack-test.ts that:
+  1. Creates a simple stack with an S3 bucket (no public access, encryption enabled)
+  2. Applies the AwsSolutions nag pack to it
+  3. Asserts that the stack passes all AwsSolutions checks without warnings
+  4. Creates a second stack with a PUBLIC S3 bucket (no encryption)
+  5. Asserts that the nag pack correctly flags at least 2 violations
+  6. Use the same test framework and assertion style as existing tests
+
+  Run the tests with the project's test command to verify they pass.
+success_criteria:
+  - type: file_exists
+    paths: ["test/example-nag-pack-test.ts"]
+  - type: command_succeeds
+    command: "npx jest test/example-nag-pack-test.ts --no-coverage 2>&1 | tail -5"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Do both test cases work — compliant stack passes, non-compliant stack triggers violations?"
+  - dimension: conventions
+    prompt: "Does it use the same test patterns, imports, and assertion style as existing tests?"

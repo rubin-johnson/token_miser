@@ -1,0 +1,34 @@
+id: bm-pyapi-flask-test-integration
+name: "Write integration tests for Flask app"
+repo_id: tiny-api
+starting_commit: HEAD
+category: test
+difficulty: hard
+setup_commands:
+  - "python -m venv .venv"
+  - ".venv/bin/pip install -e '.[dev]'"
+prompt: |
+  Write a comprehensive integration test suite for this Flask API. First read
+  conftest.py and existing tests to understand the testing patterns.
+
+  Create tests/test_integration.py covering:
+  1. Full CRUD lifecycle — create a resource, read it, update it, delete it, verify gone
+  2. Pagination — if the API supports it, test page boundaries and edge cases
+  3. Error handling — 404 for missing resources, 422 for bad input
+  4. Concurrent-safe — create two resources, verify they don't interfere
+  5. Use the test client from existing fixtures, not requests/httpx
+
+  Each test should be independent (no ordering dependencies). Use the app's
+  existing database setup/teardown — read conftest.py to see how.
+
+  Run the full test suite including your new tests.
+success_criteria:
+  - type: file_exists
+    paths: ["tests/test_integration.py"]
+  - type: command_succeeds
+    command: ".venv/bin/pytest tests/test_integration.py -x -q 2>&1 | tail -3"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Do all tests pass? Do they test real API behavior through the HTTP interface?"
+  - dimension: completeness
+    prompt: "Are all 4 areas covered — lifecycle, pagination, errors, independence?"

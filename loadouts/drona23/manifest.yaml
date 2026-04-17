@@ -1,0 +1,7 @@
+name: drona23
+version: 0.1.0
+author: rubin-johnson
+description: Viral token-efficiency rules from drona23/claude-token-efficient — concise approach, no sycophancy, no re-reading, prefer editing over rewriting
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md

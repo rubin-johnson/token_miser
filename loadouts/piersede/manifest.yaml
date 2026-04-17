@@ -1,0 +1,7 @@
+name: piersede
+version: 0.1.0
+author: rubin-johnson
+description: Piersede token-efficiency operating spec — comprehensive CLAUDE.md-only strategy for minimum-context, maximum-verification sessions
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md

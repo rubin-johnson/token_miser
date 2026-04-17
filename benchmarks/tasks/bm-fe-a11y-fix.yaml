@@ -1,0 +1,35 @@
+id: bm-fe-a11y-fix
+name: "Fix accessibility issues in components"
+repo_id: bulletproof-react
+starting_commit: master
+category: bugfix
+difficulty: medium
+setup_commands:
+  - "npm ci"
+prompt: |
+  Audit this React application for accessibility (a11y) issues:
+
+  1. Search components for common a11y problems:
+     - Missing alt text on images
+     - Clickable divs/spans without role="button" and keyboard handlers
+     - Missing form labels or aria-label
+     - Missing heading hierarchy (h1 → h3 skip)
+     - Color contrast issues in inline styles
+  2. Fix the 5 most impactful issues you find
+  3. For interactive elements, ensure both onClick and onKeyDown/onKeyUp are present
+  4. Add aria-labels where visual context isn't available to screen readers
+  5. Run TypeScript checking to verify no type errors
+  6. Run the test suite to check for regressions
+
+  Keep fixes minimal — only change what's needed for accessibility.
+success_criteria:
+  - type: output_contains
+    command: "grep -rn 'aria-\\|role=\\|alt=' --include='*.tsx' src/ | head -20"
+    contains: ["aria"]
+  - type: command_succeeds
+    command: "npx tsc --noEmit 2>&1 | tail -5"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Are the fixes genuine a11y improvements following WCAG guidelines?"
+  - dimension: minimal
+    prompt: "Were exactly 5 issues fixed without unnecessary restructuring?"

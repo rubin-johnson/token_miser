@@ -1,0 +1,31 @@
+id: bm-iac-security-review
+name: "Security audit of CDK constructs"
+repo_id: cdk-nag
+starting_commit: "v2.34.0"
+category: exploration
+difficulty: hard
+setup_commands:
+  - "npm ci"
+prompt: |
+  Perform a security review of the cdk-nag rule packs. Focus on:
+
+  1. Read the rule implementations in src/rules/ — pick the AWS Solutions pack
+  2. Identify the top 5 most critical security checks it enforces
+  3. For each, document: what it checks, why it matters, and the CWE or compliance
+     framework it maps to (if mentioned in the code)
+  4. Find any gaps — common AWS security issues (from CIS Benchmarks or AWS Well-Architected)
+     that are NOT covered by any existing rule
+  5. For 2 gaps, write pseudocode showing what the check would look like
+
+  Write your findings to SECURITY_AUDIT.md.
+success_criteria:
+  - type: file_exists
+    paths: ["SECURITY_AUDIT.md"]
+  - type: output_contains
+    command: "cat SECURITY_AUDIT.md"
+    contains: ["security", "rule", "gap"]
+quality_rubric:
+  - dimension: correctness
+    prompt: "Are the 5 rules real rules from the codebase with accurate descriptions?"
+  - dimension: depth
+    prompt: "Are the identified gaps genuine missing checks, not things already covered?"

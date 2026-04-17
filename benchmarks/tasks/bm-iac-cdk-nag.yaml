@@ -1,0 +1,32 @@
+id: bm-iac-cdk-nag
+name: "Write custom cdk-nag rule"
+repo_id: cdk-nag
+starting_commit: "v2.34.0"
+category: feature
+difficulty: hard
+setup_commands:
+  - "npm ci"
+prompt: |
+  Write a custom cdk-nag rule that enforces encryption at rest for DynamoDB tables.
+
+  1. Study existing rules in src/rules/ to understand the NagRuleBase pattern
+  2. Create src/rules/dynamodb/DynamoDBEncryptionAtRest.ts that:
+     - Checks if DynamoDB tables use AWS_OWNED, KMS, or customer-managed encryption
+     - Fails tables that don't explicitly set encryption (relying on default is not sufficient)
+     - Returns a clear reason string explaining what's wrong and how to fix it
+  3. Register the rule in the appropriate pack (check how other rules are registered)
+  4. Write a test in test/ that verifies the rule catches unencrypted tables and passes
+     encrypted ones
+  5. Run the full test suite to check for regressions
+
+  Match the exact code style, imports, and patterns of existing rules.
+success_criteria:
+  - type: file_exists
+    paths: ["src/rules/dynamodb/DynamoDBEncryptionAtRest.ts"]
+  - type: command_succeeds
+    command: "npx jest --no-coverage 2>&1 | tail -5"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does the rule correctly identify DynamoDB tables without explicit encryption?"
+  - dimension: conventions
+    prompt: "Does it follow the exact patterns of existing rules — class structure, registration, test style?"

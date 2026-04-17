@@ -1,0 +1,32 @@
+id: bm-pyapi-fastapi-middleware
+name: "Add request logging middleware"
+repo_id: tiny-api
+starting_commit: HEAD
+category: feature
+difficulty: medium
+setup_commands:
+  - "python -m venv .venv"
+  - ".venv/bin/pip install -e '.[dev]'"
+prompt: |
+  Add request logging middleware to this FastAPI application:
+
+  1. Create middleware that logs: method, path, status code, and duration (ms) for every request
+  2. Use Python's stdlib logging module (not print)
+  3. Log at INFO level for 2xx/3xx, WARNING for 4xx, ERROR for 5xx
+  4. Add a request ID (uuid4) to each request, include it in logs and in the response
+     as an X-Request-ID header
+  5. Add the middleware to the app without modifying existing route handlers
+  6. Write a test that verifies the X-Request-ID header is present on responses
+
+  Run existing tests to make sure nothing breaks.
+success_criteria:
+  - type: output_contains
+    command: "grep -rn 'X-Request-ID\\|request.id\\|middleware' --include='*.py'"
+    contains: ["Request-ID"]
+  - type: command_succeeds
+    command: ".venv/bin/pytest -x -q 2>&1 | tail -3"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does the middleware log all requests with method, path, status, and duration?"
+  - dimension: minimal
+    prompt: "Is it cleanly added as middleware without modifying existing route handlers?"

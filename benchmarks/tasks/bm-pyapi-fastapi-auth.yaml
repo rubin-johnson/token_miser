@@ -1,0 +1,35 @@
+id: bm-pyapi-fastapi-auth
+name: "Add JWT auth to FastAPI endpoints"
+repo_id: tiny-api
+starting_commit: HEAD
+category: feature
+difficulty: hard
+setup_commands:
+  - "python -m venv .venv"
+  - ".venv/bin/pip install -e '.[dev]'"
+prompt: |
+  Add JWT-based authentication to this FastAPI application:
+
+  1. Create a POST /api/auth/login endpoint that accepts username/password and returns a JWT
+  2. Create a dependency `get_current_user` that extracts and validates the JWT from the
+     Authorization header (Bearer scheme)
+  3. Protect all existing write endpoints (POST, PUT, DELETE) with this dependency
+  4. GET endpoints remain public
+  5. Use python-jose or PyJWT for token creation/validation
+  6. Store a hardcoded SECRET_KEY (this is a demo, not production)
+  7. Token should include sub (username) and exp (30 min)
+  8. Return 401 for missing/invalid tokens, 422 for bad login payload
+
+  Install any needed dependencies into the venv.
+success_criteria:
+  - type: output_contains
+    command: "grep -rn 'JWT\\|Bearer\\|get_current_user\\|jwt' --include='*.py'"
+    contains: ["jwt"]
+  - type: output_contains
+    command: "grep -rn '@router.post.*login\\|/auth/login' --include='*.py'"
+    contains: ["login"]
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does login return a JWT? Does the dependency validate it correctly? Are write endpoints protected?"
+  - dimension: security
+    prompt: "Is the token validated properly — checking expiration, handling invalid tokens with 401?"

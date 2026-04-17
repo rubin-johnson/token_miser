@@ -1,0 +1,32 @@
+id: bm-iac-cdk-vpc-stack
+name: "Create CDK VPC stack"
+repo_id: cdk-nag
+starting_commit: "v2.34.0"
+category: feature
+difficulty: medium
+setup_commands:
+  - "npm ci"
+prompt: |
+  Using the cdk-nag project as reference for CDK patterns and best practices,
+  create a new file lib/example-vpc-stack.ts that defines a production-ready VPC:
+
+  1. 3 AZs with public, private, and isolated subnets
+  2. NAT Gateways (1 per AZ for HA)
+  3. VPC Flow Logs enabled to CloudWatch
+  4. Proper CIDR allocation (10.0.0.0/16)
+  5. Tags: Environment=production, ManagedBy=cdk
+  6. Export the VPC ID and private subnet IDs as CloudFormation outputs
+
+  Follow the TypeScript patterns used in this project (check existing stacks for style).
+  The stack should pass cdk-nag checks — no suppressions.
+success_criteria:
+  - type: file_exists
+    paths: ["lib/example-vpc-stack.ts"]
+  - type: output_contains
+    command: "cat lib/example-vpc-stack.ts"
+    contains: ["Vpc", "SubnetType", "FlowLog"]
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does the stack define a proper 3-AZ VPC with all three subnet tiers and flow logs?"
+  - dimension: conventions
+    prompt: "Does it follow CDK best practices — proper constructs, no escape hatches, clean typing?"

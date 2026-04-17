@@ -1,0 +1,7 @@
+name: caveman
+version: 0.1.0
+author: rubin-johnson
+description: Brevity constraints inspired by arxiv:2604.00025 — strips articles, filler, sycophancy, and trailing summaries to minimize output tokens
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md

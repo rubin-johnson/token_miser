@@ -1,0 +1,31 @@
+id: bm-pyapi-flask-n-plus-one
+name: "Find and fix N+1 query bug"
+repo_id: tiny-api-buggy-pagination
+starting_commit: buggy-pagination
+category: bugfix
+difficulty: hard
+setup_commands:
+  - "python -m venv .venv"
+  - ".venv/bin/pip install -e '.[dev]'"
+prompt: |
+  This API has a performance bug — the /api/items endpoint triggers N+1 database queries
+  when returning items with their related data. Users report it gets slower as data grows.
+
+  1. Find the endpoint causing the N+1 problem by reading the route handlers and models
+  2. Identify the exact ORM query that triggers lazy loading in a loop
+  3. Fix it using eager loading (joinedload, subqueryload, or selectinload — whichever fits)
+  4. Run the existing tests to make sure they still pass
+  5. If no tests cover the endpoint, add one that verifies the response structure
+
+  Do NOT restructure the entire app — just fix the query pattern.
+success_criteria:
+  - type: command_succeeds
+    command: ".venv/bin/pytest -x -q 2>&1 | tail -3"
+  - type: output_contains
+    command: "grep -rn 'joinedload\\|subqueryload\\|selectinload\\|eager' --include='*.py'"
+    contains: ["load"]
+quality_rubric:
+  - dimension: correctness
+    prompt: "Was the actual N+1 query identified and fixed with an eager loading strategy?"
+  - dimension: minimal
+    prompt: "Was the fix surgical — just the query change, not a rewrite of the endpoint?"

@@ -39,3 +39,34 @@ repos:
     setup_commands:
       - "python -m venv .venv"
       - ".venv/bin/pip install -e '.[dev]'"
+
+  # Domain: Python API
+  - id: fastapi
+    url: https://github.com/fastapi/fastapi.git
+    commit: "0.115.6"
+    shallow: true
+    setup_commands:
+      - "python -m venv .venv"
+      - ".venv/bin/pip install -e '.[all,dev,test]'"
+
+  # Domain: IaC
+  - id: cdk-nag
+    url: https://github.com/cdklabs/cdk-nag.git
+    commit: "v2.34.0"
+    shallow: true
+    setup_commands:
+      - "npm ci"
+
+  - id: terraform-aws-modules-vpc
+    url: https://github.com/terraform-aws-modules/terraform-aws-vpc.git
+    commit: "v5.16.0"
+    shallow: true
+    setup_commands: []
+
+  # Domain: Frontend
+  - id: bulletproof-react
+    url: https://github.com/alan2207/bulletproof-react.git
+    commit: "master"
+    shallow: true
+    setup_commands:
+      - "npm ci"

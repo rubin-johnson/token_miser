@@ -1,0 +1,35 @@
+name: domain-frontend
+version: "0.1.0"
+description: "React/TypeScript frontend — components, hooks, testing, state management, accessibility, performance"
+tasks:
+  - file: bm-fe-custom-hook.yaml
+    category: feature
+    difficulty: medium
+
+  - file: bm-fe-component-test.yaml
+    category: test
+    difficulty: medium
+
+  - file: bm-fe-typescript-refactor.yaml
+    category: refactor
+    difficulty: hard
+
+  - file: bm-fe-perf-optimize.yaml
+    category: refactor
+    difficulty: hard
+
+  - file: bm-fe-trace-dataflow.yaml
+    category: exploration
+    difficulty: medium
+
+  - file: bm-fe-a11y-fix.yaml
+    category: bugfix
+    difficulty: medium
+
+  - file: bm-fe-form-component.yaml
+    category: feature
+    difficulty: medium
+
+  - file: bm-fe-api-integration.yaml
+    category: feature
+    difficulty: hard

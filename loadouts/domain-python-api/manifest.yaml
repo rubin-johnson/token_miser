@@ -1,0 +1,7 @@
+name: domain-python-api
+version: 0.1.0
+author: rubin-johnson
+description: Domain-specific config for Python API projects (Flask, FastAPI, SQLAlchemy)
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md

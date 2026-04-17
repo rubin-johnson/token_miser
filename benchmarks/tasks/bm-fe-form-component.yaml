@@ -1,0 +1,33 @@
+id: bm-fe-form-component
+name: "Build validated form component"
+repo_id: bulletproof-react
+starting_commit: master
+category: feature
+difficulty: medium
+setup_commands:
+  - "npm ci"
+prompt: |
+  Build a reusable form component following this project's patterns:
+
+  1. Check how existing forms are built (search for <form, useForm, react-hook-form, zod)
+  2. Create a CreateTeamForm component that collects:
+     - Team name (required, 3-50 chars)
+     - Description (optional, max 200 chars)
+     - Max members (required, number, 1-100)
+  3. Use the project's form library (react-hook-form + zod if present, or match existing)
+  4. Show inline validation errors below each field
+  5. Disable submit button while submitting (show loading state)
+  6. On successful submit, call an onSuccess callback prop
+  7. Match the project's component file structure and styling approach
+  8. Write a test that verifies validation errors appear for invalid input
+
+  Follow existing component patterns exactly — don't introduce new libraries.
+success_criteria:
+  - type: output_contains
+    command: "grep -rn 'CreateTeamForm\\|createTeam' --include='*.tsx' --include='*.ts' src/"
+    contains: ["Team"]
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does the form validate all fields correctly and show inline errors?"
+  - dimension: conventions
+    prompt: "Does it use the same form library, validation approach, and file structure as existing forms?"

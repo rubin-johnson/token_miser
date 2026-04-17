@@ -1,0 +1,7 @@
+name: thinking-cap
+version: 0.1.0
+author: rubin-johnson
+description: Limits extended thinking token spend and output verbosity
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md

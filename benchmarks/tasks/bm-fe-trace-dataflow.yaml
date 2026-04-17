@@ -1,0 +1,32 @@
+id: bm-fe-trace-dataflow
+name: "Trace state management data flow"
+repo_id: bulletproof-react
+starting_commit: master
+category: exploration
+difficulty: medium
+setup_commands:
+  - "npm ci"
+prompt: |
+  Trace how data flows through this React application's state management:
+
+  1. Identify the state management approach (Redux, Zustand, React Query, context, etc.)
+  2. Pick one feature (e.g., discussions, users, auth) and trace the full data lifecycle:
+     - Where is the data fetched? (API call, hook, loader)
+     - Where is it stored? (cache, store, context)
+     - How does it reach the component? (hook, selector, prop drilling)
+     - How are mutations handled? (optimistic updates, invalidation, refetch)
+  3. Draw the dependency graph — which components read which state?
+  4. Identify any potential issues (stale data, unnecessary re-renders, missing error handling)
+
+  Write your analysis to DATAFLOW.md with a clear flow diagram (ASCII or markdown).
+success_criteria:
+  - type: file_exists
+    paths: ["DATAFLOW.md"]
+  - type: output_contains
+    command: "cat DATAFLOW.md"
+    contains: ["fetch", "component", "state"]
+quality_rubric:
+  - dimension: correctness
+    prompt: "Does the trace follow actual code paths with real file names and function names?"
+  - dimension: completeness
+    prompt: "Is the full lifecycle covered — fetch, store, render, mutate?"

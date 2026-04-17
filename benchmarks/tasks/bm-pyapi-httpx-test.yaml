@@ -1,0 +1,33 @@
+id: bm-pyapi-httpx-test
+name: "Write httpx async client tests"
+repo_id: httpx
+starting_commit: "0.28.1"
+category: test
+difficulty: medium
+setup_commands:
+  - "python -m venv .venv"
+  - ".venv/bin/pip install -e '.[dev]'"
+prompt: |
+  Read the httpx test suite structure (check tests/ and conftest.py first).
+  Then write a new test file tests/test_retry_scenarios.py that tests client
+  behavior under various failure modes:
+
+  1. Test that a connection timeout raises the correct exception type
+  2. Test that a read timeout raises the correct exception type
+  3. Test that requesting a URL that returns 500 gives a Response with status_code=500
+     (not an exception)
+  4. Test async client with the same scenarios using pytest-anyio/trio
+  5. Use the project's existing mock server or transport fixtures — read conftest.py
+     to find them, do NOT create your own mock server
+
+  Run pytest on your new file to verify all tests pass.
+success_criteria:
+  - type: file_exists
+    paths: ["tests/test_retry_scenarios.py"]
+  - type: command_succeeds
+    command: ".venv/bin/pytest tests/test_retry_scenarios.py -x -q 2>&1 | tail -3"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Do all tests pass? Do they test real httpx behavior, not just mock returns?"
+  - dimension: conventions
+    prompt: "Does it use existing fixtures from conftest.py rather than creating new infrastructure?"

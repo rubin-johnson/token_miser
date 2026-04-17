@@ -1,0 +1,30 @@
+id: bm-iac-terraform-explore
+name: "Map Terraform VPC module architecture"
+repo_id: terraform-aws-modules-vpc
+starting_commit: "v5.16.0"
+category: exploration
+difficulty: medium
+setup_commands: []
+prompt: |
+  Analyze the terraform-aws-vpc module architecture:
+
+  1. Map every .tf file and its purpose — what resources does each file manage?
+  2. Trace how the `enable_nat_gateway` and `single_nat_gateway` variables flow
+     through conditionals to create (or skip) NAT resources
+  3. Document the subnet CIDR calculation logic — how does it allocate CIDRs
+     across AZs and subnet types?
+  4. List all submodules in modules/ and what each one does
+  5. Identify the 3 most complex conditional expressions and explain what they control
+
+  Write your analysis to MODULE_ARCHITECTURE.md with a section per topic.
+success_criteria:
+  - type: file_exists
+    paths: ["MODULE_ARCHITECTURE.md"]
+  - type: output_contains
+    command: "cat MODULE_ARCHITECTURE.md"
+    contains: ["nat_gateway", "subnet", "CIDR"]
+quality_rubric:
+  - dimension: correctness
+    prompt: "Are the file descriptions accurate? Does the NAT gateway flow trace match the actual code?"
+  - dimension: completeness
+    prompt: "Are all 5 areas covered with specific variable names, file paths, and expressions?"

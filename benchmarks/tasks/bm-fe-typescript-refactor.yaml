@@ -1,0 +1,30 @@
+id: bm-fe-typescript-refactor
+name: "Tighten TypeScript types, remove any"
+repo_id: bulletproof-react
+starting_commit: master
+category: refactor
+difficulty: hard
+setup_commands:
+  - "npm ci"
+prompt: |
+  Find and fix TypeScript type safety issues in this project:
+
+  1. Search for `any` type annotations across the codebase (grep for ': any' and 'as any')
+  2. Identify the 5 most impactful instances — where `any` masks a real type that could
+     be inferred or explicitly typed
+  3. Replace each `any` with a proper type:
+     - Infer from usage if possible
+     - Create an interface/type if the shape is clear from context
+     - Use `unknown` + type narrowing if the type genuinely can't be known
+  4. Run `npx tsc --noEmit` to verify no new type errors are introduced
+  5. Run the test suite to verify no behavioral regressions
+
+  Do NOT change any runtime behavior — this is types only.
+success_criteria:
+  - type: command_succeeds
+    command: "npx tsc --noEmit 2>&1 | tail -5"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Do the new types accurately represent the data? No overly broad types like Record<string, unknown>?"
+  - dimension: minimal
+    prompt: "Were only the 5 targeted any's changed? No unnecessary refactoring?"

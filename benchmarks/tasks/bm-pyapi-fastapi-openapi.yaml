@@ -1,0 +1,32 @@
+id: bm-pyapi-fastapi-openapi
+name: "Explore and document OpenAPI schema"
+repo_id: fastapi
+starting_commit: "0.115.6"
+category: exploration
+difficulty: medium
+setup_commands:
+  - "python -m venv .venv"
+  - ".venv/bin/pip install -e '.[all,dev,test]'"
+prompt: |
+  Explore how FastAPI generates its OpenAPI schema:
+
+  1. Find the code that builds the OpenAPI JSON (start from fastapi/openapi/)
+  2. Trace how route decorators contribute to the schema — how does @app.get() with
+     a Pydantic response_model end up in the OpenAPI paths and components?
+  3. Find where JSON Schema for Pydantic models is generated
+  4. Identify how query parameters, path parameters, and request bodies are each
+     represented differently in the schema
+
+  Write OPENAPI_INTERNALS.md documenting the generation pipeline with file paths
+  and function names for each step. Include at least 8 distinct functions in the chain.
+success_criteria:
+  - type: file_exists
+    paths: ["OPENAPI_INTERNALS.md"]
+  - type: output_contains
+    command: "cat OPENAPI_INTERNALS.md"
+    contains: ["openapi", "schema", "route"]
+quality_rubric:
+  - dimension: correctness
+    prompt: "Are the file paths and function names real? Does the trace match actual FastAPI code?"
+  - dimension: completeness
+    prompt: "Are at least 8 functions documented showing the full path from decorator to schema?"

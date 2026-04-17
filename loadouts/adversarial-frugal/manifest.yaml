@@ -1,0 +1,9 @@
+name: adversarial-frugal
+version: 0.1.0
+author: rubin-johnson
+description: Maximum token compression — caveman brevity + search-before-read + tool budget + rtk hook
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md
+  - path: settings.json
+    dest: settings.json

@@ -1,0 +1,7 @@
+name: planner
+version: 0.1.0
+author: rubin-johnson
+description: Plan-before-code workflow — numbered steps, ordered execution, test after each step
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md

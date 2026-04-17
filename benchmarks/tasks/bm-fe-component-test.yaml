@@ -1,0 +1,32 @@
+id: bm-fe-component-test
+name: "Write component tests with Testing Library"
+repo_id: bulletproof-react
+starting_commit: master
+category: test
+difficulty: medium
+setup_commands:
+  - "npm ci"
+prompt: |
+  Find a component in this project that has no tests (or minimal tests). Check the
+  src/ directory for components and their corresponding __tests__ directories.
+
+  Pick a component that has user interactions (buttons, forms, or links) and write
+  comprehensive tests:
+
+  1. Read the component source to understand its props, state, and behavior
+  2. Create a test file following the project's test file naming convention
+  3. Test: rendering with required props, user interactions (click, type), conditional
+     rendering, error states if applicable
+  4. Use @testing-library/react — prefer userEvent over fireEvent
+  5. Follow the project's existing test patterns (check other test files first)
+  6. Run the tests to verify they pass
+
+  Do NOT test implementation details — test user-visible behavior only.
+success_criteria:
+  - type: command_succeeds
+    command: "npx jest --no-coverage --passWithNoTests 2>&1 | tail -5"
+quality_rubric:
+  - dimension: correctness
+    prompt: "Do the tests verify user-visible behavior, not implementation details?"
+  - dimension: completeness
+    prompt: "Are rendering, interactions, and edge cases all covered?"
