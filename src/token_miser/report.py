@@ -23,6 +23,11 @@ class PackageStats:
     quality_scores: dict[str, float] = field(default_factory=dict)
 
 
+def _run_label(run) -> str:
+    agent = getattr(run, "agent", "") or "claude"
+    return f"{agent}:{run.package_name}"
+
+
 def compare(task_id: str, conn: sqlite3.Connection) -> str:
     """Generate a comparison report for runs of a given task."""
     runs = get_runs(conn, task_id)
@@ -32,7 +37,7 @@ def compare(task_id: str, conn: sqlite3.Connection) -> str:
     # Group by package, preserving insertion order
     by_pkg: dict[str, list] = {}
     for run in runs:
-        by_pkg.setdefault(run.package_name, []).append(run)
+        by_pkg.setdefault(_run_label(run), []).append(run)
 
     stats = [_calculate_package_stats(name, pkg_runs) for name, pkg_runs in by_pkg.items()]
 
@@ -49,13 +54,13 @@ def analyze(task_id: str, conn: sqlite3.Connection) -> str:
 
     by_pkg: dict[str, list] = {}
     for run in runs:
-        by_pkg.setdefault(run.package_name, []).append(run)
+        by_pkg.setdefault(_run_label(run), []).append(run)
 
     stats = [_calculate_package_stats(name, pkg_runs) for name, pkg_runs in by_pkg.items()]
     stats.sort(key=lambda s: s.avg_cost)
 
     # Find baseline (vanilla if present, else cheapest)
-    baseline = next((s for s in stats if s.name == "vanilla"), stats[0])
+    baseline = next((s for s in stats if s.name.endswith(":vanilla") or s.name == "vanilla"), stats[0])
 
     total_runs = sum(s.run_count for s in stats)
     lines = [f"Task: {task_id}  ({total_runs} runs across {len(stats)} packages)\n"]

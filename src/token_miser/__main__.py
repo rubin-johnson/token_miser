@@ -6,11 +6,11 @@ import json
 import os
 import sys
 
+from token_miser.backends import get_backend, parse_agents
 from token_miser.checker import check_all_criteria
 from token_miser.db import Run, get_run, get_runs, init_db, store_run
 from token_miser.environment import setup_env
 from token_miser.evaluator import score_quality
-from token_miser.executor import load_claude_env, run_claude, run_claude_sequential
 from token_miser.package_ref import list_packages, parse_package_ref, resolve_packages_dir
 from token_miser.report import analyze, compare
 from token_miser.task import load_task
@@ -19,74 +19,81 @@ from token_miser.task import load_task
 def cmd_run(args: argparse.Namespace) -> int:
     task = load_task(args.task)
     conn = init_db()
-    claude_env = load_claude_env()
     packages_dir = getattr(args, "packages_dir", None)
+    agents = parse_agents(getattr(args, "agent", None))
     try:
         specs = [args.baseline]
         if args.package:
             specs.append(args.package)
 
         results = []
-        for spec in specs:
-            package_ref = parse_package_ref(spec, packages_dir=packages_dir)
-            print(f"Running package: {package_ref.name}...", file=sys.stderr)
-            env = setup_env(task, package_ref)
-            try:
-                bare = getattr(args, "bare", False)
-                model = getattr(args, "model", None)
-                if task.type == "sequential":
-                    res = run_claude_sequential(
-                        task.prompts, env.home_dir, env.workspace_dir,
-                        timeout=args.timeout, extra_env=claude_env, bare=bare, model=model,
-                    )
-                else:
-                    res = run_claude(
-                        task.prompt, env.home_dir, env.workspace_dir,
-                        timeout=args.timeout, extra_env=claude_env, bare=bare, model=model,
-                    )
-
-                checks = check_all_criteria(task.success_criteria, env)
-                passed = sum(1 for c in checks if c.passed)
-                total = len(checks)
-
-                quality_json = "{}"
-                api_key = os.environ.get("ANTHROPIC_API_KEY")
-                if api_key and task.quality_rubric:
-                    try:
-                        scores = score_quality(
-                            task.prompt or task.prompts[-1], res.result, task.quality_rubric, api_key
+        for agent_name in agents:
+            backend = get_backend(agent_name)
+            backend_env = backend.load_env()
+            for spec in specs:
+                package_ref = parse_package_ref(spec, packages_dir=packages_dir)
+                print(f"Running {backend.name}:{package_ref.name}...", file=sys.stderr)
+                env = setup_env(task, package_ref, agent=backend.name)
+                try:
+                    bare = getattr(args, "bare", False)
+                    model = getattr(args, "model", None)
+                    if task.type == "sequential":
+                        res = backend.run_sequential(
+                            task.prompts, env.home_dir, env.workspace_dir,
+                            timeout=args.timeout, extra_env=backend_env, bare=bare, model=model,
                         )
-                        quality_json = json.dumps(
-                            [{"dimension": s.dimension, "score": s.score, "reason": s.reason} for s in scores]
+                    else:
+                        res = backend.run(
+                            task.prompt, env.home_dir, env.workspace_dir,
+                            timeout=args.timeout, extra_env=backend_env, bare=bare, model=model,
                         )
-                    except Exception as e:
-                        print(f"WARNING: quality scoring failed: {e}", file=sys.stderr)
 
-                run = Run(
-                    task_id=task.id,
-                    package_name=package_ref.name,
-                    loadout_name=package_ref.package_path.split("/")[-1] if package_ref.package_path else "",
-                    model=args.model,
-                    wall_seconds=res.wall_seconds,
-                    input_tokens=res.usage.input_tokens,
-                    output_tokens=res.usage.output_tokens,
-                    cache_read_tokens=res.usage.cache_read_input_tokens,
-                    cache_write_tokens=res.usage.cache_creation_input_tokens,
-                    total_cost_usd=res.total_cost_usd,
-                    criteria_pass=passed,
-                    criteria_total=total,
-                    quality_scores=quality_json,
-                    result=res.result,
-                )
-                run_id = store_run(conn, run)
-                results.append((package_ref.name, res, passed, total, run_id))
-            finally:
-                env.teardown()
+                    checks = check_all_criteria(task.success_criteria, env)
+                    passed = sum(1 for c in checks if c.passed)
+                    total = len(checks)
+
+                    quality_json = "{}"
+                    api_key = os.environ.get("ANTHROPIC_API_KEY")
+                    if api_key and task.quality_rubric:
+                        try:
+                            scores = score_quality(
+                                task.prompt or task.prompts[-1], res.result, task.quality_rubric, api_key
+                            )
+                            quality_json = json.dumps(
+                                [{"dimension": s.dimension, "score": s.score, "reason": s.reason} for s in scores]
+                            )
+                        except Exception as e:
+                            print(f"WARNING: quality scoring failed: {e}", file=sys.stderr)
+
+                    run = Run(
+                        agent=backend.name,
+                        task_id=task.id,
+                        package_name=package_ref.name,
+                        loadout_name=package_ref.package_path.split("/")[-1] if package_ref.package_path else "",
+                        model=backend.resolve_model(model),
+                        wall_seconds=res.wall_seconds,
+                        input_tokens=res.usage.input_tokens,
+                        output_tokens=res.usage.output_tokens,
+                        cache_read_tokens=res.usage.cache_read_input_tokens,
+                        cache_write_tokens=res.usage.cache_creation_input_tokens,
+                        reasoning_tokens=res.usage.reasoning_tokens,
+                        total_cost_usd=res.total_cost_usd,
+                        criteria_pass=passed,
+                        criteria_total=total,
+                        quality_scores=quality_json,
+                        result=res.result,
+                    )
+                    run_id = store_run(conn, run)
+                    results.append((backend.name, package_ref.name, run.model, res, passed, total, run_id))
+                finally:
+                    env.teardown()
 
         print("\n=== Run Summary ===")
-        for name, res, passed, total, run_id in results:
+        for agent_name, name, model_name, res, passed, total, run_id in results:
             print(
-                f"Package: {name} | Input: {res.usage.input_tokens:,} | Output: {res.usage.output_tokens:,} | "
+                f"Agent: {agent_name} | Package: {name} | Model: {model_name or '-'} | "
+                f"Input: {res.usage.input_tokens:,} | Output: {res.usage.output_tokens:,} | "
+                f"Cached: {res.usage.cache_read_input_tokens:,} | "
                 f"Cost: ${res.total_cost_usd:.6f} | Wall: {res.wall_seconds:.1f}s | "
                 f"Criteria: {passed}/{total} | Run ID: {run_id}"
             )
@@ -121,13 +128,16 @@ def cmd_history(args: argparse.Namespace) -> int:
             print("No runs recorded.")
             return 0
 
-        print(f"{'ID':>4}  {'Task':<16}  {'Package':<20}  {'Tokens':>10}  {'Wall':>8}  {'Cost':>12}  {'Criteria':>10}")
+        print(
+            f"{'ID':>4}  {'Agent':<8}  {'Task':<16}  {'Package':<20}  {'Tokens':>10}  "
+            f"{'Wall':>8}  {'Cost':>12}  {'Criteria':>10}"
+        )
         for r in runs:
             tokens = r.input_tokens + r.output_tokens
             wall = f"{r.wall_seconds:.1f}s" if r.wall_seconds > 0 else "-"
             criteria = f"{r.criteria_pass}/{r.criteria_total}" if r.criteria_total else "-"
             print(
-                f"{r.id:>4}  {r.task_id:<16}  {r.package_name:<20}  {tokens:>10,}  "
+                f"{r.id:>4}  {r.agent:<8}  {r.task_id:<16}  {r.package_name:<20}  {tokens:>10,}  "
                 f"{wall:>8}  ${r.total_cost_usd:>11.6f}  {criteria:>10}"
             )
         return 0
@@ -144,6 +154,7 @@ def cmd_show(args: argparse.Namespace) -> int:
             return 1
 
         print(f"Run #{run.id}")
+        print(f"  Agent:      {run.agent}")
         print(f"  Task:       {run.task_id}")
         print(f"  Package:    {run.package_name}")
         print(f"  Model:      {run.model}")
@@ -151,6 +162,9 @@ def cmd_show(args: argparse.Namespace) -> int:
         print(f"  Wall time:  {run.wall_seconds:.1f}s")
         print(f"  Input:      {run.input_tokens:,} tokens")
         print(f"  Output:     {run.output_tokens:,} tokens")
+        print(f"  Cached:     {run.cache_read_tokens:,} tokens")
+        if run.reasoning_tokens:
+            print(f"  Reasoning:  {run.reasoning_tokens:,} tokens")
         print(f"  Cost:       ${run.total_cost_usd:.6f}")
         print(f"  Criteria:   {run.criteria_pass}/{run.criteria_total}")
 
@@ -168,7 +182,7 @@ def cmd_show(args: argparse.Namespace) -> int:
                 print(f"    (unparseable: {run.quality_scores})")
 
         if run.result:
-            print("\n--- Claude Output ---")
+            print(f"\n--- {run.agent.title()} Output ---")
             text = run.result
             if len(text) > 2000:
                 text = text[:2000] + "\n... (truncated)"
@@ -213,16 +227,27 @@ def cmd_tune(args: argparse.Namespace) -> int:
         pkg = resolve_packages_dir(packages_dir) / package_path
         package_path = str(pkg)
 
-    return run_tune(
-        suite_name=args.suite,
-        skip_baseline=args.skip_baseline,
-        package_path=package_path,
-        output_dir=args.output,
-        timeout=args.timeout,
-        model=args.model,
-        yes=args.yes,
-        bare=args.bare,
-    )
+    agents = parse_agents(getattr(args, "agent", None))
+    exit_code = 0
+    for agent_name in agents:
+        output_dir = args.output
+        if len(agents) > 1:
+            output_dir = f"{args.output}-{agent_name}"
+        exit_code = max(
+            exit_code,
+            run_tune(
+                suite_name=args.suite,
+                skip_baseline=args.skip_baseline,
+                package_path=package_path,
+                output_dir=output_dir,
+                timeout=args.timeout,
+                model=args.model,
+                yes=args.yes,
+                bare=args.bare,
+                agent=agent_name,
+            ),
+        )
+    return exit_code
 
 
 def cmd_suite(args: argparse.Namespace) -> int:
@@ -443,7 +468,7 @@ def cmd_packages(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     from token_miser import __version__
 
-    parser = argparse.ArgumentParser(prog="token-miser", description="Benchmark Claude Code configuration packages")
+    parser = argparse.ArgumentParser(prog="token-miser", description="Benchmark coding-agent configuration packages")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument(
         "--packages-dir", default=None,
@@ -458,7 +483,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("--control", dest="baseline", help=argparse.SUPPRESS)
     p_run.add_argument("--package", default=None, help="Package path to benchmark")
     p_run.add_argument("--treatment", dest="package", help=argparse.SUPPRESS)
-    p_run.add_argument("--model", default="sonnet", help="Model identifier (default: sonnet)")
+    p_run.add_argument("--agent", default="claude", help="Agent backend: claude, codex, openai(alias), or both")
+    p_run.add_argument("--model", default=None, help="Model identifier (defaults by agent: sonnet for Claude, gpt-5.4 for Codex)")
     p_run.add_argument("--timeout", type=int, default=600, help="Per-invocation timeout in seconds (default: 600)")
     p_run.add_argument("--bare", action="store_true", help="Skip hooks/plugins (cheaper, less realistic)")
 
@@ -492,7 +518,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_tune.add_argument("--profile", dest="package", help=argparse.SUPPRESS)
     p_tune.add_argument("--output", default="tuned-package", help="Output dir for generated package")
     p_tune.add_argument("--timeout", type=int, default=300, help="Per-task timeout in seconds")
-    p_tune.add_argument("--model", default="sonnet", help="Model identifier")
+    p_tune.add_argument("--agent", default="claude", help="Agent backend: claude, codex, openai(alias), or both")
+    p_tune.add_argument("--model", default=None, help="Model identifier (defaults by agent)")
     p_tune.add_argument("--yes", action="store_true", help="Skip confirmation prompts")
     p_tune.add_argument("--bare", action="store_true", help="Skip hooks/plugins (cheaper, less realistic)")
 

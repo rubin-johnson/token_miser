@@ -11,6 +11,7 @@ from pathlib import Path
 @dataclass
 class Run:
     id: int = 0
+    agent: str = "claude"
     task_id: str = ""
     package_name: str = ""
     loadout_name: str = ""
@@ -21,6 +22,7 @@ class Run:
     output_tokens: int = 0
     cache_read_tokens: int = 0
     cache_write_tokens: int = 0
+    reasoning_tokens: int = 0
     total_cost_usd: float = 0.0
     exit_code: int = 0
     criteria_pass: int = 0
@@ -32,6 +34,7 @@ class Run:
 @dataclass
 class TuneSession:
     id: int = 0
+    agent: str = "claude"
     suite_name: str = ""
     suite_version: str = ""
     baseline_package: str = ""
@@ -63,6 +66,7 @@ def _create_tables(conn: sqlite3.Connection) -> None:
     conn.execute("""
         CREATE TABLE IF NOT EXISTS runs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent TEXT NOT NULL DEFAULT 'claude',
             task_id TEXT NOT NULL,
             package_name TEXT NOT NULL,
             loadout_name TEXT NOT NULL DEFAULT '',
@@ -73,6 +77,7 @@ def _create_tables(conn: sqlite3.Connection) -> None:
             output_tokens INTEGER NOT NULL DEFAULT 0,
             cache_read_tokens INTEGER NOT NULL DEFAULT 0,
             cache_write_tokens INTEGER NOT NULL DEFAULT 0,
+            reasoning_tokens INTEGER NOT NULL DEFAULT 0,
             total_cost_usd REAL NOT NULL DEFAULT 0,
             exit_code INTEGER NOT NULL DEFAULT 0,
             criteria_pass INTEGER NOT NULL DEFAULT 0,
@@ -93,6 +98,7 @@ def _create_tables(conn: sqlite3.Connection) -> None:
     conn.execute("""
         CREATE TABLE IF NOT EXISTS tune_sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent TEXT NOT NULL DEFAULT 'claude',
             suite_name TEXT NOT NULL,
             suite_version TEXT NOT NULL DEFAULT '',
             baseline_package TEXT NOT NULL DEFAULT '',
@@ -117,10 +123,18 @@ def _create_tables(conn: sqlite3.Connection) -> None:
     cols = {row[1] for row in conn.execute("PRAGMA table_info(runs)").fetchall()}
     if "arm" in cols:
         conn.execute("ALTER TABLE runs RENAME COLUMN arm TO package_name")
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(runs)").fetchall()}
+    if "agent" not in cols:
+        conn.execute("ALTER TABLE runs ADD COLUMN agent TEXT NOT NULL DEFAULT 'claude'")
+    if "reasoning_tokens" not in cols:
+        conn.execute("ALTER TABLE runs ADD COLUMN reasoning_tokens INTEGER NOT NULL DEFAULT 0")
     cols = {row[1] for row in conn.execute("PRAGMA table_info(tune_sessions)").fetchall()}
     if "baseline_profile" in cols:
         conn.execute("ALTER TABLE tune_sessions RENAME COLUMN baseline_profile TO baseline_package")
         conn.execute("ALTER TABLE tune_sessions RENAME COLUMN tuned_profile TO tuned_package")
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(tune_sessions)").fetchall()}
+    if "agent" not in cols:
+        conn.execute("ALTER TABLE tune_sessions ADD COLUMN agent TEXT NOT NULL DEFAULT 'claude'")
     conn.commit()
 
 
@@ -128,14 +142,14 @@ def store_run(conn: sqlite3.Connection, run: Run) -> int:
     """Insert a run and return its ID."""
     now = datetime.now(timezone.utc).isoformat()
     cursor = conn.execute(
-        """INSERT INTO runs (task_id, package_name, loadout_name, model, started_at, wall_seconds,
-            input_tokens, output_tokens, cache_read_tokens, cache_write_tokens,
+        """INSERT INTO runs (agent, task_id, package_name, loadout_name, model, started_at, wall_seconds,
+            input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, reasoning_tokens,
             total_cost_usd, exit_code, criteria_pass, criteria_total, quality_scores, result)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
-            run.task_id, run.package_name, run.loadout_name, run.model, now,
+            run.agent, run.task_id, run.package_name, run.loadout_name, run.model, now,
             run.wall_seconds, run.input_tokens, run.output_tokens,
-            run.cache_read_tokens, run.cache_write_tokens, run.total_cost_usd,
+            run.cache_read_tokens, run.cache_write_tokens, run.reasoning_tokens, run.total_cost_usd,
             run.exit_code, run.criteria_pass, run.criteria_total, run.quality_scores, run.result,
         ),
     )
@@ -166,6 +180,7 @@ def get_run(conn: sqlite3.Connection, run_id: int) -> Run | None:
 def _row_to_run(row: sqlite3.Row) -> Run:
     return Run(
         id=row["id"],
+        agent=row["agent"] if "agent" in row.keys() else "claude",
         task_id=row["task_id"],
         package_name=row["package_name"],
         loadout_name=row["loadout_name"],
@@ -176,6 +191,7 @@ def _row_to_run(row: sqlite3.Row) -> Run:
         output_tokens=row["output_tokens"],
         cache_read_tokens=row["cache_read_tokens"],
         cache_write_tokens=row["cache_write_tokens"],
+        reasoning_tokens=row["reasoning_tokens"] if "reasoning_tokens" in row.keys() else 0,
         total_cost_usd=row["total_cost_usd"],
         exit_code=row["exit_code"],
         criteria_pass=row["criteria_pass"],
@@ -188,10 +204,10 @@ def _row_to_run(row: sqlite3.Row) -> Run:
 def create_tune_session(conn: sqlite3.Connection, session: TuneSession) -> int:
     now = datetime.now(timezone.utc).isoformat()
     cursor = conn.execute(
-        """INSERT INTO tune_sessions (suite_name, suite_version, baseline_package,
+        """INSERT INTO tune_sessions (agent, suite_name, suite_version, baseline_package,
             tuned_package, started_at, status, recommendations_json)
-        VALUES (?, ?, ?, ?, ?, ?, ?)""",
-        (session.suite_name, session.suite_version, session.baseline_package,
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        (session.agent, session.suite_name, session.suite_version, session.baseline_package,
          session.tuned_package, now, session.status, session.recommendations_json),
     )
     conn.commit()
@@ -228,6 +244,7 @@ def get_tune_session(conn: sqlite3.Connection, session_id: int) -> TuneSession |
         return None
     return TuneSession(
         id=row["id"],
+        agent=row["agent"] if "agent" in row.keys() else "claude",
         suite_name=row["suite_name"],
         suite_version=row["suite_version"],
         baseline_package=row["baseline_package"],
@@ -273,6 +290,7 @@ def get_latest_tune_session(conn: sqlite3.Connection, suite_name: str = "") -> T
         return None
     return TuneSession(
         id=row["id"],
+        agent=row["agent"] if "agent" in row.keys() else "claude",
         suite_name=row["suite_name"],
         suite_version=row["suite_version"],
         baseline_package=row["baseline_package"],
