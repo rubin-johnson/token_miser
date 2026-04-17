@@ -1,5 +1,5 @@
-# Build artifacts
-token-miser
+# Build artifacts (the CLI binary at repo root, not loadouts/token-miser/)
+/token-miser
 
 # Claude Code session data
 .claude/

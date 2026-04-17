@@ -1,0 +1,7 @@
+name: token-miser
+version: 0.1.0
+author: rubin-johnson
+description: Minimize token usage at all costs — terse output, lazy file reading, no extras
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md
