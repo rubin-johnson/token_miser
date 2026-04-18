@@ -49,25 +49,27 @@ class TestBuildTunedPackage:
         out = tmp_path / "tuned"
         result = build_tuned_package(base, _sample_recs(), out, name="my-tuned")
         assert result == out
+        assert (out / "AGENTS.md").exists()
         assert (out / "CLAUDE.md").exists()
         assert (out / "manifest.yaml").exists()
 
-    def test_appends_recommendations_to_claude_md(self, tmp_path):
+    def test_appends_recommendations_to_agents_md(self, tmp_path):
         base = _base_bundle(tmp_path)
         out = tmp_path / "tuned"
         build_tuned_package(base, _sample_recs(), out)
-        content = (out / "CLAUDE.md").read_text()
+        content = (out / "AGENTS.md").read_text()
         assert "## Token Miser Recommendations" in content
         assert "grep/glob before reading full files" in content
         assert "Re-read the requirement" in content
         assert "# My Config" in content  # original preserved
+        assert (out / "CLAUDE.md").read_text() == "@AGENTS.md\n"
 
-    def test_creates_claude_md_if_missing(self, tmp_path):
+    def test_creates_agents_md_if_claude_md_missing(self, tmp_path):
         base = _base_bundle(tmp_path)
         (base / "CLAUDE.md").unlink()
         out = tmp_path / "tuned"
         build_tuned_package(base, _sample_recs(), out)
-        content = (out / "CLAUDE.md").read_text()
+        content = (out / "AGENTS.md").read_text()
         assert "## Token Miser Recommendations" in content
 
     def test_updates_manifest_name(self, tmp_path):
@@ -104,6 +106,7 @@ class TestBuildTunedPackage:
         build_tuned_package(base, [], out)
         content = (out / "CLAUDE.md").read_text()
         assert content == "# My Config\nBe concise.\n"
+        assert not (out / "AGENTS.md").exists()
         manifest = yaml.safe_load((out / "manifest.yaml").read_text())
         assert manifest["name"] == "base-bundle"
         assert manifest["version"] == "0.1.0"

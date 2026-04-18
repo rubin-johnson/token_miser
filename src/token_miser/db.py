@@ -119,11 +119,7 @@ def _create_tables(conn: sqlite3.Connection) -> None:
     """)
     conn.commit()
 
-    # Migrate v1 -> v2 column names
     cols = {row[1] for row in conn.execute("PRAGMA table_info(runs)").fetchall()}
-    if "arm" in cols:
-        conn.execute("ALTER TABLE runs RENAME COLUMN arm TO package_name")
-        cols = {row[1] for row in conn.execute("PRAGMA table_info(runs)").fetchall()}
     if "agent" not in cols:
         conn.execute("ALTER TABLE runs ADD COLUMN agent TEXT NOT NULL DEFAULT 'claude'")
     if "reasoning_tokens" not in cols:
@@ -276,11 +272,25 @@ def get_tune_session_runs(conn: sqlite3.Connection, session_id: int, phase: str 
     return [_row_to_run(r) for r in rows]
 
 
-def get_latest_tune_session(conn: sqlite3.Connection, suite_name: str = "") -> TuneSession | None:
-    if suite_name:
+def get_latest_tune_session(
+    conn: sqlite3.Connection,
+    suite_name: str = "",
+    agent: str = "",
+) -> TuneSession | None:
+    if suite_name and agent:
+        row = conn.execute(
+            "SELECT * FROM tune_sessions WHERE suite_name = ? AND agent = ? ORDER BY started_at DESC LIMIT 1",
+            (suite_name, agent),
+        ).fetchone()
+    elif suite_name:
         row = conn.execute(
             "SELECT * FROM tune_sessions WHERE suite_name = ? ORDER BY started_at DESC LIMIT 1",
             (suite_name,),
+        ).fetchone()
+    elif agent:
+        row = conn.execute(
+            "SELECT * FROM tune_sessions WHERE agent = ? ORDER BY started_at DESC LIMIT 1",
+            (agent,),
         ).fetchone()
     else:
         row = conn.execute(

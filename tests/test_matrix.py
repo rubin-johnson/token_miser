@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import pytest
 
@@ -44,6 +43,49 @@ def _seed_session(conn, tuned_package, task_ids, baseline_tokens=1000, tuned_tok
         rt = Run(task_id=tid, package_name=tuned_package, input_tokens=tuned_tokens,
                  output_tokens=100, total_cost_usd=0.08, wall_seconds=4.0,
                  criteria_pass=2, criteria_total=2)
+        rt_id = store_run(conn, rt)
+        link_tune_run(conn, sid, rt_id, "tuned")
+
+    return sid
+
+
+def _seed_agent_session(conn, agent, tuned_package, task_ids, baseline_tokens, tuned_tokens):
+    session = TuneSession(
+        agent=agent,
+        suite_name="axis",
+        suite_version="0.1.0",
+        baseline_package="vanilla",
+        tuned_package=tuned_package,
+        status="completed",
+    )
+    sid = create_tune_session(conn, session)
+
+    for tid in task_ids:
+        rb = Run(
+            agent=agent,
+            task_id=tid,
+            package_name="vanilla",
+            input_tokens=baseline_tokens,
+            output_tokens=0,
+            total_cost_usd=0.10,
+            wall_seconds=5.0,
+            criteria_pass=2,
+            criteria_total=2,
+        )
+        rb_id = store_run(conn, rb)
+        link_tune_run(conn, sid, rb_id, "baseline")
+
+        rt = Run(
+            agent=agent,
+            task_id=tid,
+            package_name=tuned_package,
+            input_tokens=tuned_tokens,
+            output_tokens=0,
+            total_cost_usd=0.08,
+            wall_seconds=4.0,
+            criteria_pass=2,
+            criteria_total=2,
+        )
         rt_id = store_run(conn, rt)
         link_tune_run(conn, sid, rt_id, "tuned")
 
@@ -108,11 +150,11 @@ def test_export_matrix_json(conn, tmp_path):
 
     data = json.loads(path.read_text())
     assert data["suite"] == "axis"
-    assert "baseline" in data["packages"]
-    assert "pkg-a" in data["packages"]
+    assert "claude:baseline" in data["packages"]
+    assert "claude:pkg-a" in data["packages"]
     assert "bm-axis-explore" in data["tasks"]
-    assert data["matrix"]["bm-axis-explore"]["baseline"]["tokens"] == 1100
-    assert data["matrix"]["bm-axis-explore"]["pkg-a"]["tokens"] == 900
+    assert data["matrix"]["bm-axis-explore"]["claude:baseline"]["tokens"] == 1100
+    assert data["matrix"]["bm-axis-explore"]["claude:pkg-a"]["tokens"] == 900
 
 
 def test_export_matrix_json_empty_raises(conn, tmp_path):
@@ -129,3 +171,33 @@ def test_latest_run_wins(conn):
     # Latest session's data should win (2000+100=2100 baseline, 600+100=700 tuned)
     assert "2,100" in result
     assert "700" in result
+
+
+def test_delta_uses_matching_agent_baseline(conn):
+    _seed_agent_session(conn, "claude", "pkg-a", ["bm-axis-explore"], baseline_tokens=1000, tuned_tokens=900)
+    _seed_agent_session(conn, "codex", "pkg-a", ["bm-axis-explore"], baseline_tokens=400, tuned_tokens=500)
+
+    result = build_matrix("axis", conn)
+
+    # Claude delta: (900 - 1000) / 1000 = -10.0%
+    assert "-10.0%" in result
+    # Codex delta: (500 - 400) / 400 = +25.0%
+    assert "+25.0%" in result
+
+
+def test_matrix_includes_raw_suite_runs(conn, monkeypatch):
+    monkeypatch.setattr("token_miser.matrix._suite_task_ids", lambda suite: ["bm-axis-explore"])
+
+    store_run(
+        conn,
+        Run(agent="codex", task_id="bm-axis-explore", package_name="vanilla", input_tokens=300, output_tokens=0),
+    )
+    store_run(
+        conn,
+        Run(agent="codex", task_id="bm-axis-explore", package_name="pkg-a", input_tokens=240, output_tokens=0),
+    )
+
+    result = build_matrix("axis", conn)
+    assert "codex:baseline" in result
+    assert "codex:pkg-a" in result
+    assert "-20.0%" in result

@@ -34,6 +34,7 @@ def _summarize_runs(runs: list[Run]) -> dict:
 
 def _run_digest(run: Run) -> dict:
     return {
+        "agent": getattr(run, "agent", "claude"),
         "task_id": run.task_id,
         "package": run.package_name,
         "tokens": run.input_tokens + run.output_tokens,
@@ -64,6 +65,7 @@ def export_session(conn: sqlite3.Connection, session_id: int, output_dir: Path |
     digest = {
         "type": "tune_session",
         "session_id": session.id,
+        "agent": getattr(session, "agent", "claude"),
         "suite": session.suite_name,
         "suite_version": session.suite_version,
         "timestamp": session.started_at,
@@ -131,6 +133,7 @@ def compare_digests(path1: Path, path2: Path) -> str:
         "",
         f"{'':28} {'Session 1':>14} {'Session 2':>14}",
         f"  {'Suite':<24} {d1['suite']:>14} {d2['suite']:>14}",
+        f"  {'Agent':<24} {d1.get('agent', 'claude'):>14} {d2.get('agent', 'claude'):>14}",
         f"  {'Baseline package':<24} {d1['baseline_package']:>14} {d2['baseline_package']:>14}",
     ]
 

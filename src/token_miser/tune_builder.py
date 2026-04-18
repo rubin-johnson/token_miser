@@ -31,18 +31,29 @@ def build_tuned_package(
     if not recommendations:
         return output_dir
 
+    agents_md_path = output_dir / "AGENTS.md"
     claude_md_path = output_dir / "CLAUDE.md"
-    if claude_md_path.exists():
+    if agents_md_path.exists():
+        existing = agents_md_path.read_text()
+    elif claude_md_path.exists():
         existing = claude_md_path.read_text()
     else:
         existing = ""
 
     blocks = [r.claude_md_block for r in recommendations]
     section = "\n## Token Miser Recommendations\n\n" + "\n\n".join(blocks) + "\n"
-    claude_md_path.write_text(existing + section)
+    agents_md_path.write_text(existing + section)
+    claude_md_path.write_text("@AGENTS.md\n")
 
     manifest_path = output_dir / "manifest.yaml"
     manifest = yaml.safe_load(manifest_path.read_text())
+    targets = manifest.get("targets") or []
+    paths = {t.get("path") for t in targets if isinstance(t, dict)}
+    if "AGENTS.md" not in paths:
+        targets.append({"path": "AGENTS.md", "dest": "AGENTS.md"})
+    if "CLAUDE.md" not in paths:
+        targets.append({"path": "CLAUDE.md", "dest": "CLAUDE.md"})
+    manifest["targets"] = targets
     manifest["name"] = name if name else f"tuned-{date.today().isoformat()}"
     manifest["version"] = _bump_patch(manifest.get("version", "0.0.0"))
     manifest["description"] = f"Tuned package with {len(recommendations)} recommendations"

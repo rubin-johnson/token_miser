@@ -25,6 +25,8 @@ def cmd_run(args: argparse.Namespace) -> int:
         specs = [args.baseline]
         if args.package:
             specs.append(args.package)
+            if getattr(args, "order", "baseline-first") == "package-first":
+                specs = [args.package, args.baseline]
 
         results = []
         for agent_name in agents:
@@ -480,11 +482,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_run = sub.add_parser("run", help="Run an experiment")
     p_run.add_argument("--task", required=True, help="Path to task YAML")
     p_run.add_argument("--baseline", required=True, help="Baseline spec ('vanilla' or package path)")
-    p_run.add_argument("--control", dest="baseline", help=argparse.SUPPRESS)
     p_run.add_argument("--package", default=None, help="Package path to benchmark")
-    p_run.add_argument("--treatment", dest="package", help=argparse.SUPPRESS)
     p_run.add_argument("--agent", default="claude", help="Agent backend: claude, codex, openai(alias), or both")
-    p_run.add_argument("--model", default=None, help="Model identifier (defaults by agent: sonnet for Claude, gpt-5.4 for Codex)")
+    p_run.add_argument(
+        "--order",
+        choices=("baseline-first", "package-first"),
+        default="baseline-first",
+        help="Execution order when both baseline and package are present",
+    )
+    p_run.add_argument(
+        "--model",
+        default=None,
+        help="Model identifier (defaults by agent: sonnet for Claude, gpt-5.4 for Codex)",
+    )
     p_run.add_argument("--timeout", type=int, default=600, help="Per-invocation timeout in seconds (default: 600)")
     p_run.add_argument("--bare", action="store_true", help="Skip hooks/plugins (cheaper, less realistic)")
 

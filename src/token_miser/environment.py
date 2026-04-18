@@ -98,7 +98,7 @@ def setup_env(task: Task, package_ref: PackageRef, agent: str = "claude") -> Env
     2. Clone the task repo into HOME/workspace
     3. Checkout the starting commit
     4. Copy agent credentials into the isolated HOME
-    5. If treatment package, apply agent-specific configuration
+    5. If a package is provided, apply agent-specific configuration
     """
     home_dir = tempfile.mkdtemp(prefix="experiment-")
     workspace_dir = os.path.join(home_dir, "workspace")

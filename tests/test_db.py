@@ -48,7 +48,7 @@ def test_roundtrip_all_fields(tmp_path):
     conn = init_db(str(tmp_path / "test.db"))
     run = Run(
         task_id="full",
-        package_name="treatment",
+        package_name="package-b",
         loadout_name="my-config",
         model="sonnet",
         wall_seconds=12.5,
@@ -64,7 +64,7 @@ def test_roundtrip_all_fields(tmp_path):
     )
     run_id = store_run(conn, run)
     got = get_run(conn, run_id)
-    assert got.package_name == "treatment"
+    assert got.package_name == "package-b"
     assert got.loadout_name == "my-config"
     assert got.wall_seconds == 12.5
     assert got.cache_read_tokens == 200

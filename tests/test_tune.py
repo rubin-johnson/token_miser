@@ -1,6 +1,8 @@
 """Tests for tune — DB schema and session management."""
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from token_miser.db import (
@@ -15,6 +17,7 @@ from token_miser.db import (
     store_run,
     update_tune_session,
 )
+from token_miser.tune import _capture_codex_baseline_files
 
 
 @pytest.fixture
@@ -122,3 +125,47 @@ class TestGetLatestTuneSession:
 
     def test_returns_none_when_empty(self, conn) -> None:
         assert get_latest_tune_session(conn) is None
+
+    def test_filters_by_agent(self, conn) -> None:
+        create_tune_session(
+            conn,
+            TuneSession(agent="claude", suite_name="quick", suite_version="0.1.0", baseline_package="c1"),
+        )
+        create_tune_session(
+            conn,
+            TuneSession(agent="codex", suite_name="quick", suite_version="0.1.0", baseline_package="o1"),
+        )
+        create_tune_session(
+            conn,
+            TuneSession(agent="claude", suite_name="quick", suite_version="0.1.0", baseline_package="c2"),
+        )
+
+        latest = get_latest_tune_session(conn, "quick", "codex")
+        assert latest is not None
+        assert latest.agent == "codex"
+        assert latest.baseline_package == "o1"
+
+
+class TestCodexBaselineCapture:
+    def test_returns_empty_when_no_agent_instructions_exist(self, tmp_path: Path) -> None:
+        codex_home = tmp_path / ".codex"
+        claude_home = tmp_path / ".claude"
+        codex_home.mkdir()
+        claude_home.mkdir()
+
+        files = _capture_codex_baseline_files(codex_home, claude_home)
+        assert files == {}
+
+    def test_prefers_codex_agents_md_and_adds_claude_shim(self, tmp_path: Path) -> None:
+        codex_home = tmp_path / ".codex"
+        claude_home = tmp_path / ".claude"
+        codex_home.mkdir()
+        claude_home.mkdir()
+        (codex_home / "AGENTS.md").write_text("Be terse.\n")
+        (claude_home / "CLAUDE.md").write_text("Ignored fallback.\n")
+
+        files = _capture_codex_baseline_files(codex_home, claude_home)
+        assert files == {
+            "AGENTS.md": "Be terse.\n",
+            "CLAUDE.md": "@AGENTS.md\n",
+        }

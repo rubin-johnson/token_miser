@@ -8,8 +8,17 @@
 # Requires: .packages/ populated by 'kanon install' (or symlinks for dev)
 set -euo pipefail
 
-TASK="${1:?Usage: $0 <task.yaml>}"
+CALLER_CWD="$(pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+TASK_INPUT="${1:?Usage: $0 <task.yaml>}"
+case "$TASK_INPUT" in
+    /*) TASK="$TASK_INPUT" ;;
+    *) TASK="$CALLER_CWD/$TASK_INPUT" ;;
+esac
 TIMEOUT="${2:-300}"
+AGENT="${AGENT:-claude}"
+
+cd "$REPO_ROOT"
 
 if [ ! -d .packages ]; then
     echo "ERROR: .packages/ not found. Run 'kanon install' or create symlinks." >&2
@@ -17,6 +26,7 @@ if [ ! -d .packages ]; then
 fi
 
 echo "Task: $TASK"
+echo "Agent: $AGENT"
 echo "Timeout: ${TIMEOUT}s per invocation"
 echo "Bundles: $(ls .packages/ | tr '\n' ' ')"
 echo ""
@@ -25,10 +35,11 @@ echo ""
 for bundle in .packages/*/; do
     name=$(basename "$bundle")
     echo "=== vanilla vs $name ==="
-    token-miser run \
+    uv run token-miser run \
+        --agent "$AGENT" \
         --task "$TASK" \
-        --control vanilla \
-        --treatment "$bundle" \
+        --baseline vanilla \
+        --package "$bundle" \
         --timeout "$TIMEOUT" || echo "FAILED: $name"
     echo ""
 done
@@ -36,4 +47,4 @@ done
 # Print analysis
 TASK_ID=$(python3 -c "import yaml; print(yaml.safe_load(open('$TASK'))['id'])")
 echo "=== Analysis ==="
-token-miser analyze --task "$TASK_ID"
+uv run token-miser analyze --task "$TASK_ID"

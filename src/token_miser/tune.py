@@ -10,6 +10,7 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
+from token_miser.backends import get_backend
 from token_miser.checker import check_all_criteria
 from token_miser.db import (
     Run,
@@ -22,8 +23,7 @@ from token_miser.db import (
 )
 from token_miser.environment import setup_env
 from token_miser.evaluator import score_quality
-from token_miser.executor import load_claude_env, run_claude, run_claude_sequential
-from token_miser.package_adapter import pack_current_config, read_active_state
+from token_miser.package_adapter import create_package, pack_current_config, read_active_state
 from token_miser.recommend import Recommendation, analyze_results
 from token_miser.suite import BenchmarkTask, load_suite
 from token_miser.task import Criterion, RubricDimension, Task
@@ -74,34 +74,51 @@ def _benchmark_task_to_task(bt: BenchmarkTask, repo_path: str) -> Task:
     )
 
 
+def _capture_codex_baseline_files(codex_home: Path, fallback_claude_home: Path) -> dict[str, str]:
+    current_text = ""
+    for path in (codex_home / "AGENTS.md", fallback_claude_home / "CLAUDE.md"):
+        if path.exists():
+            current_text = path.read_text()
+            break
+
+    if not current_text:
+        return {}
+    return {
+        "AGENTS.md": current_text,
+        "CLAUDE.md": "@AGENTS.md\n",
+    }
+
+
 def _run_single_task(
     task: Task,
     package_path: Path | None,
+    backend_name: str,
     model: str,
     timeout: int,
     conn: sqlite3.Connection,
-    claude_env: dict[str, str] | None = None,
+    backend_env: dict[str, str] | None = None,
     bare: bool = False,
 ) -> Run:
     """Run a single benchmark task and store the result."""
     from token_miser.package_ref import PackageRef
 
+    backend = get_backend(backend_name)
     if package_path:
         package_ref = PackageRef(name=package_path.name, package_path=str(package_path.resolve()))
     else:
         package_ref = PackageRef(name="vanilla")
 
-    env = setup_env(task, package_ref)
+    env = setup_env(task, package_ref, agent=backend.name)
     try:
         if task.type == "sequential":
-            res = run_claude_sequential(
+            res = backend.run_sequential(
                 task.prompts, env.home_dir, env.workspace_dir,
-                timeout=timeout, extra_env=claude_env, bare=bare, model=model,
+                timeout=timeout, extra_env=backend_env, bare=bare, model=model,
             )
         else:
-            res = run_claude(
+            res = backend.run(
                 task.prompt, env.home_dir, env.workspace_dir,
-                timeout=timeout, extra_env=claude_env, bare=bare, model=model,
+                timeout=timeout, extra_env=backend_env, bare=bare, model=model,
             )
 
         checks = check_all_criteria(task.success_criteria, env)
@@ -122,15 +139,17 @@ def _run_single_task(
                 print(f"WARNING: quality scoring failed: {e}", file=sys.stderr)
 
         run = Run(
+            agent=backend.name,
             task_id=task.id,
             package_name=package_ref.name,
             loadout_name=package_ref.package_path.split("/")[-1] if package_ref.package_path else "",
-            model=model,
+            model=backend.resolve_model(model),
             wall_seconds=res.wall_seconds,
             input_tokens=res.usage.input_tokens,
             output_tokens=res.usage.output_tokens,
             cache_read_tokens=res.usage.cache_read_input_tokens,
             cache_write_tokens=res.usage.cache_creation_input_tokens,
+            reasoning_tokens=res.usage.reasoning_tokens,
             total_cost_usd=res.total_cost_usd,
             criteria_pass=passed,
             criteria_total=total,
@@ -201,11 +220,13 @@ def run_tune(
     package_path: str | None = None,
     output_dir: str = "tuned-package",
     timeout: int = 300,
-    model: str = "sonnet",
+    model: str | None = None,
     yes: bool = False,
     bare: bool = False,
+    agent: str = "claude",
 ) -> int:
     """Execute the full tune workflow."""
+    backend = get_backend(agent)
     benchmarks = _benchmarks_dir()
     suites_dir = benchmarks / "suites"
     tasks_dir = benchmarks / "tasks"
@@ -217,7 +238,7 @@ def run_tune(
         return 1
 
     suite = load_suite(suite_file, tasks_dir)
-    claude_env = load_claude_env()
+    backend_env = backend.load_env()
 
     # Resolve repo_ids to local paths
     from token_miser.repos import ensure_repo, load_repos_config
@@ -237,13 +258,20 @@ def run_tune(
                 print(f"WARNING: repo_id '{bt.repo_id}' not in repos.yaml", file=sys.stderr)
 
     conn = init_db()
+    baseline_dir: Path | None = None
 
     try:
         # Phase 1: Discovery
-        target = Path.home() / ".claude"
-        state = read_active_state(target) if target.exists() else None
-        active_name = state.get("active", "none") if state else "none"
+        if backend.name == "claude":
+            target = Path.home() / ".claude"
+            state = read_active_state(target) if target.exists() else None
+            active_name = state.get("active", "none") if state else "none"
+        else:
+            target = Path.home() / ".codex"
+            state = None
+            active_name = "codex-default"
 
+        print(f"Agent: {backend.name}")
         print(f"Current package: {active_name}")
         print(f"Suite: {suite.name} v{suite.version} ({len(suite.tasks)} tasks)")
         print(f"Estimated time: ~{len(suite.tasks) * 3} minutes per pass\n")
@@ -256,19 +284,33 @@ def run_tune(
 
         # Capture current config as baseline package
         baseline_dir = Path(tempfile.mkdtemp(prefix="tune-baseline-"))
-        pack_current_config(target, baseline_dir)
+        if backend.name == "claude":
+            pack_current_config(target, baseline_dir)
+        else:
+            files = _capture_codex_baseline_files(target, Path.home() / ".claude")
+            create_package(
+                name="codex-baseline",
+                version="0.1.0",
+                author="token-miser",
+                description="Captured Codex baseline instructions",
+                files=files,
+                output_dir=baseline_dir,
+            )
         baseline_pkg = baseline_dir
 
-        # Read current CLAUDE.md for recommendation analysis
-        claude_md_path = target / "CLAUDE.md"
-        current_claude_md = claude_md_path.read_text() if claude_md_path.exists() else ""
+        current_instruction = ""
+        for path in (target / "AGENTS.md", target / "CLAUDE.md", Path.home() / ".claude" / "CLAUDE.md"):
+            if path.exists():
+                current_instruction = path.read_text()
+                break
 
         # Look up previous baseline BEFORE creating the new session
         from token_miser.db import get_latest_tune_session, get_tune_session_runs
-        prev_session = get_latest_tune_session(conn, suite.name) if skip_baseline else None
+        prev_session = get_latest_tune_session(conn, suite.name, backend.name) if skip_baseline else None
 
         # Create tune session
         session = TuneSession(
+            agent=backend.name,
             suite_name=suite.name,
             suite_version=suite.version,
             baseline_package=active_name,
@@ -282,7 +324,7 @@ def run_tune(
             for i, bt in enumerate(suite.tasks, 1):
                 task = _benchmark_task_to_task(bt, repo_paths.get(bt.repo_id, ""))
                 try:
-                    run = _run_single_task(task, baseline_pkg, model, timeout, conn, claude_env, bare)
+                    run = _run_single_task(task, baseline_pkg, backend.name, model, timeout, conn, backend_env, bare)
                     link_tune_run(conn, session_id, run.id, "baseline")
                     baseline_runs.append(run)
                     _print_run_line(i, len(suite.tasks), bt.id, run)
@@ -306,7 +348,7 @@ def run_tune(
             print(f"\nUsing supplied package: {package_path}")
         else:
             print("\nAnalyzing results...")
-            recommendations = analyze_results(baseline_runs, current_claude_md)
+            recommendations = analyze_results(baseline_runs, current_instruction)
 
             if not recommendations:
                 print("No recommendations — your config looks efficient already.")
@@ -343,7 +385,7 @@ def run_tune(
         for i, bt in enumerate(suite.tasks, 1):
             task = _benchmark_task_to_task(bt, repo_paths.get(bt.repo_id, ""))
             try:
-                run = _run_single_task(task, tuned_pkg, model, timeout, conn, claude_env, bare)
+                run = _run_single_task(task, tuned_pkg, backend.name, model, timeout, conn, backend_env, bare)
                 link_tune_run(conn, session_id, run.id, "tuned")
                 tuned_runs.append(run)
                 _print_run_line(i, len(suite.tasks), bt.id, run)
@@ -362,4 +404,5 @@ def run_tune(
 
     finally:
         conn.close()
-        shutil.rmtree(baseline_dir, ignore_errors=True)
+        if baseline_dir is not None:
+            shutil.rmtree(baseline_dir, ignore_errors=True)

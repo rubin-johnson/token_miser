@@ -22,12 +22,12 @@ def test_compare_no_runs(tmp_path):
 def test_compare_two_packages(tmp_path):
     runs = [
         Run(task_id="t1", package_name="vanilla", input_tokens=100, output_tokens=50, total_cost_usd=0.01),
-        Run(task_id="t1", package_name="treatment", input_tokens=80, output_tokens=40, total_cost_usd=0.008),
+        Run(task_id="t1", package_name="package-b", input_tokens=80, output_tokens=40, total_cost_usd=0.008),
     ]
     conn = _setup_db(tmp_path, runs)
     result = compare("t1", conn)
     assert "vanilla" in result
-    assert "treatment" in result
+    assert "package-b" in result
     assert "|" in result  # side-by-side format
     conn.close()
 
@@ -59,13 +59,13 @@ def test_analyze_with_runs(tmp_path):
             total_cost_usd=0.01, criteria_pass=3, criteria_total=5),
         Run(task_id="t1", package_name="vanilla", input_tokens=120, output_tokens=60,
             total_cost_usd=0.012, criteria_pass=4, criteria_total=5),
-        Run(task_id="t1", package_name="treatment", input_tokens=80, output_tokens=40,
+        Run(task_id="t1", package_name="package-b", input_tokens=80, output_tokens=40,
             total_cost_usd=0.008, criteria_pass=5, criteria_total=5),
     ]
     conn = _setup_db(tmp_path, runs)
     result = analyze("t1", conn)
     assert "vanilla" in result
-    assert "treatment" in result
+    assert "package-b" in result
     assert "(baseline)" in result
     conn.close()
 
