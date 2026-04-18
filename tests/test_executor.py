@@ -2,6 +2,11 @@
 import json
 from pathlib import Path
 
+import pytest
+
+from token_miser.backends.base import Usage
+from token_miser.backends.claude import ClaudeBackend
+from token_miser.backends.codex import CodexBackend, estimate_codex_cost
 from token_miser.executor import filter_env, load_claude_env, parse_claude_json
 
 
@@ -85,3 +90,65 @@ def test_load_claude_env_empty_file(tmp_path: Path):
     env_file.write_text("# just a comment\n\n")
     result = load_claude_env(env_file)
     assert result == {}
+
+
+class TestClaudeEstimateCost:
+    def setup_method(self):
+        self.backend = ClaudeBackend()
+
+    def test_sonnet_alias(self):
+        usage = Usage(input_tokens=1_000_000, output_tokens=0)
+        cost = self.backend.estimate_cost(usage, "sonnet")
+        assert cost == pytest.approx(3.00, rel=1e-4)
+
+    def test_haiku_alias(self):
+        usage = Usage(input_tokens=1_000_000, output_tokens=0)
+        cost = self.backend.estimate_cost(usage, "haiku")
+        assert cost == pytest.approx(0.80, rel=1e-4)
+
+    def test_opus_alias(self):
+        usage = Usage(input_tokens=0, output_tokens=1_000_000)
+        cost = self.backend.estimate_cost(usage, "opus")
+        assert cost == pytest.approx(75.00, rel=1e-4)
+
+    def test_cached_tokens_cheaper(self):
+        full = Usage(input_tokens=1_000_000, output_tokens=0)
+        cached = Usage(input_tokens=1_000_000, output_tokens=0, cache_read_input_tokens=1_000_000)
+        assert self.backend.estimate_cost(cached, "sonnet") < self.backend.estimate_cost(full, "sonnet")
+
+    def test_unknown_model_returns_zero(self):
+        usage = Usage(input_tokens=1_000_000, output_tokens=1_000_000)
+        assert self.backend.estimate_cost(usage, "unknown-model-xyz") == 0.0
+
+    def test_default_model_fallback(self):
+        usage = Usage(input_tokens=1_000_000, output_tokens=0)
+        # Default model is "sonnet"; should not return 0.0
+        assert self.backend.estimate_cost(usage) > 0.0
+
+
+class TestCodexEstimateCost:
+    def setup_method(self):
+        self.backend = CodexBackend()
+
+    def test_known_model(self):
+        usage = Usage(input_tokens=1_000_000, output_tokens=0)
+        cost = self.backend.estimate_cost(usage, "gpt-5.4")
+        assert cost == pytest.approx(2.50, rel=1e-4)
+
+    def test_cached_tokens_cheaper(self):
+        full = Usage(input_tokens=1_000_000, output_tokens=0)
+        cached = Usage(input_tokens=1_000_000, output_tokens=0, cache_read_input_tokens=1_000_000)
+        assert self.backend.estimate_cost(cached, "gpt-5.4") < self.backend.estimate_cost(full, "gpt-5.4")
+
+    def test_unknown_model_returns_zero(self):
+        usage = Usage(input_tokens=1_000_000, output_tokens=1_000_000)
+        assert self.backend.estimate_cost(usage, "gpt-unknown") == 0.0
+
+    def test_standalone_function_matches_method(self):
+        usage = Usage(input_tokens=500_000, output_tokens=200_000)
+        assert estimate_codex_cost("gpt-5.4", usage) == self.backend.estimate_cost(usage, "gpt-5.4")
+
+    def test_default_model_fallback(self):
+        usage = Usage(input_tokens=1_000_000, output_tokens=0)
+        # Default model is "gpt-5.4"; should not return 0.0
+        assert self.backend.estimate_cost(usage) > 0.0

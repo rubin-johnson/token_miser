@@ -58,6 +58,10 @@ class BaseBackend(ABC):
             extra[key.strip()] = val.strip()
         return extra
 
+    def estimate_cost(self, usage: Usage, model: str = "") -> float:
+        """Estimate cost in USD for the given usage. Returns 0.0 if pricing is unknown."""
+        return 0.0
+
     @abstractmethod
     def run(
         self,

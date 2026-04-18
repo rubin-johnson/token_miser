@@ -9,6 +9,29 @@ from pathlib import Path
 
 from token_miser.backends.base import DEFAULT_TIMEOUT, BaseBackend, ExecutorResult, Usage
 
+# (input_rate, cached_rate, output_rate) per million tokens
+_CLAUDE_PRICE_PER_MILLION: dict[str, tuple[float, float, float]] = {
+    "claude-haiku-4-5": (0.80, 0.08, 4.00),
+    "claude-sonnet-4-6": (3.00, 0.30, 15.00),
+    "claude-opus-4-7": (15.00, 1.50, 75.00),
+}
+# Alias prefixes → canonical model key
+_CLAUDE_ALIAS: dict[str, str] = {
+    "haiku": "claude-haiku-4-5",
+    "sonnet": "claude-sonnet-4-6",
+    "opus": "claude-opus-4-7",
+}
+
+
+def _resolve_claude_model_key(model: str) -> str | None:
+    m = model.strip().lower()
+    if m in _CLAUDE_PRICE_PER_MILLION:
+        return m
+    for alias, key in _CLAUDE_ALIAS.items():
+        if alias in m:
+            return key
+    return None
+
 
 def parse_claude_json(data: str | bytes) -> ExecutorResult:
     """Parse Claude CLI JSON output into ExecutorResult."""
@@ -43,6 +66,21 @@ class ClaudeBackend(BaseBackend):
     name = "claude"
     default_model = "sonnet"
     instruction_filename = "CLAUDE.md"
+
+    def estimate_cost(self, usage: Usage, model: str = "") -> float:
+        """Estimate cost from token counts (independent of CLI-reported cost)."""
+        key = _resolve_claude_model_key(model or self.default_model or "")
+        if key is None:
+            return 0.0
+        input_rate, cached_rate, output_rate = _CLAUDE_PRICE_PER_MILLION[key]
+        cached = min(usage.cache_read_input_tokens, usage.input_tokens)
+        uncached = max(usage.input_tokens - cached, 0)
+        total = (
+            uncached * input_rate
+            + cached * cached_rate
+            + usage.output_tokens * output_rate
+        ) / 1_000_000
+        return round(total, 6)
 
     def run(
         self,

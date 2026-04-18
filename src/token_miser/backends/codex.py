@@ -48,6 +48,9 @@ class CodexBackend(BaseBackend):
     default_model = "gpt-5.4"
     instruction_filename = "AGENTS.md"
 
+    def estimate_cost(self, usage: Usage, model: str = "") -> float:
+        return estimate_codex_cost(model or self.default_model, usage)
+
     def run(
         self,
         prompt: str,
@@ -126,7 +129,7 @@ class CodexBackend(BaseBackend):
 
         result = ExecutorResult(
             result="\n\n".join(messages).strip(),
-            total_cost_usd=estimate_codex_cost(resolved_model, usage),
+            total_cost_usd=self.estimate_cost(usage, resolved_model),
             usage=usage,
             wall_seconds=time.monotonic() - start,
         )
