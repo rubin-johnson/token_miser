@@ -1,7 +1,0 @@
----
-alwaysApply: false
-description: STORY-004 per-criterion percentages in compare CLI output
----
-# STORY-004 — Compare CLI per-criterion percentages
-
-`token-miser compare --task <id>` renders, for each arm, per-criterion pass rates as integer percentages with dot leaders, while retaining any aggregate N/M if present. This relies on task YAML to infer `criterion.type` labels.

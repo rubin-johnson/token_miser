@@ -11,7 +11,7 @@ token_miser is a Go CLI that A/B tests Claude Code configurations by running ide
 ### What's genuinely novel
 
 Token_miser occupies a real gap. The insight that **nobody benchmarks at the Claude Code configuration level** is correct and verified by the research:
-- promptfoo, DeepEval, caylent-evals → measure prompt/model quality
+- promptfoo, DeepEval, proprietary eval tools → measure prompt/model quality
 - SWE-bench, AgentBench, TAU-Bench → measure task completion (pass/fail)
 - Langfuse, LangSmith → observability, not evaluation
 - None measure **agent efficiency** (tokens per unit of task completion under different configs)
@@ -39,7 +39,7 @@ A single run per arm tells you almost nothing. Claude's output has inherent vari
 Using Haiku to judge code quality on a 0-1 scale with 256 max tokens is likely to produce scores that cluster around 0.7-0.9 for anything remotely reasonable. The discriminative power between "good enough" and "excellent" is low. And evaluating dimensions independently misses interactions (e.g., high code quality but wrong structure = still bad).
 
 **5. Portability problem.**
-Task YAML files hardcode absolute paths (`/home/rujohnson/code/personal/loadout`). This makes tasks non-portable across machines and non-shareable with teams — undermining the "version-controlled experiments" pitch.
+Task YAML files hardcode absolute paths (e.g. `repo: /path/to/my/repo`). This makes tasks non-portable across machines and non-shareable with teams — undermining the "version-controlled experiments" pitch.
 
 ---
 
@@ -51,7 +51,7 @@ Task YAML files hardcode absolute paths (`/home/rujohnson/code/personal/loadout`
 |-------|----------|--------|
 | **No execution timeout** | `executor.go:83` — `exec.CommandContext` uses `context.Background()` in practice | A Claude invocation can hang indefinitely. Real experiments need a timeout (e.g., 10 min). |
 | **Quality scoring errors silently swallowed** | `cli.go:143` — `qualityScores, _ := evaluator.ScoreQuality(...)` | If the Anthropic API fails, you get zero quality data with no indication. Silent data loss. |
-| **Hardcoded local paths in task YAML** | `tasks/synth-001.yaml:4` — `repo: /home/rujohnson/code/personal/loadout` | This task only works on one developer's machine. No way to run the included example task anywhere else. |
+| **Hardcoded local paths in task YAML** | `tasks/synth-001.yaml` — absolute `repo:` paths | Tasks only work on one developer's machine. No way to run the included example tasks anywhere else. |
 | **No repeat/multi-run support** | `cli.go` — arms run once each | Can't establish statistical significance. A single run is anecdotal, not evidence. |
 | **readWorkspaceFiles reads 5 arbitrary files** | `evaluator.go:94-126` — WalkDir in filesystem order | The judge sees whatever 5 files come first alphabetically, not the files that matter. For a Python project, it might read `LICENSE` and `.gitignore` instead of `src/main.py`. |
 
@@ -94,7 +94,7 @@ Task YAML files hardcode absolute paths (`/home/rujohnson/code/personal/loadout`
 1. **Smart file selection** — Instead of "first 5 files alphabetically," use heuristics: prioritize files matching patterns in the task prompt (e.g., if prompt mentions `pyproject.toml`, include it), prioritize files Claude created/modified (diff against starting commit), skip binary files.
 2. **Increase judge context** — Bump max tokens to 512-1024. 256 forces terse reasoning that loses nuance.
 3. **Upgrade judge model** — Allow configurable judge model. Haiku is fast/cheap but less discriminating. Sonnet is the sweet spot for most rubrics.
-4. **Externalize rubrics to .md files** — Adopt the caylent-evals pattern: `rubric_path: rubrics/code-quality.md` instead of inline YAML strings. Enables richer rubric descriptions with examples and anchoring.
+4. **Externalize rubrics to .md files** — Support `rubric_path: rubrics/code-quality.md` instead of inline YAML strings. Enables richer rubric descriptions with examples and anchoring.
 5. **Add holistic evaluation** — After per-dimension scoring, run one final judge call with all dimensions + scores visible to produce an overall assessment and flag dimension conflicts.
 6. **Adopt standard rubric dimensions** — Offer a default 7-attribute rubric (from simple-eval: Accuracy, Instruction Following, Format Compliance, Completeness, Clarity, Conciseness, Reasoning) as a starting template for new tasks.
 
@@ -210,12 +210,11 @@ Phase 1 should include at least one real experiment run (with actual Claude, not
 
 ---
 
-## Key insight from adjacent analysis (caylent-evals / simple-eval)
+## Key insight: agent evaluation vs. prompt evaluation
 
-- **caylent-evals** = prompt-level evaluation → "which model answers best?"
+- **Prompt evaluators** (promptfoo, simple-eval) = "which model/prompt answers best?"
 - **token_miser** = agent-level evaluation → "which configuration makes the agent most efficient?"
 - These are **different layers of the stack** with **shared grading patterns**
 - The rubric/grader layer should converge (external .md rubrics, standard dimensions)
 - The execution model, primary metrics, and variables under test are fundamentally different
-- Don't try to merge them — they solve adjacent but distinct problems
 - The strongest immediate adoption: externalize rubrics to .md files, adopt the 7-attribute rubric as a default template
