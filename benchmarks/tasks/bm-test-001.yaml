@@ -11,11 +11,13 @@ prompt: |
   - format_table: test with various column widths, empty rows, single row
 
   Add the tests to tests/test_utils.py. All tests should pass.
+setup_commands:
+  - "uv sync -q"
 success_criteria:
   - type: command_exits_zero
-    command: "python -m pytest tests/test_utils.py -q"
+    command: "uv run pytest tests/test_utils.py -q"
   - type: output_contains
-    command: "python -m pytest tests/test_utils.py -v --tb=no"
+    command: "uv run pytest tests/test_utils.py -v --tb=no"
     contains: ["read_lines", "format_table"]
 quality_rubric:
   - dimension: correctness

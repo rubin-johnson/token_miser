@@ -1,4 +1,5 @@
 """Task YAML loading and validation."""
+
 from __future__ import annotations
 
 import os
@@ -69,10 +70,7 @@ def load_task(filename: str | Path) -> Task:
         for c in data.get("success_criteria", [])
     ]
 
-    rubric = [
-        RubricDimension(dimension=r["dimension"], prompt=r["prompt"])
-        for r in data.get("quality_rubric", [])
-    ]
+    rubric = [RubricDimension(dimension=r["dimension"], prompt=r["prompt"]) for r in data.get("quality_rubric", [])]
 
     # Resolve ${VAR} references in repo path from environment
     repo = data.get("repo", "")

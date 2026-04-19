@@ -1,4 +1,5 @@
 """Package ref parsing — resolves CLI spec to a package path."""
+
 from __future__ import annotations
 
 import os
@@ -51,7 +52,5 @@ def parse_package_ref(spec: str, packages_dir: str | None = None) -> PackageRef:
     if not pkg_path.is_dir():
         available = list_packages(packages_dir)
         avail_str = ", ".join(available) if available else "(none)"
-        raise ValueError(
-            f"Package '{spec}' not found in {resolved}/ (available: {avail_str})"
-        )
+        raise ValueError(f"Package '{spec}' not found in {resolved}/ (available: {avail_str})")
     return PackageRef(name=spec, package_path=str(pkg_path.resolve()))

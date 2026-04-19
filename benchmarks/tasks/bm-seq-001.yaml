@@ -16,11 +16,13 @@ prompts:
     Write a comprehensive test suite for the config module you just created in
     tests/test_config.py. Cover: load existing file, load missing file, save and reload,
     validate valid config, validate missing keys, validate empty dict.
+setup_commands:
+  - "uv sync -q"
 success_criteria:
   - type: file_exists
     paths: ["src/tiny_cli/config.py", "tests/test_config.py"]
   - type: command_exits_zero
-    command: "python -m pytest tests/test_config.py -q"
+    command: "uv run pytest tests/test_config.py -q"
 quality_rubric:
   - dimension: correctness
     prompt: "Does the config module work correctly? Do the tests cover all specified scenarios?"

@@ -1,4 +1,5 @@
 """Tests for digest — export, list, compare."""
+
 from __future__ import annotations
 
 import json
@@ -36,10 +37,26 @@ def session_with_runs(conn):
     )
     sid = create_tune_session(conn, session)
 
-    run_b = Run(task_id="bm-feat-001", package_name="vanilla", input_tokens=3000, output_tokens=500,
-                total_cost_usd=0.002, wall_seconds=5.0, criteria_pass=2, criteria_total=2)
-    run_t = Run(task_id="bm-feat-001", package_name="tuned-v1", input_tokens=2000, output_tokens=400,
-                total_cost_usd=0.0015, wall_seconds=4.0, criteria_pass=2, criteria_total=2)
+    run_b = Run(
+        task_id="bm-feat-001",
+        package_name="vanilla",
+        input_tokens=3000,
+        output_tokens=500,
+        total_cost_usd=0.002,
+        wall_seconds=5.0,
+        criteria_pass=2,
+        criteria_total=2,
+    )
+    run_t = Run(
+        task_id="bm-feat-001",
+        package_name="tuned-v1",
+        input_tokens=2000,
+        output_tokens=400,
+        total_cost_usd=0.0015,
+        wall_seconds=4.0,
+        criteria_pass=2,
+        criteria_total=2,
+    )
     rid_b = store_run(conn, run_b)
     rid_t = store_run(conn, run_t)
     link_tune_run(conn, sid, rid_b, "baseline")

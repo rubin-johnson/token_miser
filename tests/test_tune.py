@@ -1,4 +1,5 @@
 """Tests for tune — DB schema and session management."""
+
 from __future__ import annotations
 
 from pathlib import Path

@@ -1,4 +1,5 @@
 """Claude Code backend."""
+
 from __future__ import annotations
 
 import json
@@ -75,11 +76,7 @@ class ClaudeBackend(BaseBackend):
         input_rate, cached_rate, output_rate = _CLAUDE_PRICE_PER_MILLION[key]
         cached = min(usage.cache_read_input_tokens, usage.input_tokens)
         uncached = max(usage.input_tokens - cached, 0)
-        total = (
-            uncached * input_rate
-            + cached * cached_rate
-            + usage.output_tokens * output_rate
-        ) / 1_000_000
+        total = (uncached * input_rate + cached * cached_rate + usage.output_tokens * output_rate) / 1_000_000
         return round(total, 6)
 
     def run(

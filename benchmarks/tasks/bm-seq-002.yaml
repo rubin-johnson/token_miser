@@ -23,11 +23,13 @@ prompts:
     - Invalidate the cache when items are created or deleted
     - Add tests for the caching behavior
     - All existing tests must still pass
+setup_commands:
+  - "uv sync -q"
 success_criteria:
   - type: file_exists
     paths: ["src/tiny_api/cache.py", "docs/caching-design.md"]
   - type: command_exits_zero
-    command: "python -m pytest tests/ -q"
+    command: "uv run pytest tests/ -q"
 quality_rubric:
   - dimension: correctness
     prompt: "Does the cache work correctly with proper invalidation on mutations?"

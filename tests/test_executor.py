@@ -1,4 +1,5 @@
 """Tests for executor module."""
+
 import json
 from pathlib import Path
 
@@ -11,16 +12,18 @@ from token_miser.executor import filter_env, load_claude_env, parse_claude_json
 
 
 def test_parse_claude_json():
-    data = json.dumps({
-        "result": "Hello world",
-        "total_cost_usd": 0.0042,
-        "usage": {
-            "input_tokens": 100,
-            "output_tokens": 50,
-            "cache_creation_input_tokens": 10,
-            "cache_read_input_tokens": 5,
-        },
-    })
+    data = json.dumps(
+        {
+            "result": "Hello world",
+            "total_cost_usd": 0.0042,
+            "usage": {
+                "input_tokens": 100,
+                "output_tokens": 50,
+                "cache_creation_input_tokens": 10,
+                "cache_read_input_tokens": 5,
+            },
+        }
+    )
     result = parse_claude_json(data)
     assert result.result == "Hello world"
     assert result.total_cost_usd == 0.0042

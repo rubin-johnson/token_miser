@@ -1,4 +1,5 @@
 """Cross-package matrix report from tune session data."""
+
 from __future__ import annotations
 
 import json
@@ -36,7 +37,8 @@ def _query_matrix_runs(conn: sqlite3.Connection, suite: str) -> list[dict]:
         return []
 
     placeholders = ", ".join("?" for _ in task_ids)
-    rows = conn.execute(f"""
+    rows = conn.execute(
+        f"""
         SELECT r.task_id, r.package_name, r.agent,
                r.input_tokens + r.output_tokens AS tokens,
                r.total_cost_usd AS cost,
@@ -49,7 +51,9 @@ def _query_matrix_runs(conn: sqlite3.Connection, suite: str) -> list[dict]:
         LEFT JOIN tune_sessions ts ON tr.session_id = ts.id
         WHERE r.task_id IN ({placeholders})
         ORDER BY r.started_at DESC
-    """, task_ids).fetchall()
+    """,
+        task_ids,
+    ).fetchall()
     return [dict(r) for r in rows]
 
 

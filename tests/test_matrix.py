@@ -1,4 +1,5 @@
 """Tests for matrix — cross-package comparison."""
+
 from __future__ import annotations
 
 import json
@@ -34,15 +35,29 @@ def _seed_session(conn, tuned_package, task_ids, baseline_tokens=1000, tuned_tok
     sid = create_tune_session(conn, session)
 
     for tid in task_ids:
-        rb = Run(task_id=tid, package_name="vanilla", input_tokens=baseline_tokens,
-                 output_tokens=100, total_cost_usd=0.10, wall_seconds=5.0,
-                 criteria_pass=2, criteria_total=2)
+        rb = Run(
+            task_id=tid,
+            package_name="vanilla",
+            input_tokens=baseline_tokens,
+            output_tokens=100,
+            total_cost_usd=0.10,
+            wall_seconds=5.0,
+            criteria_pass=2,
+            criteria_total=2,
+        )
         rb_id = store_run(conn, rb)
         link_tune_run(conn, sid, rb_id, "baseline")
 
-        rt = Run(task_id=tid, package_name=tuned_package, input_tokens=tuned_tokens,
-                 output_tokens=100, total_cost_usd=0.08, wall_seconds=4.0,
-                 criteria_pass=2, criteria_total=2)
+        rt = Run(
+            task_id=tid,
+            package_name=tuned_package,
+            input_tokens=tuned_tokens,
+            output_tokens=100,
+            total_cost_usd=0.08,
+            wall_seconds=4.0,
+            criteria_pass=2,
+            criteria_total=2,
+        )
         rt_id = store_run(conn, rt)
         link_tune_run(conn, sid, rt_id, "tuned")
 
@@ -121,19 +136,39 @@ def test_build_matrix_multiple_packages(conn):
 
 
 def test_build_matrix_pass_fail(conn):
-    sid = create_tune_session(conn, TuneSession(
-        suite_name="axis", suite_version="0.1.0",
-        baseline_package="vanilla", tuned_package="pkg-x", status="completed",
-    ))
-    rb = Run(task_id="bm-axis-explore", package_name="vanilla", input_tokens=500,
-             output_tokens=100, total_cost_usd=0.05, wall_seconds=3.0,
-             criteria_pass=1, criteria_total=2)
+    sid = create_tune_session(
+        conn,
+        TuneSession(
+            suite_name="axis",
+            suite_version="0.1.0",
+            baseline_package="vanilla",
+            tuned_package="pkg-x",
+            status="completed",
+        ),
+    )
+    rb = Run(
+        task_id="bm-axis-explore",
+        package_name="vanilla",
+        input_tokens=500,
+        output_tokens=100,
+        total_cost_usd=0.05,
+        wall_seconds=3.0,
+        criteria_pass=1,
+        criteria_total=2,
+    )
     rb_id = store_run(conn, rb)
     link_tune_run(conn, sid, rb_id, "baseline")
 
-    rt = Run(task_id="bm-axis-explore", package_name="pkg-x", input_tokens=400,
-             output_tokens=100, total_cost_usd=0.04, wall_seconds=2.0,
-             criteria_pass=2, criteria_total=2)
+    rt = Run(
+        task_id="bm-axis-explore",
+        package_name="pkg-x",
+        input_tokens=400,
+        output_tokens=100,
+        total_cost_usd=0.04,
+        wall_seconds=2.0,
+        criteria_pass=2,
+        criteria_total=2,
+    )
     rt_id = store_run(conn, rt)
     link_tune_run(conn, sid, rt_id, "tuned")
 

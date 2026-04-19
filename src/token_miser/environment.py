@@ -1,4 +1,5 @@
 """Isolated experiment environment setup."""
+
 from __future__ import annotations
 
 import os
@@ -70,10 +71,12 @@ def _package_instruction_text(package_ref: PackageRef, real_home: Path) -> str:
         package_dir = Path(package_ref.package_path)
         return _read_first_existing([package_dir / "AGENTS.md", package_dir / "CLAUDE.md"])
 
-    return _read_first_existing([
-        real_home / ".codex" / "AGENTS.md",
-        real_home / ".claude" / "CLAUDE.md",
-    ])
+    return _read_first_existing(
+        [
+            real_home / ".codex" / "AGENTS.md",
+            real_home / ".claude" / "CLAUDE.md",
+        ]
+    )
 
 
 def _setup_codex_instructions(workspace_dir: str, package_ref: PackageRef, real_home: Path) -> None:
@@ -123,7 +126,11 @@ def setup_env(task: Task, package_ref: PackageRef, agent: str = "claude") -> Env
         # Run setup commands (e.g., pip install, npm install)
         for cmd in task.setup_commands:
             subprocess.run(
-                cmd, shell=True, check=True, capture_output=True, cwd=workspace_dir,
+                cmd,
+                shell=True,
+                check=True,
+                capture_output=True,
+                cwd=workspace_dir,
             )
 
         real_home = Path.home()

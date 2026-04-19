@@ -8,11 +8,13 @@ prompt: |
   Running the CLI fails with an ImportError about a circular import.
   Diagnose the circular dependency, fix it without changing the public API
   of any module, and verify all tests pass.
+setup_commands:
+  - "uv sync -q"
 success_criteria:
   - type: command_exits_zero
-    command: "python -m pytest tests/ -q"
+    command: "uv run pytest tests/ -q"
   - type: command_exits_zero
-    command: "python -m tiny_cli greet World"
+    command: "uv run python -m tiny_cli greet World"
 quality_rubric:
   - dimension: correctness
     prompt: "Is the circular import fully resolved? Does the CLI work?"

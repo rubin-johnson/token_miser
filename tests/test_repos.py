@@ -1,4 +1,5 @@
 """Tests for repos — clone cache management and fixture unpacking."""
+
 from __future__ import annotations
 
 import subprocess
@@ -69,24 +70,28 @@ class TestEnsureRepo:
         subprocess.run(["git", "init", str(repo_dir)], check=True, capture_output=True)
         subprocess.run(
             ["git", "-C", str(repo_dir), "config", "user.email", "test@test.com"],
-            check=True, capture_output=True,
+            check=True,
+            capture_output=True,
         )
         subprocess.run(
             ["git", "-C", str(repo_dir), "config", "user.name", "Test"],
-            check=True, capture_output=True,
+            check=True,
+            capture_output=True,
         )
         (repo_dir / "main.py").write_text("print('hello')\n")
         subprocess.run(["git", "-C", str(repo_dir), "add", "."], check=True, capture_output=True)
         subprocess.run(
             ["git", "-C", str(repo_dir), "commit", "-m", "initial"],
-            check=True, capture_output=True,
+            check=True,
+            capture_output=True,
         )
 
         # Export as bundle
         bundle_path = tmp_path / "repo.bundle"
         subprocess.run(
             ["git", "-C", str(repo_dir), "bundle", "create", str(bundle_path), "--all"],
-            check=True, capture_output=True,
+            check=True,
+            capture_output=True,
         )
 
         spec = RepoSpec(id="test-fixture", type="fixture", bundle=str(bundle_path), commit="HEAD")
@@ -104,22 +109,26 @@ class TestEnsureRepo:
         subprocess.run(["git", "init", str(repo_dir)], check=True, capture_output=True)
         subprocess.run(
             ["git", "-C", str(repo_dir), "config", "user.email", "test@test.com"],
-            check=True, capture_output=True,
+            check=True,
+            capture_output=True,
         )
         subprocess.run(
             ["git", "-C", str(repo_dir), "config", "user.name", "Test"],
-            check=True, capture_output=True,
+            check=True,
+            capture_output=True,
         )
         (repo_dir / "main.py").write_text("print('hello')\n")
         subprocess.run(["git", "-C", str(repo_dir), "add", "."], check=True, capture_output=True)
         subprocess.run(
             ["git", "-C", str(repo_dir), "commit", "-m", "initial"],
-            check=True, capture_output=True,
+            check=True,
+            capture_output=True,
         )
         bundle_path = tmp_path / "repo.bundle"
         subprocess.run(
             ["git", "-C", str(repo_dir), "bundle", "create", str(bundle_path), "--all"],
-            check=True, capture_output=True,
+            check=True,
+            capture_output=True,
         )
 
         spec = RepoSpec(id="test-fixture", type="fixture", bundle=str(bundle_path), commit="HEAD")

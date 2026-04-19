@@ -1,4 +1,5 @@
 """Tests for suite — benchmark suite loading and management."""
+
 from __future__ import annotations
 
 from pathlib import Path

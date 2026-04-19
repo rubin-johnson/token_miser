@@ -1,4 +1,5 @@
 """Tests for publish — push tuned packages to git for kanon distribution."""
+
 from __future__ import annotations
 
 import subprocess
@@ -33,17 +34,20 @@ def target_repo(tmp_path: Path) -> Path:
     subprocess.run(["git", "init", str(repo)], check=True, capture_output=True)
     subprocess.run(
         ["git", "-C", str(repo), "config", "user.email", "test@test.com"],
-        check=True, capture_output=True,
+        check=True,
+        capture_output=True,
     )
     subprocess.run(
         ["git", "-C", str(repo), "config", "user.name", "Test"],
-        check=True, capture_output=True,
+        check=True,
+        capture_output=True,
     )
     (repo / "README.md").write_text("# Packages\n")
     subprocess.run(["git", "-C", str(repo), "add", "."], check=True, capture_output=True)
     subprocess.run(
         ["git", "-C", str(repo), "commit", "-m", "initial"],
-        check=True, capture_output=True,
+        check=True,
+        capture_output=True,
     )
     return repo
 
@@ -63,7 +67,9 @@ class TestPublishPackage:
         publish_package(sample_package, str(target_repo), name="my-pkg")
         log = subprocess.run(
             ["git", "-C", str(target_repo), "log", "--oneline", "-1"],
-            capture_output=True, text=True, check=True,
+            capture_output=True,
+            text=True,
+            check=True,
         )
         assert "my-pkg" in log.stdout
 
@@ -71,18 +77,20 @@ class TestPublishPackage:
         result = publish_package(sample_package, str(target_repo), name="my-pkg", version="1.0.0")
         tags = subprocess.run(
             ["git", "-C", str(target_repo), "tag", "-l"],
-            capture_output=True, text=True, check=True,
+            capture_output=True,
+            text=True,
+            check=True,
         )
         assert "my-pkg/1.0.0" in tags.stdout
         assert result["version"] == "1.0.0"
 
-    def test_uses_manifest_version_when_no_version_given(
-        self, sample_package: Path, target_repo: Path
-    ) -> None:
+    def test_uses_manifest_version_when_no_version_given(self, sample_package: Path, target_repo: Path) -> None:
         result = publish_package(sample_package, str(target_repo))
         tags = subprocess.run(
             ["git", "-C", str(target_repo), "tag", "-l"],
-            capture_output=True, text=True, check=True,
+            capture_output=True,
+            text=True,
+            check=True,
         )
         assert "tuned-2026-04-15/0.1.1" in tags.stdout
         assert result["version"] == "0.1.1"

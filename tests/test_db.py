@@ -1,4 +1,5 @@
 """Tests for database module."""
+
 from token_miser.db import Run, db_path, get_run, get_runs, init_db, store_run
 
 

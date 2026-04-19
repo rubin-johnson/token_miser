@@ -8,11 +8,13 @@ prompt: |
   Add a "stats" subcommand to this CLI tool. When run as `python -m tiny_cli stats <directory>`,
   it should print a summary showing: number of Python files, total lines of code, and average
   lines per file. Write tests for the new subcommand in tests/test_commands.py.
+setup_commands:
+  - "uv sync -q"
 success_criteria:
   - type: file_exists
     paths: ["src/tiny_cli/commands/stats.py"]
   - type: command_exits_zero
-    command: "python -m pytest tests/ -q"
+    command: "uv run pytest tests/ -q"
 quality_rubric:
   - dimension: correctness
     prompt: "Does the stats command correctly count files, lines, and compute averages?"

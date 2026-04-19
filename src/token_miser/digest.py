@@ -1,4 +1,5 @@
 """Digest export — git-trackable JSON summaries of tune sessions."""
+
 from __future__ import annotations
 
 import json
@@ -58,9 +59,7 @@ def export_session(conn: sqlite3.Connection, session_id: int, output_dir: Path |
 
     token_reduction = 0.0
     if baseline_summary["total_tokens"] and tuned_summary.get("total_tokens"):
-        token_reduction = round(
-            (1 - tuned_summary["total_tokens"] / baseline_summary["total_tokens"]) * 100, 1
-        )
+        token_reduction = round((1 - tuned_summary["total_tokens"] / baseline_summary["total_tokens"]) * 100, 1)
 
     digest = {
         "type": "tune_session",

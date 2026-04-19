@@ -1,4 +1,5 @@
 """Tests for report module."""
+
 import json
 
 from token_miser.db import Run, init_db, store_run
@@ -55,12 +56,33 @@ def test_analyze_no_runs(tmp_path):
 
 def test_analyze_with_runs(tmp_path):
     runs = [
-        Run(task_id="t1", package_name="vanilla", input_tokens=100, output_tokens=50,
-            total_cost_usd=0.01, criteria_pass=3, criteria_total=5),
-        Run(task_id="t1", package_name="vanilla", input_tokens=120, output_tokens=60,
-            total_cost_usd=0.012, criteria_pass=4, criteria_total=5),
-        Run(task_id="t1", package_name="package-b", input_tokens=80, output_tokens=40,
-            total_cost_usd=0.008, criteria_pass=5, criteria_total=5),
+        Run(
+            task_id="t1",
+            package_name="vanilla",
+            input_tokens=100,
+            output_tokens=50,
+            total_cost_usd=0.01,
+            criteria_pass=3,
+            criteria_total=5,
+        ),
+        Run(
+            task_id="t1",
+            package_name="vanilla",
+            input_tokens=120,
+            output_tokens=60,
+            total_cost_usd=0.012,
+            criteria_pass=4,
+            criteria_total=5,
+        ),
+        Run(
+            task_id="t1",
+            package_name="package-b",
+            input_tokens=80,
+            output_tokens=40,
+            total_cost_usd=0.008,
+            criteria_pass=5,
+            criteria_total=5,
+        ),
     ]
     conn = _setup_db(tmp_path, runs)
     result = analyze("t1", conn)

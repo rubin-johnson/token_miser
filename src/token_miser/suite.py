@@ -1,4 +1,5 @@
 """Benchmark suite loading and management."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -49,20 +50,22 @@ def load_suite(suite_path: Path, tasks_dir: Path) -> Suite:
         if not task_type:
             task_type = "sequential" if prompts else "single_shot"
 
-        tasks.append(BenchmarkTask(
-            id=task_data["id"],
-            name=task_data.get("name", ""),
-            repo_id=task_data.get("repo_id", ""),
-            starting_commit=task_data.get("starting_commit", ""),
-            prompt=prompt,
-            prompts=prompts,
-            type=task_type,
-            category=entry.get("category", ""),
-            difficulty=entry.get("difficulty", ""),
-            setup_commands=task_data.get("setup_commands", []),
-            success_criteria=task_data.get("success_criteria", []),
-            quality_rubric=task_data.get("quality_rubric", []),
-        ))
+        tasks.append(
+            BenchmarkTask(
+                id=task_data["id"],
+                name=task_data.get("name", ""),
+                repo_id=task_data.get("repo_id", ""),
+                starting_commit=task_data.get("starting_commit", ""),
+                prompt=prompt,
+                prompts=prompts,
+                type=task_type,
+                category=entry.get("category", ""),
+                difficulty=entry.get("difficulty", ""),
+                setup_commands=task_data.get("setup_commands", []),
+                success_criteria=task_data.get("success_criteria", []),
+                quality_rubric=task_data.get("quality_rubric", []),
+            )
+        )
 
     return Suite(
         name=data["name"],

@@ -3,6 +3,7 @@
 All loadout/kanon interactions go through this module, isolating the
 coupling so the rest of token_miser doesn't import them directly.
 """
+
 from __future__ import annotations
 
 from pathlib import Path

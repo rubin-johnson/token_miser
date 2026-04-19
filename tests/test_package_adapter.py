@@ -1,4 +1,5 @@
 """Tests for package_adapter — adapter wrapping loadout and kanon APIs."""
+
 from __future__ import annotations
 
 import json
@@ -150,13 +151,15 @@ class TestDiscoverKanonPackages:
         bundle = packages / "my-loadout"
         bundle.mkdir()
         (bundle / "manifest.yaml").write_text(
-            yaml.dump({
-                "name": "my-loadout",
-                "version": "0.1.0",
-                "author": "test",
-                "description": "a loadout",
-                "targets": [{"path": "CLAUDE.md", "dest": "CLAUDE.md"}],
-            })
+            yaml.dump(
+                {
+                    "name": "my-loadout",
+                    "version": "0.1.0",
+                    "author": "test",
+                    "description": "a loadout",
+                    "targets": [{"path": "CLAUDE.md", "dest": "CLAUDE.md"}],
+                }
+            )
         )
         (bundle / "CLAUDE.md").write_text("# config\n")
 

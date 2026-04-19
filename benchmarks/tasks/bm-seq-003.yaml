@@ -20,9 +20,11 @@ prompts:
     1. Reproduce the original 500 error scenario (which should now return 422)
     2. Verify normal items still create successfully
     3. Test boundary values around the problematic input
+setup_commands:
+  - "uv sync -q"
 success_criteria:
   - type: command_exits_zero
-    command: "python -m pytest tests/ -q"
+    command: "uv run pytest tests/ -q"
 quality_rubric:
   - dimension: correctness
     prompt: "Is the root cause correctly identified? Does the fix handle the edge case properly?"

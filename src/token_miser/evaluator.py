@@ -1,4 +1,5 @@
 """Quality scoring via Anthropic API (Claude as judge)."""
+
 from __future__ import annotations
 
 import json

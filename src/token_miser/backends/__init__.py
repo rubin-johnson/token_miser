@@ -1,4 +1,5 @@
 """Backend registry for supported coding agents."""
+
 from __future__ import annotations
 
 from token_miser.backends.base import DEFAULT_TIMEOUT, BaseBackend, ExecutorResult, Usage

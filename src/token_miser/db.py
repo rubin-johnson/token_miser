@@ -1,4 +1,5 @@
 """SQLite storage for experiment runs."""
+
 from __future__ import annotations
 
 import os
@@ -146,10 +147,24 @@ def store_run(conn: sqlite3.Connection, run: Run) -> int:
             total_cost_usd, exit_code, criteria_pass, criteria_total, quality_scores, result)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
-            run.agent, run.task_id, run.package_name, run.loadout_name, run.model, now,
-            run.wall_seconds, run.input_tokens, run.output_tokens,
-            run.cache_read_tokens, run.cache_write_tokens, run.reasoning_tokens, run.total_cost_usd,
-            run.exit_code, run.criteria_pass, run.criteria_total, run.quality_scores, run.result,
+            run.agent,
+            run.task_id,
+            run.package_name,
+            run.loadout_name,
+            run.model,
+            now,
+            run.wall_seconds,
+            run.input_tokens,
+            run.output_tokens,
+            run.cache_read_tokens,
+            run.cache_write_tokens,
+            run.reasoning_tokens,
+            run.total_cost_usd,
+            run.exit_code,
+            run.criteria_pass,
+            run.criteria_total,
+            run.quality_scores,
+            run.result,
         ),
     )
     conn.commit()
@@ -162,9 +177,7 @@ def store_run(conn: sqlite3.Connection, run: Run) -> int:
 def get_runs(conn: sqlite3.Connection, task_id: str = "") -> list[Run]:
     """Retrieve runs, optionally filtered by task ID."""
     if task_id:
-        rows = conn.execute(
-            "SELECT * FROM runs WHERE task_id = ? ORDER BY started_at DESC", (task_id,)
-        ).fetchall()
+        rows = conn.execute("SELECT * FROM runs WHERE task_id = ? ORDER BY started_at DESC", (task_id,)).fetchall()
     else:
         rows = conn.execute("SELECT * FROM runs ORDER BY started_at DESC").fetchall()
     return [_row_to_run(r) for r in rows]
@@ -206,8 +219,16 @@ def create_tune_session(conn: sqlite3.Connection, session: TuneSession) -> int:
         """INSERT INTO tune_sessions (agent, suite_name, suite_version, baseline_package,
             tuned_package, started_at, status, recommendations_json)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-        (session.agent, session.suite_name, session.suite_version, session.baseline_package,
-         session.tuned_package, now, session.status, session.recommendations_json),
+        (
+            session.agent,
+            session.suite_name,
+            session.suite_version,
+            session.baseline_package,
+            session.tuned_package,
+            now,
+            session.status,
+            session.recommendations_json,
+        ),
     )
     conn.commit()
     row_id = cursor.lastrowid
@@ -296,9 +317,7 @@ def get_latest_tune_session(
             (agent,),
         ).fetchone()
     else:
-        row = conn.execute(
-            "SELECT * FROM tune_sessions ORDER BY started_at DESC LIMIT 1"
-        ).fetchone()
+        row = conn.execute("SELECT * FROM tune_sessions ORDER BY started_at DESC LIMIT 1").fetchone()
     if not row:
         return None
     return TuneSession(

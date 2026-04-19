@@ -1,4 +1,5 @@
 """Codex CLI backend."""
+
 from __future__ import annotations
 
 import json
@@ -35,11 +36,7 @@ def estimate_codex_cost(model: str, usage: Usage) -> float:
     input_rate, cached_rate, output_rate = rates
     cached = min(usage.cache_read_input_tokens, usage.input_tokens)
     uncached = max(usage.input_tokens - cached, 0)
-    total = (
-        uncached * input_rate
-        + cached * cached_rate
-        + usage.output_tokens * output_rate
-    ) / 1_000_000
+    total = (uncached * input_rate + cached * cached_rate + usage.output_tokens * output_rate) / 1_000_000
     return round(total, 6)
 
 

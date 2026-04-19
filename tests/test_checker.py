@@ -1,4 +1,5 @@
 """Tests for success criteria checker."""
+
 import os
 
 from token_miser.checker import check_all_criteria, check_criterion
@@ -57,9 +58,7 @@ def test_output_contains_fail(tmp_path):
     env = _make_env(tmp_path)
     os.makedirs(env.workspace_dir, exist_ok=True)
     os.makedirs(env.home_dir, exist_ok=True)
-    result = check_criterion(
-        Criterion(type="output_contains", command="echo hello", contains=["goodbye"]), env
-    )
+    result = check_criterion(Criterion(type="output_contains", command="echo hello", contains=["goodbye"]), env)
     assert not result.passed
     assert "goodbye" in result.detail
 

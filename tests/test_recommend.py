@@ -1,4 +1,5 @@
 """Tests for recommendation engine."""
+
 import json
 
 from token_miser.db import Run
@@ -20,8 +21,13 @@ from token_miser.recommend import (
 
 def _run(**kwargs) -> Run:
     defaults = dict(
-        task_id="t1", package_name="a", input_tokens=10000, output_tokens=10000,
-        criteria_pass=9, criteria_total=10, wall_seconds=60.0,
+        task_id="t1",
+        package_name="a",
+        input_tokens=10000,
+        output_tokens=10000,
+        criteria_pass=9,
+        criteria_total=10,
+        wall_seconds=60.0,
         quality_scores=json.dumps({"minimal_change": 0.9, "correctness": 0.9}),
     )
     defaults.update(kwargs)
@@ -29,6 +35,7 @@ def _run(**kwargs) -> Run:
 
 
 # --- rule_high_tokens_no_grep ---
+
 
 class TestHighTokensNoGrep:
     def test_triggers_when_high_tokens_and_no_grep(self):
@@ -59,6 +66,7 @@ class TestHighTokensNoGrep:
 
 
 # --- rule_low_minimal_change ---
+
 
 class TestLowMinimalChange:
     def test_triggers_when_low_score(self):
@@ -92,6 +100,7 @@ class TestLowMinimalChange:
 
 
 # --- rule_high_variance_feature_tasks ---
+
 
 class TestHighVarianceFeatureTasks:
     def test_triggers_on_high_variance(self):
@@ -127,6 +136,7 @@ class TestHighVarianceFeatureTasks:
 
 # --- rule_low_criteria_pass_rate ---
 
+
 class TestLowCriteriaPassRate:
     def test_triggers_when_low_pass_rate(self):
         runs = [
@@ -150,6 +160,7 @@ class TestLowCriteriaPassRate:
 
 # --- rule_empty_claude_md ---
 
+
 class TestEmptyClaudeMd:
     def test_triggers_on_short_config(self):
         rec = rule_empty_claude_md([], "# Config\nBe concise.\n")
@@ -167,6 +178,7 @@ class TestEmptyClaudeMd:
 
 
 # --- rule_high_wall_low_quality ---
+
 
 class TestHighWallLowQuality:
     def test_triggers_on_slow_low_quality(self):
@@ -213,13 +225,16 @@ class TestHighWallLowQuality:
 
 # --- analyze_results ---
 
+
 class TestAnalyzeResults:
     def test_returns_sorted_by_confidence_descending(self):
         runs = [
             _run(
                 task_id="feat-x",
-                input_tokens=25000, output_tokens=20000,
-                criteria_pass=3, criteria_total=10,
+                input_tokens=25000,
+                output_tokens=20000,
+                criteria_pass=3,
+                criteria_total=10,
                 wall_seconds=200,
                 quality_scores=json.dumps({"minimal_change": 0.4, "correctness": 0.5}),
             ),
@@ -232,9 +247,12 @@ class TestAnalyzeResults:
     def test_returns_empty_when_no_issues(self):
         runs = [
             _run(
-                input_tokens=10000, output_tokens=1000,
-                criteria_pass=10, criteria_total=10,
-                wall_seconds=30, cache_read_tokens=5000,
+                input_tokens=10000,
+                output_tokens=1000,
+                criteria_pass=10,
+                criteria_total=10,
+                wall_seconds=30,
+                cache_read_tokens=5000,
                 quality_scores=json.dumps({"minimal_change": 0.95, "correctness": 0.95}),
             ),
         ]

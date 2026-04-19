@@ -1,4 +1,5 @@
 """Recommendation engine for CLAUDE.md improvements based on benchmark results."""
+
 from __future__ import annotations
 
 import json
@@ -57,7 +58,7 @@ def rule_high_tokens_no_grep(runs: list[Run], current_claude_md: str) -> Recomme
         category="token_efficiency",
         title="Add grep-first rule",
         description="High average token usage without grep/glob guidance. "
-                    "Instructing the agent to search before reading full files reduces token waste.",
+        "Instructing the agent to search before reading full files reduces token waste.",
         claude_md_block=(
             "## Token Efficiency\n"
             "- Use grep/glob before reading full files — never read a file when a search answers it\n"
@@ -109,15 +110,14 @@ def rule_high_variance_feature_tasks(runs: list[Run], current_claude_md: str) ->
         category="structure",
         title="Add planning discipline for features",
         description="High token variance on feature tasks suggests inconsistent approach. "
-                    "A structured planning step can reduce variability.",
+        "A structured planning step can reduce variability.",
         claude_md_block=(
             "## Planning\n"
             "- Before starting a feature, outline the approach in 3-5 bullet points\n"
             "- If 3+ tool calls without progress, stop and reassess"
         ),
         confidence=0.75,
-        evidence=f"feature task token stdev: {stdev:.0f}, mean: {mean:.0f} "
-                 f"(stdev/mean: {stdev/mean:.1%})",
+        evidence=f"feature task token stdev: {stdev:.0f}, mean: {mean:.0f} (stdev/mean: {stdev / mean:.1%})",
     )
 
 
@@ -182,7 +182,7 @@ def rule_high_wall_low_quality(runs: list[Run], current_claude_md: str) -> Recom
         category="token_efficiency",
         title="Stop and reassess on slow runs",
         description="High wall time combined with low quality suggests the agent is spinning. "
-                    "Adding a reassessment checkpoint helps.",
+        "Adding a reassessment checkpoint helps.",
         claude_md_block=(
             "## Efficiency\n"
             "- If 3+ tool calls without progress, stop and reassess\n"
@@ -211,7 +211,7 @@ def rule_high_output_ratio(runs: list[Run], current_claude_md: str) -> Recommend
         category="token_efficiency",
         title="Reduce output verbosity",
         description="High output-to-input token ratio suggests verbose responses. "
-                    "Output tokens cost 5x more than input tokens.",
+        "Output tokens cost 5x more than input tokens.",
         claude_md_block=(
             "## Output Efficiency\n"
             "- No unsolicited summaries, no trailing questions, no preamble\n"
@@ -237,7 +237,7 @@ def rule_no_parallel_guidance(runs: list[Run], current_claude_md: str) -> Recomm
         category="token_efficiency",
         title="Add parallel execution guidance",
         description="High average wall time without parallel execution guidance. "
-                    "Independent tool calls can run concurrently.",
+        "Independent tool calls can run concurrently.",
         claude_md_block=(
             "## Execution\n"
             "- Prefer parallel execution when dispatching agents or running independent tasks\n"
@@ -265,7 +265,7 @@ def rule_high_cache_miss(runs: list[Run], current_claude_md: str) -> Recommendat
         category="token_efficiency",
         title="Improve context reuse",
         description="Low cache hit rate suggests the agent re-reads context on each tool call. "
-                    "Structuring prompts for cache-friendly patterns reduces cost.",
+        "Structuring prompts for cache-friendly patterns reduces cost.",
         claude_md_block=(
             "## Context Efficiency\n"
             "- Read a file once and remember its contents; don't re-read between tool calls\n"
@@ -292,7 +292,7 @@ def rule_excessive_tokens_per_criterion(runs: list[Run], current_claude_md: str)
         category="token_efficiency",
         title="Reduce tokens per successful criterion",
         description="High token expenditure per passing criterion suggests over-engineering or "
-                    "exploratory approaches where a direct approach would suffice.",
+        "exploratory approaches where a direct approach would suffice.",
         claude_md_block=(
             "## Approach\n"
             "- Simple > clever; match existing project patterns\n"

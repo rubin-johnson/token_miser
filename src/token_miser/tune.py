@@ -1,4 +1,5 @@
 """Tune workflow — guided efficiency optimization."""
+
 from __future__ import annotations
 
 import json
@@ -36,7 +37,7 @@ def _benchmarks_dir() -> Path:
     pkg_dir = Path(__file__).parent
     candidates = [
         pkg_dir.parent.parent / "benchmarks",  # dev: src/token_miser/../../benchmarks
-        pkg_dir / "benchmarks",                 # installed: token_miser/benchmarks
+        pkg_dir / "benchmarks",  # installed: token_miser/benchmarks
     ]
     for c in candidates:
         if c.is_dir():
@@ -55,10 +56,7 @@ def _benchmark_task_to_task(bt: BenchmarkTask, repo_path: str) -> Task:
         )
         for c in bt.success_criteria
     ]
-    rubric = [
-        RubricDimension(dimension=r["dimension"], prompt=r["prompt"])
-        for r in bt.quality_rubric
-    ]
+    rubric = [RubricDimension(dimension=r["dimension"], prompt=r["prompt"]) for r in bt.quality_rubric]
     return Task(
         id=bt.id,
         name=bt.name,
@@ -112,13 +110,23 @@ def _run_single_task(
     try:
         if task.type == "sequential":
             res = backend.run_sequential(
-                task.prompts, env.home_dir, env.workspace_dir,
-                timeout=timeout, extra_env=backend_env, bare=bare, model=model,
+                task.prompts,
+                env.home_dir,
+                env.workspace_dir,
+                timeout=timeout,
+                extra_env=backend_env,
+                bare=bare,
+                model=model,
             )
         else:
             res = backend.run(
-                task.prompt, env.home_dir, env.workspace_dir,
-                timeout=timeout, extra_env=backend_env, bare=bare, model=model,
+                task.prompt,
+                env.home_dir,
+                env.workspace_dir,
+                timeout=timeout,
+                extra_env=backend_env,
+                bare=bare,
+                model=model,
             )
 
         checks = check_all_criteria(task.success_criteria, env)
@@ -129,9 +137,7 @@ def _run_single_task(
         api_key = os.environ.get("ANTHROPIC_API_KEY")
         if api_key and task.quality_rubric:
             try:
-                scores = score_quality(
-                    task.prompt or task.prompts[-1], res.result, task.quality_rubric, api_key
-                )
+                scores = score_quality(task.prompt or task.prompts[-1], res.result, task.quality_rubric, api_key)
                 quality_json = json.dumps(
                     [{"dimension": s.dimension, "score": s.score, "reason": s.reason} for s in scores]
                 )
@@ -306,6 +312,7 @@ def run_tune(
 
         # Look up previous baseline BEFORE creating the new session
         from token_miser.db import get_latest_tune_session, get_tune_session_runs
+
         prev_session = get_latest_tune_session(conn, suite.name, backend.name) if skip_baseline else None
 
         # Create tune session
@@ -352,8 +359,9 @@ def run_tune(
 
             if not recommendations:
                 print("No recommendations — your config looks efficient already.")
-                update_tune_session(conn, session_id, status="completed",
-                                    completed_at=datetime.now(timezone.utc).isoformat())
+                update_tune_session(
+                    conn, session_id, status="completed", completed_at=datetime.now(timezone.utc).isoformat()
+                )
                 return 0
 
             print(f"\nRecommendations ({len(recommendations)}):")
@@ -366,11 +374,14 @@ def run_tune(
             tuned_pkg = build_tuned_package(baseline_pkg, recommendations, output)
             print(f"\nGenerated tuned package at: {output}")
 
-        update_tune_session(conn, session_id,
-                            tuned_package=tuned_pkg.name,
-                            recommendations_json=json.dumps(
-                                [{"title": r.title, "category": r.category,
-                                  "confidence": r.confidence} for r in recommendations]))
+        update_tune_session(
+            conn,
+            session_id,
+            tuned_package=tuned_pkg.name,
+            recommendations_json=json.dumps(
+                [{"title": r.title, "category": r.category, "confidence": r.confidence} for r in recommendations]
+            ),
+        )
 
         if not yes:
             answer = input("\nRun benchmarks with tuned package? [Y/n] ").strip().lower()
@@ -397,8 +408,7 @@ def run_tune(
         # Phase 6: Comparison
         _print_comparison(baseline_runs, tuned_runs)
 
-        update_tune_session(conn, session_id, status="completed",
-                            completed_at=datetime.now(timezone.utc).isoformat())
+        update_tune_session(conn, session_id, status="completed", completed_at=datetime.now(timezone.utc).isoformat())
 
         return 0
 

@@ -1,4 +1,5 @@
 """Tests for package ref parsing."""
+
 import pytest
 
 from token_miser.package_ref import (
@@ -34,6 +35,7 @@ def test_file_path_rejected(tmp_path):
 
 # --- resolve_packages_dir ---
 
+
 def test_resolve_explicit_flag(tmp_path):
     assert resolve_packages_dir(str(tmp_path)) == tmp_path.resolve()
 
@@ -57,6 +59,7 @@ def test_resolve_default_fallback(monkeypatch):
 
 # --- list_packages ---
 
+
 def test_list_packages(tmp_path):
     (tmp_path / "alpha").mkdir()
     (tmp_path / "bravo").mkdir()
@@ -73,6 +76,7 @@ def test_list_packages_nonexistent():
 
 
 # --- name-based lookup ---
+
 
 def test_name_lookup(tmp_path):
     (tmp_path / "token-miser").mkdir()

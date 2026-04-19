@@ -1,4 +1,5 @@
 """Repo cache management — cloning, fixture unpacking, version pinning."""
+
 from __future__ import annotations
 
 import shutil
@@ -46,7 +47,8 @@ def ensure_repo(spec: RepoSpec, cache_dir: Path, benchmarks_dir: Path | None = N
         if spec.commit and spec.commit != "HEAD":
             subprocess.run(
                 ["git", "-C", str(dest), "checkout", spec.commit],
-                check=True, capture_output=True,
+                check=True,
+                capture_output=True,
             )
         return dest
     if dest.exists():
@@ -58,12 +60,14 @@ def ensure_repo(spec: RepoSpec, cache_dir: Path, benchmarks_dir: Path | None = N
             bundle_path = benchmarks_dir / spec.bundle
         subprocess.run(
             ["git", "clone", str(bundle_path), str(dest)],
-            check=True, capture_output=True,
+            check=True,
+            capture_output=True,
         )
         if spec.commit and spec.commit != "HEAD":
             subprocess.run(
                 ["git", "-C", str(dest), "checkout", spec.commit],
-                check=True, capture_output=True,
+                check=True,
+                capture_output=True,
             )
     else:
         clone_cmd = ["git", "clone"]
@@ -77,7 +81,8 @@ def ensure_repo(spec: RepoSpec, cache_dir: Path, benchmarks_dir: Path | None = N
         if spec.commit and spec.commit != "HEAD" and not spec.shallow:
             subprocess.run(
                 ["git", "-C", str(dest), "checkout", spec.commit],
-                check=True, capture_output=True,
+                check=True,
+                capture_output=True,
             )
 
     return dest

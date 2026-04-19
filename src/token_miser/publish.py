@@ -1,4 +1,5 @@
 """Publish a tuned package to a git repo for kanon distribution."""
+
 from __future__ import annotations
 
 import shutil
@@ -55,11 +56,13 @@ def publish_package(
     subprocess.run(["git", "-C", str(target_dir), "add", pkg_name], check=True, capture_output=True)
     subprocess.run(
         ["git", "-C", str(target_dir), "commit", "-m", f"publish: {pkg_name} v{pkg_version}"],
-        check=True, capture_output=True,
+        check=True,
+        capture_output=True,
     )
     subprocess.run(
         ["git", "-C", str(target_dir), "tag", tag],
-        check=True, capture_output=True,
+        check=True,
+        capture_output=True,
     )
 
     return {"package_name": pkg_name, "version": pkg_version, "tag": tag}
@@ -67,9 +70,4 @@ def publish_package(
 
 def generate_manifest_snippet(name: str, version: str, remote: str = "origin") -> str:
     """Generate a kanon XML manifest snippet for a published package."""
-    return (
-        f'<project name="{name}" '
-        f'path=".packages/{name}" '
-        f'remote="{remote}" '
-        f'revision="refs/tags/{name}/{version}" />'
-    )
+    return f'<project name="{name}" path=".packages/{name}" remote="{remote}" revision="refs/tags/{name}/{version}" />'

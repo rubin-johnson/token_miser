@@ -1,4 +1,5 @@
 """CLI entry point for token-miser."""
+
 from __future__ import annotations
 
 import argparse
@@ -41,13 +42,23 @@ def cmd_run(args: argparse.Namespace) -> int:
                     model = getattr(args, "model", None)
                     if task.type == "sequential":
                         res = backend.run_sequential(
-                            task.prompts, env.home_dir, env.workspace_dir,
-                            timeout=args.timeout, extra_env=backend_env, bare=bare, model=model,
+                            task.prompts,
+                            env.home_dir,
+                            env.workspace_dir,
+                            timeout=args.timeout,
+                            extra_env=backend_env,
+                            bare=bare,
+                            model=model,
                         )
                     else:
                         res = backend.run(
-                            task.prompt, env.home_dir, env.workspace_dir,
-                            timeout=args.timeout, extra_env=backend_env, bare=bare, model=model,
+                            task.prompt,
+                            env.home_dir,
+                            env.workspace_dir,
+                            timeout=args.timeout,
+                            extra_env=backend_env,
+                            bare=bare,
+                            model=model,
                         )
 
                     checks = check_all_criteria(task.success_criteria, env)
@@ -356,6 +367,7 @@ def cmd_digest(args: argparse.Namespace) -> int:
                 print(f"{len(paths)} digests exported.")
             else:
                 from token_miser.db import get_latest_tune_session
+
                 session = get_latest_tune_session(conn)
                 if not session:
                     print("No tune sessions found.", file=sys.stderr)
@@ -400,8 +412,10 @@ def cmd_publish(args: argparse.Namespace) -> int:
 
     try:
         result = publish_package(
-            pkg_path, args.repo,
-            name=args.name, version=args.version,
+            pkg_path,
+            args.repo,
+            name=args.name,
+            version=args.version,
         )
     except ValueError as e:
         print(f"ERROR: {e}", file=sys.stderr)
@@ -444,10 +458,7 @@ def cmd_packages(args: argparse.Namespace) -> int:
         # Also check .packages/ directly
         packages_dir = Path.cwd() / ".packages"
         if packages_dir.is_dir():
-            packages = sorted(
-                p for p in packages_dir.iterdir()
-                if p.is_dir() and (p / "manifest.yaml").exists()
-            )
+            packages = sorted(p for p in packages_dir.iterdir() if p.is_dir() and (p / "manifest.yaml").exists())
 
     if not packages:
         print("No kanon packages found. Run 'kanon install' first, or check .packages/ directory.")
@@ -473,7 +484,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="token-miser", description="Benchmark coding-agent configuration packages")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument(
-        "--packages-dir", default=None,
+        "--packages-dir",
+        default=None,
         help="Directory containing packages (default: $TOKEN_MISER_PACKAGES_DIR or ./packages)",
     )
     sub = parser.add_subparsers(dest="command", required=True)

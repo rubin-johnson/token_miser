@@ -1,4 +1,5 @@
 """Tests for tune builder."""
+
 import yaml
 
 from token_miser.recommend import Recommendation

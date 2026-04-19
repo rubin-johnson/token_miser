@@ -11,9 +11,11 @@ prompt: |
   - page=0 or negative should default to 1
   - per_page > 100 should cap at 100
   Update existing tests and add new pagination tests.
+setup_commands:
+  - "uv sync -q"
 success_criteria:
   - type: command_exits_zero
-    command: "python -m pytest tests/ -q"
+    command: "uv run pytest tests/ -q"
 quality_rubric:
   - dimension: correctness
     prompt: "Does pagination handle edge cases: empty results, last page with fewer items, invalid page numbers?"

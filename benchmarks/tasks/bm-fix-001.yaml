@@ -12,9 +12,11 @@ prompt: |
   - Page 3 should return items 11-12
 
   Find and fix the pagination bug. Add a regression test that would catch this bug.
+setup_commands:
+  - "uv sync -q"
 success_criteria:
   - type: command_exits_zero
-    command: "python -m pytest tests/ -q"
+    command: "uv run pytest tests/ -q"
 quality_rubric:
   - dimension: correctness
     prompt: "Does the fix correctly resolve the off-by-one error and pass the regression test?"
