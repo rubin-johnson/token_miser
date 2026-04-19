@@ -76,7 +76,8 @@ def _check_output_contains(criterion: Criterion, env: EnvironmentContext) -> Che
         if missing:
             return CheckResult(passed=False, detail=f"Missing in output: {', '.join(missing)}")
         if proc.returncode != 0:
-            return CheckResult(passed=False, detail=f"Command exited {proc.returncode} (output matched but command failed)")
+            detail = f"Command exited {proc.returncode} (output matched but command failed)"
+            return CheckResult(passed=False, detail=detail)
         return CheckResult(passed=True)
     except subprocess.TimeoutExpired:
         return CheckResult(passed=False, detail="Command timed out after 120s")
