@@ -49,3 +49,6 @@ docs/notes-*.md
 docs/research-notes.md
 docs/plans/notes-*.md
 tuned-package/
+
+# Compiled package binaries — build locally, do not commit
+packages/*/bin/

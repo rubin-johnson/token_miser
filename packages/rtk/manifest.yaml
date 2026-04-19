@@ -2,6 +2,7 @@ name: rtk
 version: 0.1.0
 author: rubin-johnson
 description: RTK (Rust Token Killer) — CLI proxy that compresses command outputs via a Claude Code PreToolUse hook
+notes: "Requires bin/rtk binary (not included). See README.md for build/download instructions."
 targets:
   - path: bin/rtk
     dest: bin/rtk
