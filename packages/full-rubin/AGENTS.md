@@ -92,7 +92,7 @@ Create the file and `.claude/` directory if they don't exist. Keep entries brief
 
 **Context management:**
 - Within session: maintain `/tmp/claude-session-state.md` for key decisions; if it has context you lack, compression has occurred — flag it
-- Across sessions: log decisions to claude-mem immediately when made, not at session end
+- Across sessions: log decisions to memory immediately when made, not at session end
 
 **Full Details**: `~/.claude/token-efficiency.md` — read when you need detailed strategies for search tool selection, batch operations, escalation signals, or context staleness decisions
 
@@ -198,17 +198,6 @@ If a `.gitignore` is missing these entries and you're about to commit, add them 
 
 ---
 
-## AWS Tooling (Caylent)
-
-- MCP servers (aws-docs, pricing, terraform, diagrams): run via Docker in `~/code/caylent/cae-claude-bestpractices`
-  - Start: `cd ~/code/caylent/cae-claude-bestpractices && docker compose up -d`
-  - Project MCP config: copy `.mcp.json` to project root
-- Skills: `/scaffold` (AWS project generation), `/review-terraform` (code review with Checkov)
-- Community skills: `~/code/caylent/caylent-community-skills` — compliance, architecture, SOW review
-- For new AWS/Terraform projects: copy `.mcp.json` from cae-claude-bestpractices
-
----
-
 ## Preferences
 
 - SI units (convert if I use imperial, also show imperial in parens)
@@ -217,16 +206,8 @@ If a `.gitignore` is missing these entries and you're about to commit, add them 
 
 ## Dotfiles & Chezmoi
 
-- Dotfiles repo: `~/.local/share/chezmoi` (remote: `github.com:rubin-johnson/dotfiles.git`, branch: `master`)
 - When modifying chezmoi-managed files: edit the **deployed target** (e.g. `~/.zshrc`), then `chezmoi re-add <file>`. Never edit the source (`dotfiles/dot_zshrc`) then re-add — re-add copies target→source and reverts source edits.
 - Commit only the files you changed — don't sweep in unrelated unstaged changes
-
----
-
-## Data Locations
-
-- **mempalace** (primary memory store): MCP server `mempalace`. Use `mempalace_search` for recall, `mempalace_kg_query` / `mempalace_kg_add` for structured knowledge. Always check mempalace alongside auto-memory when looking for prior context. Wings are organized by project (e.g., `crowncastle`, `aws_playground`, `dotfiles`).
-- **claude-mem database** (legacy/secondary): `~/.claude-mem/claude-mem.db` (SQLite). To delete observations: `python3 -c "import sqlite3; conn = sqlite3.connect('$HOME/.claude-mem/claude-mem.db'); conn.execute('DELETE FROM observations WHERE id IN (...)'); conn.commit()"`
 
 ---
 
