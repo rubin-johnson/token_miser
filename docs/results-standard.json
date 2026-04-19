@@ -1,0 +1,478 @@
+{
+  "suite": "standard",
+  "packages": [
+    "claude:baseline",
+    "claude:personal",
+    "claude:personal-async",
+    "claude:personal-lazy"
+  ],
+  "tasks": [
+    "bm-feat-001",
+    "bm-feat-002",
+    "bm-feat-003",
+    "bm-fix-001",
+    "bm-fix-002",
+    "bm-fix-003",
+    "bm-refactor-001",
+    "bm-refactor-002",
+    "bm-refactor-003",
+    "bm-seq-001",
+    "bm-seq-002",
+    "bm-seq-003",
+    "bm-test-001",
+    "bm-test-002",
+    "bm-test-003"
+  ],
+  "matrix": {
+    "bm-feat-001": {
+      "claude:baseline": {
+        "tokens": 8048,
+        "cost": 0.324435,
+        "wall_seconds": 110.2,
+        "criteria_pass": 0,
+        "criteria_total": 2
+      },
+      "claude:personal": {
+        "tokens": 4872,
+        "cost": 0.286916,
+        "wall_seconds": 87.4,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:personal-async": {
+        "tokens": 6310,
+        "cost": 0.304771,
+        "wall_seconds": 87.9,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:personal-lazy": {
+        "tokens": 6425,
+        "cost": 0.30958,
+        "wall_seconds": 94.0,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      }
+    },
+    "bm-feat-002": {
+      "claude:baseline": {
+        "tokens": 4085,
+        "cost": 0.215853,
+        "wall_seconds": 64.0,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:personal": {
+        "tokens": 3381,
+        "cost": 0.175526,
+        "wall_seconds": 56.3,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:personal-async": {
+        "tokens": 3004,
+        "cost": 0.157781,
+        "wall_seconds": 50.6,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:personal-lazy": {
+        "tokens": 3179,
+        "cost": 0.166025,
+        "wall_seconds": 49.0,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      }
+    },
+    "bm-feat-003": {
+      "claude:baseline": {
+        "tokens": 3740,
+        "cost": 0.298969,
+        "wall_seconds": 110.9,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:personal": {
+        "tokens": 4507,
+        "cost": 0.259209,
+        "wall_seconds": 96.0,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:personal-async": {
+        "tokens": 3103,
+        "cost": 0.227135,
+        "wall_seconds": 66.3,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:personal-lazy": {
+        "tokens": 4503,
+        "cost": 0.29665,
+        "wall_seconds": 184.4,
+        "criteria_pass": 1,
+        "criteria_total": 1
+      }
+    },
+    "bm-fix-001": {
+      "claude:baseline": {
+        "tokens": 2795,
+        "cost": 0.140604,
+        "wall_seconds": 49.8,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:personal": {
+        "tokens": 2750,
+        "cost": 0.185884,
+        "wall_seconds": 62.5,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:personal-async": {
+        "tokens": 2524,
+        "cost": 0.167627,
+        "wall_seconds": 54.4,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:personal-lazy": {
+        "tokens": 2430,
+        "cost": 0.150891,
+        "wall_seconds": 51.2,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      }
+    },
+    "bm-fix-002": {
+      "claude:baseline": {
+        "tokens": 4956,
+        "cost": 0.227131,
+        "wall_seconds": 72.5,
+        "criteria_pass": 0,
+        "criteria_total": 2
+      },
+      "claude:personal": {
+        "tokens": 3506,
+        "cost": 0.187691,
+        "wall_seconds": 54.0,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:personal-async": {
+        "tokens": 2567,
+        "cost": 0.177371,
+        "wall_seconds": 64.9,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:personal-lazy": {
+        "tokens": 2893,
+        "cost": 0.183244,
+        "wall_seconds": 51.0,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      }
+    },
+    "bm-fix-003": {
+      "claude:baseline": {
+        "tokens": 17727,
+        "cost": 0.689507,
+        "wall_seconds": 184.7,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:personal": {
+        "tokens": 15452,
+        "cost": 1.141107,
+        "wall_seconds": 238.9,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:personal-async": {
+        "tokens": 14824,
+        "cost": 0.812375,
+        "wall_seconds": 152.0,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:personal-lazy": {
+        "tokens": 18511,
+        "cost": 1.317536,
+        "wall_seconds": 255.0,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      }
+    },
+    "bm-refactor-001": {
+      "claude:baseline": {
+        "tokens": 3659,
+        "cost": 0.182625,
+        "wall_seconds": 55.2,
+        "criteria_pass": 2,
+        "criteria_total": 3
+      },
+      "claude:personal": {
+        "tokens": 3542,
+        "cost": 0.196952,
+        "wall_seconds": 77.4,
+        "criteria_pass": 2,
+        "criteria_total": 3
+      },
+      "claude:personal-async": {
+        "tokens": 4586,
+        "cost": 0.212359,
+        "wall_seconds": 62.9,
+        "criteria_pass": 2,
+        "criteria_total": 3
+      },
+      "claude:personal-lazy": {
+        "tokens": 4776,
+        "cost": 0.213022,
+        "wall_seconds": 62.6,
+        "criteria_pass": 2,
+        "criteria_total": 3
+      }
+    },
+    "bm-refactor-002": {
+      "claude:baseline": {
+        "tokens": 3144,
+        "cost": 0.190668,
+        "wall_seconds": 72.5,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:personal": {
+        "tokens": 4080,
+        "cost": 0.205529,
+        "wall_seconds": 84.8,
+        "criteria_pass": 0,
+        "criteria_total": 2
+      },
+      "claude:personal-async": {
+        "tokens": 2675,
+        "cost": 0.175744,
+        "wall_seconds": 51.0,
+        "criteria_pass": 0,
+        "criteria_total": 2
+      },
+      "claude:personal-lazy": {
+        "tokens": 2425,
+        "cost": 0.16834,
+        "wall_seconds": 50.5,
+        "criteria_pass": 0,
+        "criteria_total": 2
+      }
+    },
+    "bm-refactor-003": {
+      "claude:baseline": {
+        "tokens": 6040,
+        "cost": 0.310837,
+        "wall_seconds": 97.4,
+        "criteria_pass": 0,
+        "criteria_total": 2
+      },
+      "claude:personal": {
+        "tokens": 6032,
+        "cost": 0.357265,
+        "wall_seconds": 122.4,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:personal-async": {
+        "tokens": 6371,
+        "cost": 0.361816,
+        "wall_seconds": 108.4,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:personal-lazy": {
+        "tokens": 7202,
+        "cost": 0.359409,
+        "wall_seconds": 107.4,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      }
+    },
+    "bm-seq-001": {
+      "claude:baseline": {
+        "tokens": 6076,
+        "cost": 0.385359,
+        "wall_seconds": 114.4,
+        "criteria_pass": 0,
+        "criteria_total": 2
+      },
+      "claude:personal": {
+        "tokens": 4718,
+        "cost": 0.307105,
+        "wall_seconds": 95.1,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:personal-async": {
+        "tokens": 4588,
+        "cost": 0.27465,
+        "wall_seconds": 96.0,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:personal-lazy": {
+        "tokens": 2427,
+        "cost": 0.164392,
+        "wall_seconds": 41.0,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      }
+    },
+    "bm-seq-002": {
+      "claude:baseline": {
+        "tokens": 8733,
+        "cost": 0.476102,
+        "wall_seconds": 154.5,
+        "criteria_pass": 0,
+        "criteria_total": 2
+      },
+      "claude:personal": {
+        "tokens": 8110,
+        "cost": 0.444678,
+        "wall_seconds": 266.7,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:personal-async": {
+        "tokens": 7799,
+        "cost": 0.426554,
+        "wall_seconds": 126.9,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:personal-lazy": {
+        "tokens": 6963,
+        "cost": 0.418924,
+        "wall_seconds": 128.5,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      }
+    },
+    "bm-seq-003": {
+      "claude:baseline": {
+        "tokens": 6502,
+        "cost": 0.424076,
+        "wall_seconds": 134.7,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:personal": {
+        "tokens": 4535,
+        "cost": 0.316682,
+        "wall_seconds": 125.3,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:personal-async": {
+        "tokens": 7182,
+        "cost": 0.477419,
+        "wall_seconds": 144.7,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:personal-lazy": {
+        "tokens": 5922,
+        "cost": 0.348475,
+        "wall_seconds": 105.1,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      }
+    },
+    "bm-test-001": {
+      "claude:baseline": {
+        "tokens": 3346,
+        "cost": 0.229732,
+        "wall_seconds": 110.3,
+        "criteria_pass": 0,
+        "criteria_total": 2
+      },
+      "claude:personal": {
+        "tokens": 4913,
+        "cost": 0.266696,
+        "wall_seconds": 99.5,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:personal-async": {
+        "tokens": 3222,
+        "cost": 0.162679,
+        "wall_seconds": 50.4,
+        "criteria_pass": 0,
+        "criteria_total": 2
+      },
+      "claude:personal-lazy": {
+        "tokens": 3138,
+        "cost": 0.201653,
+        "wall_seconds": 61.3,
+        "criteria_pass": 0,
+        "criteria_total": 2
+      }
+    },
+    "bm-test-002": {
+      "claude:baseline": {
+        "tokens": 2549,
+        "cost": 0.15805,
+        "wall_seconds": 47.8,
+        "criteria_pass": 0,
+        "criteria_total": 2
+      },
+      "claude:personal": {
+        "tokens": 3796,
+        "cost": 0.216599,
+        "wall_seconds": 70.7,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:personal-async": {
+        "tokens": 3166,
+        "cost": 0.175248,
+        "wall_seconds": 51.5,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:personal-lazy": {
+        "tokens": 2264,
+        "cost": 0.155784,
+        "wall_seconds": 43.2,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      }
+    },
+    "bm-test-003": {
+      "claude:baseline": {
+        "tokens": 4557,
+        "cost": 0.331368,
+        "wall_seconds": 103.9,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:personal": {
+        "tokens": 5061,
+        "cost": 0.195244,
+        "wall_seconds": 58.3,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:personal-async": {
+        "tokens": 4431,
+        "cost": 0.301449,
+        "wall_seconds": 95.7,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:personal-lazy": {
+        "tokens": 3715,
+        "cost": 0.266821,
+        "wall_seconds": 70.0,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      }
+    }
+  }
+}

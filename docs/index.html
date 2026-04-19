@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>token_miser — Benchmark Results</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --red: #f85149;
+      --yellow: #d29922;
+      --purple: #bc8cff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+    .container { max-width: 1100px; margin: 0 auto; }
+    header { margin-bottom: 3rem; }
+    header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.4rem; }
+    header h1 a { color: var(--accent); text-decoration: none; }
+    header h1 a:hover { text-decoration: underline; }
+    header p { color: var(--muted); max-width: 680px; }
+    .badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.15rem 0.5rem;
+      border-radius: 2rem;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+    .badge-owner { background: #1f3a5f; color: var(--accent); }
+
+    section { margin-bottom: 3rem; }
+    h2 { font-size: 1.2rem; font-weight: 600; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+    h3 { font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.78rem; }
+
+    .suite-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .suite-tab {
+      padding: 0.4rem 1rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .suite-tab.active { border-color: var(--accent); color: var(--accent); background: #1f3a5f33; }
+
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .summary-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+    }
+    .summary-card .pkg-name { font-size: 0.85rem; font-weight: 600; color: var(--accent); margin-bottom: 0.5rem; }
+    .summary-card .metric { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+    .summary-card .metric span:last-child { color: var(--text); font-weight: 500; }
+    .delta { font-size: 0.72rem; font-weight: 600; margin-left: 0.3rem; }
+    .delta.pos { color: var(--green); }
+    .delta.neg { color: var(--red); }
+
+    .pass-rate { font-size: 1.2rem; font-weight: 700; }
+    .pass-rate.high { color: var(--green); }
+    .pass-rate.mid { color: var(--yellow); }
+    .pass-rate.low { color: var(--red); }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    thead th {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    thead th:first-child { border-radius: 6px 0 0 0; }
+    thead th:last-child { border-radius: 0 6px 0 0; }
+    tbody tr:hover { background: #ffffff08; }
+    tbody td {
+      padding: 0.45rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      vertical-align: middle;
+    }
+    .task-id { font-family: monospace; font-size: 0.78rem; color: var(--muted); }
+    .task-name { font-size: 0.82rem; }
+    .tag {
+      display: inline-block;
+      font-size: 0.65rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      font-weight: 600;
+      margin-left: 0.3rem;
+      vertical-align: middle;
+    }
+    .tag-feature { background: #1f3a5f; color: var(--accent); }
+    .tag-bugfix   { background: #2d1f1f; color: #f85149; }
+    .tag-refactor { background: #1f2d1f; color: var(--green); }
+    .tag-test     { background: #2a1f3a; color: var(--purple); }
+    .tag-sequential { background: #2d2a1f; color: var(--yellow); }
+    .tag-easy   { border: 1px solid #30363d; color: var(--muted); }
+    .tag-medium { border: 1px solid #30363d; color: var(--yellow); }
+    .tag-hard   { border: 1px solid #30363d; color: var(--red); }
+
+    .cell-pass { color: var(--green); font-weight: 600; }
+    .cell-partial { color: var(--yellow); }
+    .cell-fail { color: var(--red); }
+    .cell-tokens { font-variant-numeric: tabular-nums; font-size: 0.78rem; }
+
+    .pkg-table th:not(:first-child) { text-align: center; }
+    .pkg-table td:not(:first-child) { text-align: center; }
+
+    .packages-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+    .pkg-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+    }
+    .pkg-card h4 { font-family: monospace; font-size: 0.9rem; color: var(--accent); margin-bottom: 0.4rem; }
+    .pkg-card p { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+    .pkg-card .dim { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--purple); margin-top: 0.4rem; }
+
+    .contrib-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      max-width: 720px;
+    }
+    .contrib-box p { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.75rem; }
+    .contrib-box code {
+      font-family: monospace;
+      font-size: 0.8rem;
+      background: #0d1117;
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      color: var(--text);
+    }
+    .contrib-box ol, .contrib-box ul { padding-left: 1.5rem; font-size: 0.85rem; color: var(--muted); }
+    .contrib-box li { margin-bottom: 0.3rem; }
+
+    .note {
+      font-size: 0.78rem;
+      color: var(--muted);
+      border-left: 3px solid var(--border);
+      padding-left: 0.75rem;
+      margin: 0.75rem 0;
+    }
+    footer {
+      margin-top: 4rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1><a href="https://github.com/rubin-johnson/token_miser">token_miser</a> — Benchmark Results</h1>
+    <p>End-to-end benchmark results for Claude Code configuration packages. Each run is a real agent session on a real coding task — no mocks, no cherry-picking. All experiment data on this page was collected by <strong>Rubin Johnson</strong> <span class="badge badge-owner">sole experimenter</span> on Claude Sonnet 4.6 via AWS Bedrock.</p>
+  </header>
+
+  <!-- SUITE SUMMARY -->
+  <section id="results">
+    <h2>Results</h2>
+
+    <div class="suite-tabs">
+      <button class="suite-tab active" onclick="showSuite('standard')">Standard suite (15 tasks)</button>
+      <button class="suite-tab" onclick="showSuite('quick')">Quick suite (8 tasks)</button>
+    </div>
+
+    <div id="suite-standard">
+      <p class="note">15 tasks across feature, bugfix, refactor, test-writing, and sequential categories. Mix of fixture repos (tiny-cli, tiny-api) and real open-source repos (Flask, httpx). Single run per package — treat pass rates as directional, not statistically final.</p>
+      <div class="summary-grid" id="summary-standard"></div>
+      <table class="pkg-table">
+        <thead id="thead-standard"></thead>
+        <tbody id="tbody-standard"></tbody>
+      </table>
+    </div>
+
+    <div id="suite-quick" style="display:none">
+      <p class="note">8 tasks using self-contained fixture repos only. Faster to run, no network required. Good for quick iteration.</p>
+      <div class="summary-grid" id="summary-quick"></div>
+      <table class="pkg-table">
+        <thead id="thead-quick"></thead>
+        <tbody id="tbody-quick"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- HOW TO READ -->
+  <section id="reading">
+    <h2>How to read this</h2>
+    <div class="contrib-box">
+      <p><strong>Pass rate</strong> is the fraction of success criteria met across all tasks. Each task has 1–3 automated criteria (file exists, command exits zero, output contains a string). This is the primary quality signal.</p>
+      <p><strong>Tokens</strong> is the sum of input + output tokens across all tasks in the suite. Lower is cheaper per run. It does <em>not</em> include cache hits — cached tokens cost ~10x less and are tracked separately.</p>
+      <p><strong>Cost</strong> is the actual USD charged, including cache reads at Bedrock rates. Costs vary run-to-run due to cache state at time of execution.</p>
+      <p><strong>Baseline</strong> is vanilla Claude Code with no CLAUDE.md — the agent's default behavior. Every other package is compared against this.</p>
+      <p class="note">Single-run data has high variance. A package that fails one hard task will look worse than one that happened to get an easier ordering. Interpret trends, not individual numbers.</p>
+    </div>
+  </section>
+
+  <!-- PACKAGES -->
+  <section id="packages">
+    <h2>Packages</h2>
+
+    <h3>Tested in this dataset</h3>
+    <div class="packages-grid" id="tested-packages">
+
+      <div class="pkg-card">
+        <h4>baseline</h4>
+        <p>Vanilla Claude Code — no CLAUDE.md, no configuration. All other packages are measured against this.</p>
+        <div class="dim">Reference</div>
+      </div>
+
+      <div class="pkg-card">
+        <h4>personal</h4>
+        <p>Rubin's full personal config (~270 lines). Covers model selection, token efficiency rules, TDD, git workflow, communication style, and tool preferences. This is the primary config being optimized.</p>
+        <div class="dim">Comprehensive</div>
+      </div>
+
+      <div class="pkg-card">
+        <h4>personal-async</h4>
+        <p>personal + async-first: explicit instruction to batch all independent reads, greps, and shell commands in one message before waiting for results.</p>
+        <div class="dim">Combo · Tool use discipline</div>
+      </div>
+
+      <div class="pkg-card">
+        <h4>personal-lazy</h4>
+        <p>personal + opportunistic-lazy: explicit instruction to never re-read a file already in context, batch edits to the same file, and reference by filename+line rather than re-fetching.</p>
+        <div class="dim">Combo · Context reuse</div>
+      </div>
+
+    </div>
+
+    <h3>Available — not yet benchmarked on standard suite</h3>
+    <div class="packages-grid">
+      <div class="pkg-card">
+        <h4>async-first</h4>
+        <p>Batch all independent reads, greps, and commands in one message. Targets wall time reduction; token cost is secondary.</p>
+        <div class="dim">Tool use discipline</div>
+      </div>
+      <div class="pkg-card">
+        <h4>context-guardian</h4>
+        <p>Session indexing on first call, no re-reads, prune unrelated context every 5 tool calls, write state file before topic switches.</p>
+        <div class="dim">Context management</div>
+      </div>
+      <div class="pkg-card">
+        <h4>depth-control</h4>
+        <p>State assumption about codebase structure before searching, explore breadth-first, one deep dive per task.</p>
+        <div class="dim">Exploration strategy</div>
+      </div>
+      <div class="pkg-card">
+        <h4>fail-smart</h4>
+        <p>Read full error before retrying, enumerate failure modes before implementing, run targeted verification after each change.</p>
+        <div class="dim">Failure discipline</div>
+      </div>
+      <div class="pkg-card">
+        <h4>minimal-wip</h4>
+        <p>Identify the smallest change that satisfies the requirement and write only that. No extras, no side quests.</p>
+        <div class="dim">Scope discipline</div>
+      </div>
+      <div class="pkg-card">
+        <h4>opportunistic-lazy</h4>
+        <p>Never re-read a file already in the conversation. Batch all edits to one file before moving on.</p>
+        <div class="dim">Context reuse</div>
+      </div>
+      <div class="pkg-card">
+        <h4>phase-budget</h4>
+        <p>Hard tool-call budgets per phase: 10 for explore, 15 for implement, 5 for verify. Budget overrun = stop and re-plan.</p>
+        <div class="dim">Structured execution</div>
+      </div>
+      <div class="pkg-card">
+        <h4>quality-floor</h4>
+        <p>Correctness over speed. Full file reads, exhaustive test coverage, explicit verification of every acceptance criterion. Inverse of token-miser — use as a quality calibration baseline.</p>
+        <div class="dim">Inverse / calibration</div>
+      </div>
+      <div class="pkg-card">
+        <h4>adversarial-frugal</h4>
+        <p>Maximum suppression: no articles, no filler, max 30 tool calls, no prose between tool calls, zero comments in code.</p>
+        <div class="dim">Extreme verbosity control</div>
+      </div>
+      <div class="pkg-card">
+        <h4>caveman</h4>
+        <p>Sentence-level constraints: ≤1 sentence between tool calls, no markdown, no articles, no filler openers.</p>
+        <div class="dim">Verbosity control</div>
+      </div>
+      <div class="pkg-card">
+        <h4>c-structured</h4>
+        <p>Multi-file .claude/ layout with max 50 tool calls per task and separate rule files for workflow and efficiency.</p>
+        <div class="dim">Tool call budget</div>
+      </div>
+      <div class="pkg-card">
+        <h4>drona23</h4>
+        <p>Think before acting, read before writing, skip files over 100KB, recommend /cost on long sessions.</p>
+        <div class="dim">Planning discipline</div>
+      </div>
+      <div class="pkg-card">
+        <h4>lean</h4>
+        <p>Trimmed personal config (~40 lines). Behavior-changing rules only: lead-answer, grep-first, one-tool-per-step, TDD, challenge assumptions.</p>
+        <div class="dim">Minimal comprehensive</div>
+      </div>
+      <div class="pkg-card">
+        <h4>piersede</h4>
+        <p>Aggressive context minimization: strict retrieval hierarchy (LSP → grep → line range → full file), subagent delegation for noisy work, compaction policy.</p>
+        <div class="dim">Context minimization</div>
+      </div>
+      <div class="pkg-card">
+        <h4>planner</h4>
+        <p>Numbered plan before any code change, steps per file, test after each step, no exploratory reads.</p>
+        <div class="dim">Planning discipline</div>
+      </div>
+      <div class="pkg-card">
+        <h4>tdd-strict</h4>
+        <p>Strict TDD: failing test first, minimum code to pass, refactor only after green. 100% coverage on new code.</p>
+        <div class="dim">Test discipline</div>
+      </div>
+      <div class="pkg-card">
+        <h4>thinking-cap</h4>
+        <p>Limit extended reasoning to 2–3 sentences. No enumeration of possibilities — pick the most likely and act.</p>
+        <div class="dim">Reasoning budget</div>
+      </div>
+      <div class="pkg-card">
+        <h4>thorough</h4>
+        <p>Correctness-first: read all relevant files before writing, add type hints and docstrings, cover all test cases, re-verify requirements before declaring done.</p>
+        <div class="dim">Correctness focus</div>
+      </div>
+      <div class="pkg-card">
+        <h4>token-miser</h4>
+        <p>Lead with the answer, one sentence between tool calls max, grep before read, batch independent tool calls, minimum code that satisfies requirements.</p>
+        <div class="dim">Token efficiency</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTRIBUTING -->
+  <section id="contributing">
+    <h2>Submitting a package for benchmarking</h2>
+    <div class="contrib-box">
+      <p>All data on this page was collected by me on a consistent hardware + model setup. To keep results comparable, <strong>I run all experiments myself</strong> — I don't accept self-reported numbers.</p>
+      <p>Caylent colleagues may get access to run experiments directly; reach out if you're interested.</p>
+
+      <p><strong>To submit a package for benchmarking:</strong></p>
+      <ol>
+        <li>Open a GitHub issue titled <code>benchmark request: &lt;package-name&gt;</code></li>
+        <li>Include your package files (CLAUDE.md / AGENTS.md, optional settings.json)</li>
+        <li>Describe the strategy in 2–3 sentences: what behavior it changes and why</li>
+        <li>Include enough reproduction details that I can run the same experiment: model, suite, any env requirements</li>
+        <li>If you have your own numbers, include them with your setup details — I'll run my own and compare</li>
+      </ol>
+      <p>I'll add packages that test a genuinely new strategy dimension and post results when I have them. I reserve the right to decline packages that duplicate existing ones or that I can't run cleanly.</p>
+
+      <p class="note">If your package is in the <a href="https://github.com/rubin-johnson/loadout-packages">loadout-packages registry</a> already, just link to it in the issue — no need to paste the files.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p>Data collected on Claude Sonnet 4.6 via AWS Bedrock (us-east-2) &middot; <a href="https://github.com/rubin-johnson/token_miser">github.com/rubin-johnson/token_miser</a> &middot; Last updated <span id="last-updated"></span></p>
+  </footer>
+
+</div>
+
+<script>
+const PACKAGE_LABELS = {
+  'claude:baseline': 'baseline',
+  'claude:personal': 'personal',
+  'claude:personal-async': 'personal-async',
+  'claude:personal-lazy': 'personal-lazy',
+};
+
+const TASK_META = {
+  'bm-feat-001': { name: 'Add CLI stats subcommand', category: 'feature', difficulty: 'easy' },
+  'bm-feat-002': { name: 'Add config file support', category: 'feature', difficulty: 'medium' },
+  'bm-feat-003': { name: 'Flask tutorial feature', category: 'feature', difficulty: 'medium' },
+  'bm-fix-001':  { name: 'Fix pagination off-by-one', category: 'bugfix', difficulty: 'easy' },
+  'bm-fix-002':  { name: 'Fix CLI greeting bug', category: 'bugfix', difficulty: 'easy' },
+  'bm-fix-003':  { name: 'Fix httpx bug', category: 'bugfix', difficulty: 'hard' },
+  'bm-refactor-001': { name: 'Extract God method', category: 'refactor', difficulty: 'easy' },
+  'bm-refactor-002': { name: 'Schema refactor', category: 'refactor', difficulty: 'medium' },
+  'bm-refactor-003': { name: 'httpx refactor', category: 'refactor', difficulty: 'hard' },
+  'bm-test-001': { name: 'Write utility tests', category: 'test', difficulty: 'easy' },
+  'bm-test-002': { name: 'Write API tests', category: 'test', difficulty: 'medium' },
+  'bm-test-003': { name: 'Flask tutorial tests', category: 'test', difficulty: 'hard' },
+  'bm-seq-001':  { name: 'Multi-step config task', category: 'sequential', difficulty: 'easy' },
+  'bm-seq-002':  { name: 'Multi-step API task', category: 'sequential', difficulty: 'medium' },
+  'bm-seq-003':  { name: 'Multi-step debug task', category: 'sequential', difficulty: 'hard' },
+  // quick-only
+  'bm-refactor-002-q': { name: 'Schema refactor (quick)', category: 'refactor', difficulty: 'medium' },
+};
+
+function passClass(pass, total) {
+  const r = pass / total;
+  if (r === 1) return 'cell-pass';
+  if (r === 0) return 'cell-fail';
+  return 'cell-partial';
+}
+
+function passRateClass(pass, total) {
+  const r = pass / total;
+  if (r >= 0.5) return 'high';
+  if (r >= 0.25) return 'mid';
+  return 'low';
+}
+
+function fmt(n) { return n.toLocaleString(); }
+function fmtDelta(v, ref, invert) {
+  if (!ref) return '';
+  const pct = ((v - ref) / ref * 100);
+  const sign = pct > 0 ? '+' : '';
+  const cls = (invert ? pct < 0 : pct > 0) ? 'pos' : 'neg';
+  return `<span class="delta ${cls}">${sign}${pct.toFixed(1)}%</span>`;
+}
+
+async function loadSuite(id) {
+  const resp = await fetch(`results-${id}.json`);
+  const data = await resp.json();
+  return data;
+}
+
+function renderSummary(containerId, data) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const packages = data.packages;
+  const tasks = data.tasks;
+  const matrix = data.matrix;
+
+  const baseline = packages[0];
+
+  packages.forEach(pkg => {
+    let totalTokens = 0, totalPass = 0, totalCriteria = 0, totalCost = 0;
+    tasks.forEach(t => {
+      const cell = matrix[t]?.[pkg];
+      if (cell) {
+        totalTokens += cell.tokens || 0;
+        totalPass += cell.criteria_pass || 0;
+        totalCriteria += cell.criteria_total || 0;
+        totalCost += cell.cost || 0;
+      }
+    });
+
+    const baseTokens = pkg !== baseline ? (() => {
+      let t = 0; tasks.forEach(task => { t += matrix[task]?.[baseline]?.tokens || 0; }); return t;
+    })() : null;
+
+    const rateClass = passRateClass(totalPass, totalCriteria);
+    const label = PACKAGE_LABELS[pkg] || pkg;
+
+    const card = document.createElement('div');
+    card.className = 'summary-card';
+    card.innerHTML = `
+      <div class="pkg-name">${label}</div>
+      <div style="margin-bottom:0.5rem">
+        <span class="pass-rate ${rateClass}">${totalCriteria ? Math.round(totalPass/totalCriteria*100) : 0}%</span>
+        <span style="font-size:0.75rem;color:var(--muted)"> pass rate (${totalPass}/${totalCriteria})</span>
+      </div>
+      <div class="metric"><span>Tokens</span><span>${fmt(totalTokens)}${baseTokens ? fmtDelta(totalTokens, baseTokens, true) : ''}</span></div>
+      <div class="metric"><span>Cost</span><span>$${totalCost.toFixed(2)}</span></div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function renderTable(theadId, tbodyId, data) {
+  const thead = document.getElementById(theadId);
+  const tbody = document.getElementById(tbodyId);
+  const packages = data.packages;
+  const tasks = data.tasks;
+  const matrix = data.matrix;
+
+  // Header
+  let headerRow = '<tr><th>Task</th>';
+  packages.forEach(pkg => {
+    headerRow += `<th>${PACKAGE_LABELS[pkg] || pkg}</th>`;
+  });
+  headerRow += '</tr>';
+  thead.innerHTML = headerRow;
+
+  // Body
+  tbody.innerHTML = '';
+  tasks.forEach(taskId => {
+    const meta = TASK_META[taskId] || {};
+    const row = document.createElement('tr');
+
+    let cells = `<td>
+      <div class="task-id">${taskId}</div>
+      <div class="task-name">
+        ${meta.name || taskId}
+        <span class="tag tag-${meta.category || ''}">${meta.category || ''}</span>
+        <span class="tag tag-${meta.difficulty || ''}">${meta.difficulty || ''}</span>
+      </div>
+    </td>`;
+
+    packages.forEach(pkg => {
+      const cell = matrix[taskId]?.[pkg];
+      if (!cell) { cells += '<td style="color:var(--muted)">—</td>'; return; }
+      const cls = passClass(cell.criteria_pass, cell.criteria_total);
+      cells += `<td>
+        <span class="${cls}">${cell.criteria_pass}/${cell.criteria_total}</span>
+        <div class="cell-tokens">${fmt(cell.tokens)}t</div>
+      </td>`;
+    });
+
+    row.innerHTML = cells;
+    tbody.appendChild(row);
+  });
+}
+
+async function showSuite(id) {
+  document.querySelectorAll('.suite-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('[id^="suite-"]').forEach(s => s.style.display = 'none');
+  event.target.classList.add('active');
+  document.getElementById(`suite-${id}`).style.display = '';
+
+  const data = await loadSuite(id);
+  renderSummary(`summary-${id}`, data);
+  renderTable(`thead-${id}`, `tbody-${id}`, data);
+}
+
+// Init
+document.getElementById('last-updated').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+loadSuite('standard').then(data => {
+  renderSummary('summary-standard', data);
+  renderTable('thead-standard', 'tbody-standard', data);
+});
+</script>
+</body>
+</html>

@@ -2,7 +2,22 @@
 
 A/B test coding-agent configurations.
 
-token-miser runs identical tasks under different agent/package combinations and measures token usage, cost, and quality. It now supports both Claude Code and Codex runs from the same CLI, so you can compare a vanilla setup against a package, across one agent or both.
+token-miser runs identical tasks under different agent/package combinations and measures token usage, cost, and quality. It supports both Claude Code and Codex runs from the same CLI, so you can compare a vanilla setup against a package, across one agent or both.
+
+## Benchmark Results
+
+**[rubin-johnson.github.io/token_miser](https://rubin-johnson.github.io/token_miser)** — live results dashboard showing pass rates, token usage, and cost across packages and suites.
+
+Current headline (standard suite, 15 tasks, Claude Sonnet 4.6 via Bedrock):
+
+| Package | Pass rate | Tokens | vs baseline |
+|---------|-----------|--------|-------------|
+| baseline (vanilla) | 12% | 85,957 | — |
+| personal | **40%** | 79,255 | -7.8% tokens |
+| personal-lazy | 36% | 76,773 | -10.7% tokens |
+| personal-async | 32% | 76,352 | -11.2% tokens |
+
+All experiment data is collected by the repo owner on a consistent setup. See [Submitting a package](#submitting-a-package-for-benchmarking) if you want your package included.
 
 ## Concepts
 
@@ -230,6 +245,24 @@ uv run token-miser --help
 > **Note:** The `loadout` dependency is declared as a git source in `pyproject.toml`. Do not
 > run `pip install loadout` separately — the package with that name on PyPI is unrelated.
 > `uv sync` handles the correct version automatically.
+
+## Submitting a package for benchmarking
+
+All benchmark data is collected by me (Rubin Johnson) on a consistent hardware and model setup. I don't accept self-reported numbers — I run all experiments myself so results are comparable.
+
+**To submit a package:**
+
+1. Open a GitHub issue titled `benchmark request: <package-name>`
+2. Include your package files (`CLAUDE.md` / `AGENTS.md`, optional `settings.json`)
+3. Describe the strategy in 2–3 sentences: what behavior it changes and why
+4. Include reproduction details: model, suite, any env requirements
+5. If you have your own numbers, include them with your setup — I'll run independently and compare
+
+Packages that test a genuinely new strategy dimension are most likely to get picked up. I'll decline submissions that duplicate existing ones or can't be run cleanly in the standard environment.
+
+If your package is already in the [loadout-packages registry](https://github.com/rubin-johnson/loadout-packages), just link to it in the issue.
+
+Caylent colleagues may get access to run experiments directly — reach out if interested.
 
 ## Ecosystem
 
