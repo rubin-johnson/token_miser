@@ -1,0 +1,7 @@
+name: personal-lazy
+version: 0.1.0
+author: rubin-johnson
+description: personal config + opportunistic-lazy — never re-read a file already in context
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md

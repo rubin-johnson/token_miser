@@ -1,0 +1,7 @@
+name: context-guardian
+version: 0.1.0
+author: rubin-johnson
+description: Context management — reuse reads, index on session start, prune every 5 calls, state file on topic switch
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md

@@ -1,0 +1,7 @@
+name: minimal-wip
+version: 0.1.0
+author: rubin-johnson
+description: Minimum viable change only — no extras, no side quests, no generalization beyond the requirement
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md

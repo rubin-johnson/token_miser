@@ -1,0 +1,7 @@
+name: quality-floor
+version: 0.1.0
+author: rubin-johnson
+description: Inverse of token-miser — correctness at all cost, full reads, exhaustive testing, explicit verification
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md

@@ -1,0 +1,7 @@
+name: async-first
+version: 0.1.0
+author: rubin-johnson
+description: Parallel-first tool use — batch all independent reads, greps, and commands in one message
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md

@@ -1,0 +1,7 @@
+name: depth-control
+version: 0.1.0
+author: rubin-johnson
+description: Assumption-driven search + breadth-first traversal + one-deep-dive-per-task exploration discipline
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md

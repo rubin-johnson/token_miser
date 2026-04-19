@@ -1,0 +1,7 @@
+name: phase-budget
+version: 0.1.0
+author: rubin-johnson
+description: Three-phase structured execution with hard tool-call budgets — explore/implement/verify
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md

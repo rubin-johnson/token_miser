@@ -1,0 +1,7 @@
+name: opportunistic-lazy
+version: 0.1.0
+author: rubin-johnson
+description: Never re-read a file already in context — track reads, batch mutations, reference don't repeat
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md

@@ -1,0 +1,7 @@
+name: fail-smart
+version: 0.1.0
+author: rubin-johnson
+description: Error-first diagnosis, failure mode enumeration before testing, incremental per-change verification
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md
