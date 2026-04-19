@@ -90,6 +90,16 @@ def test_command_succeeds_failure(tmp_path):
     assert result.passed is False
 
 
+def test_output_contains_fails_on_nonzero_exit(tmp_path):
+    env = _make_env(tmp_path)
+    os.makedirs(env.workspace_dir, exist_ok=True)
+    os.makedirs(env.home_dir, exist_ok=True)
+    c = Criterion(type="output_contains", command="echo expected; exit 1", contains=["expected"])
+    result = check_criterion(c, env)
+    assert result.passed is False
+    assert "exit" in result.detail.lower() or "1" in result.detail
+
+
 def test_check_all_criteria(tmp_path):
     env = _make_env(tmp_path)
     os.makedirs(env.workspace_dir, exist_ok=True)
