@@ -124,7 +124,7 @@ class TestCompareDigests:
         }
         d2 = {
             "suite": "quick",
-            "baseline_package": "slim-rubin",
+            "baseline_package": "lean",
             "summary": {
                 "baseline": {"total_tokens": 4000, "total_cost": 0.0025},
                 "tuned": {"total_tokens": 2800, "total_cost": 0.0018},
@@ -139,4 +139,4 @@ class TestCompareDigests:
         output = compare_digests(p1, p2)
         assert "quick" in output
         assert "vanilla" in output
-        assert "slim-rubin" in output
+        assert "lean" in output

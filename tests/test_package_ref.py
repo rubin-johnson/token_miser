@@ -98,8 +98,8 @@ def test_slash_path_bypasses_name_lookup(tmp_path):
 
 
 def test_name_lookup_via_env(tmp_path, monkeypatch):
-    (tmp_path / "slim-rubin").mkdir()
+    (tmp_path / "lean").mkdir()
     monkeypatch.setenv("TOKEN_MISER_PACKAGES_DIR", str(tmp_path))
-    ref = parse_package_ref("slim-rubin")
-    assert ref.name == "slim-rubin"
-    assert ref.package_path == str((tmp_path / "slim-rubin").resolve())
+    ref = parse_package_ref("lean")
+    assert ref.name == "lean"
+    assert ref.package_path == str((tmp_path / "lean").resolve())

@@ -211,7 +211,7 @@ To use packages from another directory (e.g. your dotfiles):
 ```bash
 export TOKEN_MISER_PACKAGES_DIR=~/.claude/packages
 token-miser list           # show available packages
-token-miser tune --package slim-rubin   # resolve by name
+token-miser tune --package lean   # resolve by name
 ```
 
 ## Data
