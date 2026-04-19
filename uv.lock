@@ -227,29 +227,21 @@ wheels = [
 [[package]]
 name = "kanon-cli"
 version = "1.2.0"
-source = { editable = "../../caylent/kanon" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "packaging" },
 ]
-
-[package.metadata]
-requires-dist = [{ name = "packaging", specifier = ">=23.0" }]
+sdist = { url = "https://files.pythonhosted.org/packages/c7/23/83ca838f372a4236caec123e58548d8e74622d36aef7d8f56af379765f59/kanon_cli-1.2.0.tar.gz", hash = "sha256:ab8743aa951cd9ac39bdf48d9db273af137ad4c28bd35ea3c976150dd656b29a", size = 130585, upload-time = "2026-04-14T19:38:24.653Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ef/51/f1fc63df88d00d3b44565b306f8bfeaefd01d69b85bf1cb2cd4a57410558/kanon_cli-1.2.0-py3-none-any.whl", hash = "sha256:349e739d28d35beeeb3a30b030e94019fbbddd8cd832da01fd30e12134adcc8b", size = 47152, upload-time = "2026-04-14T19:38:23.473Z" },
+]
 
 [[package]]
 name = "loadout"
 version = "0.1.0"
-source = { editable = "../loadout" }
+source = { git = "ssh://git@github.com/rubin-johnson/loadout.git?rev=v0.1.0#e5d65ec06bebc129406d0e6fd78f6c8b54556b92" }
 dependencies = [
     { name = "pyyaml" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "pyyaml", specifier = ">=6.0" }]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=9.0" },
-    { name = "ruff", specifier = ">=0.11" },
 ]
 
 [[package]]
@@ -521,8 +513,8 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "anthropic", specifier = ">=0.40" },
-    { name = "kanon-cli", editable = "../../caylent/kanon" },
-    { name = "loadout", editable = "../loadout" },
+    { name = "kanon-cli", specifier = "==1.2.0" },
+    { name = "loadout", git = "ssh://git@github.com/rubin-johnson/loadout.git?rev=v0.1.0" },
     { name = "pyyaml", specifier = ">=6.0" },
 ]
 
