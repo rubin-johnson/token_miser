@@ -16,7 +16,7 @@ token-miser runs identical tasks under different agent/package combinations and 
 - Python 3.11+
 - [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) installed and authenticated for Claude runs (`claude auth status`)
 - [Codex CLI](https://developers.openai.com/codex/) installed and authenticated for Codex runs (`codex`)
-- [loadout](https://github.com/rubin-johnson/loadout) installed (`uv tool install loadout`)
+- [loadout](https://github.com/rubin-johnson/loadout) — installed automatically as a dependency (git source)
 
 ## Install
 
@@ -221,10 +221,15 @@ All results are stored locally in `~/.token_miser/results.db` (SQLite). Runs now
 ## Development
 
 ```bash
+git clone https://github.com/rubin-johnson/token_miser.git
+cd token_miser
 uv sync
-uv run pytest tests/ -v
-uv run ruff check src/ tests/
+uv run token-miser --help
 ```
+
+> **Note:** The `loadout` dependency is declared as a git source in `pyproject.toml`. Do not
+> run `pip install loadout` separately — the package with that name on PyPI is unrelated.
+> `uv sync` handles the correct version automatically.
 
 ## Ecosystem
 

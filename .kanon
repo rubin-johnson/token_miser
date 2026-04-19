@@ -1,6 +1,9 @@
+# This .kanon file shows how kanon distributes packages to a team.
+# It points to the author's public package repository as an example.
+# Replace GITBASE and KANON_SOURCE_packages_URL to use your own package repository.
+#
 # token-miser Kanon Configuration
 #
-# This .kanon file shows how kanon distributes loadout packages to the team.
 # kanon syncs versioned packages from a manifest repo into .packages/,
 # then token-miser can reference them as experiment packages.
 #

@@ -3,7 +3,7 @@
 #
 # Usage:
 #   EXPERIMENT_REPO_LOADOUT=$HOME/code/personal/loadout ./scripts/run-matrix.sh tasks/loadout-diff-001.yaml
-#   EXPERIMENT_REPO_KANON=$HOME/code/caylent/kanon ./scripts/run-matrix.sh tasks/kanon-status-001.yaml
+#   EXPERIMENT_REPO_KANON=$HOME/code/kanon ./scripts/run-matrix.sh tasks/kanon-status-001.yaml
 #
 # Requires: .packages/ populated by 'kanon install' (or symlinks for dev)
 set -euo pipefail
