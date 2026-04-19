@@ -1,5 +1,11 @@
 """Tests for database module."""
-from token_miser.db import Run, get_run, get_runs, init_db, store_run
+from token_miser.db import Run, db_path, get_run, get_runs, init_db, store_run
+
+
+def test_db_path_env_override(monkeypatch, tmp_path):
+    custom = str(tmp_path / "custom.db")
+    monkeypatch.setenv("TOKEN_MISER_DB", custom)
+    assert db_path() == custom
 
 
 def test_init_and_store(tmp_path):

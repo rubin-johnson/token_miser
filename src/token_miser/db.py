@@ -46,6 +46,9 @@ class TuneSession:
 
 
 def db_path() -> str:
+    override = os.environ.get("TOKEN_MISER_DB")
+    if override:
+        return override
     home = Path.home()
     return str(home / ".token_miser" / "results.db")
 
