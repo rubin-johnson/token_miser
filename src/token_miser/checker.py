@@ -20,7 +20,7 @@ def check_criterion(criterion: Criterion, env: EnvironmentContext) -> CheckResul
     match criterion.type:
         case "file_exists":
             return _check_file_exists(criterion, env)
-        case "command_exits_zero":
+        case "command_exits_zero" | "command_succeeds":
             return _check_command_exits_zero(criterion, env)
         case "output_contains":
             return _check_output_contains(criterion, env)

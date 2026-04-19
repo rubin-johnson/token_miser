@@ -72,6 +72,24 @@ def test_unknown_type(tmp_path):
     assert "Unknown" in result.detail
 
 
+def test_command_succeeds_alias(tmp_path):
+    env = _make_env(tmp_path)
+    os.makedirs(env.workspace_dir, exist_ok=True)
+    os.makedirs(env.home_dir, exist_ok=True)
+    c = Criterion(type="command_succeeds", command="true")
+    result = check_criterion(c, env)
+    assert result.passed is True
+
+
+def test_command_succeeds_failure(tmp_path):
+    env = _make_env(tmp_path)
+    os.makedirs(env.workspace_dir, exist_ok=True)
+    os.makedirs(env.home_dir, exist_ok=True)
+    c = Criterion(type="command_succeeds", command="false")
+    result = check_criterion(c, env)
+    assert result.passed is False
+
+
 def test_check_all_criteria(tmp_path):
     env = _make_env(tmp_path)
     os.makedirs(env.workspace_dir, exist_ok=True)
