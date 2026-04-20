@@ -1,0 +1,7 @@
+name: rubin
+version: 0.1.0
+author: rubin-johnson
+description: Rubin's full personal config — everything, everywhere, all at once
+targets:
+  - path: CLAUDE.md
+    dest: CLAUDE.md

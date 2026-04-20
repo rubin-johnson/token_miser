@@ -13,9 +13,9 @@ Current headline (standard suite, 15 tasks, Claude Sonnet 4.6 via Bedrock):
 | Package | Pass rate | Tokens | vs baseline |
 |---------|-----------|--------|-------------|
 | baseline (vanilla) | 12% | 85,957 | — |
-| personal | **40%** | 79,255 | -7.8% tokens |
-| personal-lazy | 36% | 76,773 | -10.7% tokens |
-| personal-async | 32% | 76,352 | -11.2% tokens |
+| rubin | **40%** | 79,255 | -7.8% tokens |
+| rubin-lazy | 36% | 76,773 | -10.7% tokens |
+| rubin-async | 32% | 76,352 | -11.2% tokens |
 
 All experiment data is collected by the repo owner on a consistent setup. See [Submitting a package](#submitting-a-package-for-benchmarking) if you want your package included.
 

@@ -1,7 +1,0 @@
-name: personal-async
-version: 0.1.0
-author: rubin-johnson
-description: personal config + async-first — batch all independent reads and commands
-targets:
-  - path: CLAUDE.md
-    dest: CLAUDE.md
