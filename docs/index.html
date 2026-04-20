@@ -131,6 +131,8 @@
       border-radius: 8px; padding: 1rem 1.1rem;
     }
     .pkg-card h4 { font-family: monospace; font-size: 0.88rem; color: var(--accent); margin-bottom: 0.35rem; }
+    .pkg-card h4 a { color: inherit; text-decoration: none; }
+    .pkg-card h4 a:hover { text-decoration: underline; }
     .pkg-card p  { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
     .pkg-card .dim { font-size: 0.67rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--purple); margin-top: 0.4rem; }
     .pkg-card .tested-badge { font-size: 0.67rem; font-weight: 600; color: var(--green); float: right; margin-top: 0.1rem; }
@@ -230,17 +232,17 @@
         <div class="dim">Reference</div>
       </div>
       <div class="pkg-card">
-        <h4>rubin <span class="tested-badge">✓ tested</span></h4>
+        <h4><a href="https://github.com/rubin-johnson/rubin">rubin</a> <span class="tested-badge">✓ tested</span></h4>
         <p>Rubin's full personal config (~270 lines). Model selection, token efficiency, TDD, git workflow, communication style, parallel execution preference.</p>
         <div class="dim">Comprehensive personal</div>
       </div>
       <div class="pkg-card">
-        <h4>rubin-async <span class="tested-badge">✓ tested</span></h4>
+        <h4><a href="https://github.com/rubin-johnson/rubin-async">rubin-async</a> <span class="tested-badge">✓ tested</span></h4>
         <p>rubin + async-first: explicit instruction to batch all independent reads, greps, and shell commands before waiting for results.</p>
         <div class="dim">Combo · Tool batching</div>
       </div>
       <div class="pkg-card">
-        <h4>rubin-lazy <span class="tested-badge">✓ tested</span></h4>
+        <h4><a href="https://github.com/rubin-johnson/rubin-lazy">rubin-lazy</a> <span class="tested-badge">✓ tested</span></h4>
         <p>rubin + opportunistic-lazy: never re-read a file already in context, batch edits to the same file, reference by filename+line instead of re-fetching.</p>
         <div class="dim">Combo · Context reuse</div>
       </div>
@@ -249,97 +251,97 @@
     <h3>Available — not yet benchmarked on standard suite</h3>
     <div class="pkg-grid">
       <div class="pkg-card">
-        <h4>async-first</h4>
+        <h4><a href="https://github.com/rubin-johnson/async-first">async-first</a></h4>
         <p>Batch all independent reads, greps, and commands in one message. Targets wall time; token cost is secondary.</p>
         <div class="dim">Tool use discipline</div>
       </div>
       <div class="pkg-card">
-        <h4>context-guardian</h4>
+        <h4><a href="https://github.com/rubin-johnson/context-guardian">context-guardian</a></h4>
         <p>Session indexing on first call, no re-reads, prune unrelated context every 5 tool calls, write state file before topic switches.</p>
         <div class="dim">Context management</div>
       </div>
       <div class="pkg-card">
-        <h4>depth-control</h4>
+        <h4><a href="https://github.com/rubin-johnson/depth-control">depth-control</a></h4>
         <p>State assumption about structure before searching, explore breadth-first, one deep dive per task.</p>
         <div class="dim">Exploration strategy</div>
       </div>
       <div class="pkg-card">
-        <h4>fail-smart</h4>
+        <h4><a href="https://github.com/rubin-johnson/fail-smart">fail-smart</a></h4>
         <p>Read full error before retrying, enumerate failure modes before implementing, run targeted verification after each change.</p>
         <div class="dim">Failure discipline</div>
       </div>
       <div class="pkg-card">
-        <h4>minimal-wip</h4>
+        <h4><a href="https://github.com/rubin-johnson/minimal-wip">minimal-wip</a></h4>
         <p>Identify the smallest change that satisfies the requirement and write only that — no extras, no side quests.</p>
         <div class="dim">Scope discipline</div>
       </div>
       <div class="pkg-card">
-        <h4>opportunistic-lazy</h4>
+        <h4><a href="https://github.com/rubin-johnson/opportunistic-lazy">opportunistic-lazy</a></h4>
         <p>Never re-read a file already in the conversation. Batch all edits to one file before moving on.</p>
         <div class="dim">Context reuse</div>
       </div>
       <div class="pkg-card">
-        <h4>phase-budget</h4>
+        <h4><a href="https://github.com/rubin-johnson/phase-budget">phase-budget</a></h4>
         <p>Hard tool-call budgets per phase: 10 explore, 15 implement, 5 verify. Budget overrun = stop and re-plan.</p>
         <div class="dim">Structured execution</div>
       </div>
       <div class="pkg-card">
-        <h4>quality-floor</h4>
+        <h4><a href="https://github.com/rubin-johnson/quality-floor">quality-floor</a></h4>
         <p>Correctness over speed. Full file reads, exhaustive test coverage, explicit criterion verification. Inverse calibration baseline.</p>
         <div class="dim">Inverse · Calibration</div>
       </div>
       <div class="pkg-card">
-        <h4>adversarial-frugal</h4>
+        <h4><a href="https://github.com/rubin-johnson/adversarial-frugal">adversarial-frugal</a></h4>
         <p>Maximum suppression: no articles, no filler, max 30 tool calls, no prose between tool calls, zero code comments.</p>
         <div class="dim">Extreme verbosity control</div>
       </div>
       <div class="pkg-card">
-        <h4>caveman</h4>
+        <h4><a href="https://github.com/rubin-johnson/caveman">caveman</a></h4>
         <p>Sentence-level constraints: ≤1 sentence between tool calls, no markdown, no articles, no filler openers.</p>
         <div class="dim">Verbosity control</div>
       </div>
       <div class="pkg-card">
-        <h4>c-structured</h4>
+        <h4><a href="https://github.com/rubin-johnson/c-structured">c-structured</a></h4>
         <p>Multi-file .claude/ layout, max 50 tool calls per task, separate rule files for workflow and efficiency.</p>
         <div class="dim">Tool call budget</div>
       </div>
       <div class="pkg-card">
-        <h4>drona23</h4>
+        <h4><a href="https://github.com/rubin-johnson/drona23">drona23</a></h4>
         <p>Think before acting, read before writing, skip files over 100KB, recommend /cost on long sessions.</p>
         <div class="dim">Planning discipline</div>
       </div>
       <div class="pkg-card">
-        <h4>lean</h4>
+        <h4><a href="https://github.com/rubin-johnson/lean">lean</a></h4>
         <p>Trimmed config (~40 lines). Behavior-changing rules only: lead-answer, grep-first, one-tool-per-step, TDD, challenge assumptions.</p>
         <div class="dim">Minimal comprehensive</div>
       </div>
       <div class="pkg-card">
-        <h4>piersede</h4>
+        <h4><a href="https://github.com/rubin-johnson/piersede">piersede</a></h4>
         <p>Aggressive context minimization: strict retrieval hierarchy (LSP → grep → line range → full file), subagent delegation, compaction policy.</p>
         <div class="dim">Context minimization</div>
       </div>
       <div class="pkg-card">
-        <h4>planner</h4>
+        <h4><a href="https://github.com/rubin-johnson/planner">planner</a></h4>
         <p>Numbered plan before any code change, one step per file, run tests after each step, no exploratory reads.</p>
         <div class="dim">Planning discipline</div>
       </div>
       <div class="pkg-card">
-        <h4>tdd-strict</h4>
+        <h4><a href="https://github.com/rubin-johnson/tdd-strict">tdd-strict</a></h4>
         <p>Strict TDD: failing test first, minimum code to pass, refactor only after green. 100% coverage on new code.</p>
         <div class="dim">Test discipline</div>
       </div>
       <div class="pkg-card">
-        <h4>thinking-cap</h4>
+        <h4><a href="https://github.com/rubin-johnson/thinking-cap">thinking-cap</a></h4>
         <p>Limit extended reasoning to 2–3 sentences. No enumeration of possibilities — pick the most likely and act.</p>
         <div class="dim">Reasoning budget</div>
       </div>
       <div class="pkg-card">
-        <h4>thorough</h4>
+        <h4><a href="https://github.com/rubin-johnson/thorough">thorough</a></h4>
         <p>Correctness-first: read all relevant files before writing, type hints and docstrings, cover all test cases, re-verify requirements before done.</p>
         <div class="dim">Correctness focus</div>
       </div>
       <div class="pkg-card">
-        <h4>token-miser</h4>
+        <h4><a href="https://github.com/rubin-johnson/token-miser">token-miser</a></h4>
         <p>Lead with the answer, one sentence between tool calls max, grep before read, batch independent calls, minimum code that satisfies requirements.</p>
         <div class="dim">Token efficiency</div>
       </div>
