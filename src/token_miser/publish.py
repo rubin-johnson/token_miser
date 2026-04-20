@@ -7,7 +7,7 @@ import subprocess
 from pathlib import Path
 
 import yaml
-from loadout.validate import validate_package
+from token_miser.package_adapter import validate_package
 
 
 def publish_package(

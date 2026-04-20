@@ -200,14 +200,6 @@ wheels = [
 ]
 
 [[package]]
-name = "loadout"
-version = "0.1.0"
-source = { git = "https://github.com/rubin-johnson/loadout.git?rev=v0.1.0#e5d65ec06bebc129406d0e6fd78f6c8b54556b92" }
-dependencies = [
-    { name = "pyyaml" },
-]
-
-[[package]]
 name = "packaging"
 version = "26.1"
 source = { registry = "https://pypi.org/simple" }
@@ -398,7 +390,6 @@ source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
     { name = "kanon-cli" },
-    { name = "loadout" },
     { name = "pyyaml" },
 ]
 
@@ -412,7 +403,6 @@ dev = [
 requires-dist = [
     { name = "anthropic", specifier = ">=0.40" },
     { name = "kanon-cli", specifier = "==1.2.0" },
-    { name = "loadout", git = "https://github.com/rubin-johnson/loadout.git?rev=v0.1.0" },
     { name = "pyyaml", specifier = ">=6.0" },
 ]
 
