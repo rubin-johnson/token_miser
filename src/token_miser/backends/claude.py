@@ -14,13 +14,13 @@ from token_miser.backends.base import DEFAULT_TIMEOUT, BaseBackend, ExecutorResu
 _CLAUDE_PRICE_PER_MILLION: dict[str, tuple[float, float, float]] = {
     "claude-haiku-4-5": (0.80, 0.08, 4.00),
     "claude-sonnet-4-6": (3.00, 0.30, 15.00),
-    "claude-opus-4-7": (15.00, 1.50, 75.00),
+    "claude-opus-4-6": (15.00, 1.50, 75.00),
 }
 # Alias prefixes → canonical model key
 _CLAUDE_ALIAS: dict[str, str] = {
     "haiku": "claude-haiku-4-5",
     "sonnet": "claude-sonnet-4-6",
-    "opus": "claude-opus-4-7",
+    "opus": "claude-opus-4-6",
 }
 
 
