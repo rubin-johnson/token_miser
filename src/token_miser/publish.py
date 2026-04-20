@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 
 import yaml
+
 from token_miser.package_adapter import validate_package
 
 

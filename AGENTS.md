@@ -14,13 +14,13 @@ Benchmarks coding-agent configurations; records token usage, cost, and task outc
 - Execution backends: `src/token_miser/backends/` (claude, codex) — extend `base.py`
 - Benchmark environment setup: `src/token_miser/environment.py`
 - Run data schema: `src/token_miser/db.py`
-- Loadout integration: `src/token_miser/package_adapter.py` — wraps loadout's `apply_package`
+- Package operations: `src/token_miser/package_adapter.py` — validate, apply, restore, pack packages
 - Package publishing to kanon: `src/token_miser/publish.py`
 - Experiment packages live in `packages/`
 
 ## Working Rules
 - Keep backend additions additive; do not regress existing Claude behavior while adding Codex support
-- Depends on loadout (editable install via uv sources) — `uv sync` resolves it, bare `pip install` does not
+- Depends on kanon-cli — `uv sync` resolves it
 - Schema changes need migration logic in `init_db()`, not fresh database creation
 - `checker.py` evaluates success criteria — changes affect all benchmark results, test carefully
-- `package_adapter.py` guards against PyPI's unrelated `loadout` package — don't remove that import check
+- `package_adapter.py` inlines loadout functionality — no external loadout dependency
