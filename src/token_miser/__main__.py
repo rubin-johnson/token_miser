@@ -539,7 +539,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_tune.add_argument("--package", default=None, help="Test a specific package path")
     p_tune.add_argument("--profile", dest="package", help=argparse.SUPPRESS)
     p_tune.add_argument("--output", default="tuned-package", help="Output dir for generated package")
-    p_tune.add_argument("--timeout", type=int, default=300, help="Per-task timeout in seconds")
+    p_tune.add_argument("--timeout", type=int, default=600, help="Per-task timeout in seconds")
     p_tune.add_argument("--agent", default="claude", help="Agent backend: claude, codex, openai(alias), or both")
     p_tune.add_argument("--model", default=None, help="Model identifier (defaults by agent)")
     p_tune.add_argument("--yes", action="store_true", help="Skip confirmation prompts")

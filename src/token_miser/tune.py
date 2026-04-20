@@ -225,7 +225,7 @@ def run_tune(
     skip_baseline: bool = False,
     package_path: str | None = None,
     output_dir: str = "tuned-package",
-    timeout: int = 300,
+    timeout: int = 600,
     model: str | None = None,
     yes: bool = False,
     bare: bool = False,

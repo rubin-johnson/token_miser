@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
@@ -24,6 +25,27 @@ class EnvironmentContext:
             shutil.rmtree(self.home_dir, ignore_errors=True)
 
 
+def _deep_merge(base: dict, overlay: dict) -> dict:
+    result = dict(base)
+    for key, val in overlay.items():
+        if key in result and isinstance(result[key], dict) and isinstance(val, dict):
+            result[key] = _deep_merge(result[key], val)
+        elif key in result and isinstance(result[key], list) and isinstance(val, list):
+            result[key] = result[key] + val
+        else:
+            result[key] = val
+    return result
+
+
+def _merge_package_settings(claude_dir: Path, package_dir: Path, pre_existing: dict) -> None:
+    pkg_settings = package_dir / "settings.json"
+    if not pkg_settings.exists():
+        return
+    overlay = json.loads(pkg_settings.read_text())
+    merged = _deep_merge(pre_existing, overlay)
+    (claude_dir / "settings.json").write_text(json.dumps(merged, indent=2) + "\n")
+
+
 def _copy_if_exists(src: Path, dest: Path) -> None:
     if src.exists():
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -43,7 +65,10 @@ def _setup_claude_home(home_dir: str, package_ref: PackageRef, real_home: Path) 
         shutil.copy2(claude_md_src, claude_dir / "CLAUDE.md")
 
     if package_ref.package_path:
+        existing_settings_path = claude_dir / "settings.json"
+        pre_existing = json.loads(existing_settings_path.read_text()) if existing_settings_path.exists() else {}
         apply_package(Path(package_ref.package_path), claude_dir)
+        _merge_package_settings(claude_dir, Path(package_ref.package_path), pre_existing)
         package_dir = Path(package_ref.package_path)
         package_agents = package_dir / "AGENTS.md"
         package_claude = package_dir / "CLAUDE.md"
