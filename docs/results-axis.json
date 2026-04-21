@@ -6,6 +6,7 @@
     "claude:adversarial-frugal",
     "claude:c-structured",
     "claude:caveman",
+    "claude:rubin-v2",
     "codex:adversarial-frugal",
     "codex:c-structured",
     "codex:caveman"
@@ -23,10 +24,10 @@
   "matrix": {
     "bm-axis-bashheavy": {
       "claude:baseline": {
-        "tokens": 8677,
-        "cost": 0.67149,
-        "wall_seconds": 255.5,
-        "criteria_pass": 2,
+        "tokens": 5298,
+        "cost": 0.34054,
+        "wall_seconds": 137.8,
+        "criteria_pass": 0,
         "criteria_total": 3
       },
       "claude:adversarial-frugal": {
@@ -47,6 +48,13 @@
         "tokens": 3899,
         "cost": 0.211275,
         "wall_seconds": 86.1,
+        "criteria_pass": 3,
+        "criteria_total": 3
+      },
+      "claude:rubin-v2": {
+        "tokens": 4240,
+        "cost": 0.234794,
+        "wall_seconds": 89.5,
         "criteria_pass": 3,
         "criteria_total": 3
       },
@@ -73,6 +81,13 @@
       }
     },
     "bm-axis-bigoutput": {
+      "claude:baseline": {
+        "tokens": 6389,
+        "cost": 0.344067,
+        "wall_seconds": 185.6,
+        "criteria_pass": 0,
+        "criteria_total": 2
+      },
       "claude:adversarial-frugal": {
         "tokens": 7696,
         "cost": 0.338846,
@@ -86,13 +101,20 @@
         "wall_seconds": 151.5,
         "criteria_pass": 1,
         "criteria_total": 2
+      },
+      "claude:rubin-v2": {
+        "tokens": 6386,
+        "cost": 0.3161,
+        "wall_seconds": 121.5,
+        "criteria_pass": 2,
+        "criteria_total": 2
       }
     },
     "bm-axis-diff": {
       "claude:baseline": {
-        "tokens": 4914,
-        "cost": 0.217105,
-        "wall_seconds": 73.1,
+        "tokens": 5115,
+        "cost": 0.225703,
+        "wall_seconds": 77.2,
         "criteria_pass": 0,
         "criteria_total": 3
       },
@@ -124,6 +146,13 @@
         "criteria_pass": 2,
         "criteria_total": 3
       },
+      "claude:rubin-v2": {
+        "tokens": 2845,
+        "cost": 0.234113,
+        "wall_seconds": 79.8,
+        "criteria_pass": 2,
+        "criteria_total": 3
+      },
       "codex:adversarial-frugal": {
         "tokens": 959738,
         "cost": 0.71619,
@@ -148,9 +177,9 @@
     },
     "bm-axis-explore": {
       "claude:baseline": {
-        "tokens": 7033,
-        "cost": 0.58529,
-        "wall_seconds": 179.8,
+        "tokens": 8293,
+        "cost": 0.446912,
+        "wall_seconds": 152.7,
         "criteria_pass": 0,
         "criteria_total": 2
       },
@@ -182,6 +211,13 @@
         "criteria_pass": 2,
         "criteria_total": 2
       },
+      "claude:rubin-v2": {
+        "tokens": 10808,
+        "cost": 0.37698,
+        "wall_seconds": 123.4,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
       "codex:adversarial-frugal": {
         "tokens": 534464,
         "cost": 0.363523,
@@ -206,10 +242,10 @@
     },
     "bm-axis-multiturn": {
       "claude:baseline": {
-        "tokens": 19096,
-        "cost": 1.32345,
-        "wall_seconds": 490.4,
-        "criteria_pass": 1,
+        "tokens": 12246,
+        "cost": 0.982715,
+        "wall_seconds": 303.1,
+        "criteria_pass": 0,
         "criteria_total": 2
       },
       "claude:adversarial-frugal": {
@@ -233,6 +269,13 @@
         "criteria_pass": 2,
         "criteria_total": 2
       },
+      "claude:rubin-v2": {
+        "tokens": 9758,
+        "cost": 0.504123,
+        "wall_seconds": 173.8,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
       "codex:c-structured": {
         "tokens": 2234316,
         "cost": 1.238694,
@@ -243,9 +286,9 @@
     },
     "bm-axis-reasoning": {
       "claude:baseline": {
-        "tokens": 4379,
-        "cost": 0.285318,
-        "wall_seconds": 100.1,
+        "tokens": 8001,
+        "cost": 0.445384,
+        "wall_seconds": 161.4,
         "criteria_pass": 0,
         "criteria_total": 1
       },
@@ -270,6 +313,13 @@
         "criteria_pass": 1,
         "criteria_total": 1
       },
+      "claude:rubin-v2": {
+        "tokens": 2829,
+        "cost": 0.198724,
+        "wall_seconds": 66.3,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
       "codex:adversarial-frugal": {
         "tokens": 1368889,
         "cost": 0.600442,
@@ -287,9 +337,9 @@
     },
     "bm-axis-smallio": {
       "claude:baseline": {
-        "tokens": 4134,
-        "cost": 0.329344,
-        "wall_seconds": 109.0,
+        "tokens": 5081,
+        "cost": 0.277191,
+        "wall_seconds": 93.0,
         "criteria_pass": 0,
         "criteria_total": 3
       },
@@ -321,6 +371,13 @@
         "criteria_pass": 3,
         "criteria_total": 3
       },
+      "claude:rubin-v2": {
+        "tokens": 3096,
+        "cost": 0.195148,
+        "wall_seconds": 61.1,
+        "criteria_pass": 3,
+        "criteria_total": 3
+      },
       "codex:adversarial-frugal": {
         "tokens": 216146,
         "cost": 0.151085,
@@ -345,9 +402,9 @@
     },
     "bm-axis-testrun": {
       "claude:baseline": {
-        "tokens": 3732,
-        "cost": 0.375962,
-        "wall_seconds": 101.5,
+        "tokens": 9911,
+        "cost": 0.575521,
+        "wall_seconds": 201.9,
         "criteria_pass": 0,
         "criteria_total": 2
       },
@@ -369,6 +426,13 @@
         "tokens": 4707,
         "cost": 0.36719,
         "wall_seconds": 90.2,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:rubin-v2": {
+        "tokens": 4453,
+        "cost": 0.4141,
+        "wall_seconds": 108.9,
         "criteria_pass": 2,
         "criteria_total": 2
       },

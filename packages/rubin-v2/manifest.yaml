@@ -1,0 +1,9 @@
+name: rubin-v2
+version: 0.1.0
+author: rubin-johnson
+description: Rubin's config v2 — hybrid of rubin personal prefs + c-structured's winning behavioral rules
+targets:
+  - path: AGENTS.md
+    dest: AGENTS.md
+  - path: CLAUDE.md
+    dest: CLAUDE.md
