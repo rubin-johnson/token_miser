@@ -1,0 +1,454 @@
+{
+  "suite": "domain-python-api",
+  "packages": [
+    "claude:baseline",
+    "codex:baseline",
+    "claude:adversarial-frugal",
+    "claude:c-structured",
+    "claude:caveman",
+    "codex:adversarial-frugal",
+    "codex:c-structured",
+    "codex:caveman"
+  ],
+  "tasks": [
+    "bm-pyapi-fastapi-auth",
+    "bm-pyapi-fastapi-crud",
+    "bm-pyapi-fastapi-middleware",
+    "bm-pyapi-fastapi-openapi",
+    "bm-pyapi-flask-debug-500",
+    "bm-pyapi-flask-n-plus-one",
+    "bm-pyapi-flask-test-integration",
+    "bm-pyapi-httpx-test"
+  ],
+  "matrix": {
+    "bm-pyapi-fastapi-auth": {
+      "claude:baseline": {
+        "tokens": 6581,
+        "cost": 0.386488,
+        "wall_seconds": 143.1,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:adversarial-frugal": {
+        "tokens": 7995,
+        "cost": 0.483535,
+        "wall_seconds": 162.7,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:c-structured": {
+        "tokens": 12991,
+        "cost": 0.846728,
+        "wall_seconds": 283.5,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:caveman": {
+        "tokens": 6935,
+        "cost": 0.440236,
+        "wall_seconds": 148.4,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "codex:adversarial-frugal": {
+        "tokens": 1198736,
+        "cost": 0.542759,
+        "wall_seconds": 362.0,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "codex:c-structured": {
+        "tokens": 1849783,
+        "cost": 0.837777,
+        "wall_seconds": 576.1,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "codex:caveman": {
+        "tokens": 2495921,
+        "cost": 1.025332,
+        "wall_seconds": 553.5,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      }
+    },
+    "bm-pyapi-fastapi-crud": {
+      "claude:baseline": {
+        "tokens": 6912,
+        "cost": 0.362833,
+        "wall_seconds": 119.8,
+        "criteria_pass": 0,
+        "criteria_total": 2
+      },
+      "codex:baseline": {
+        "tokens": 1644458,
+        "cost": 0.752744,
+        "wall_seconds": 435.5,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:adversarial-frugal": {
+        "tokens": 6123,
+        "cost": 0.290039,
+        "wall_seconds": 90.3,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:c-structured": {
+        "tokens": 8000,
+        "cost": 0.34298,
+        "wall_seconds": 100.6,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:caveman": {
+        "tokens": 6802,
+        "cost": 0.314296,
+        "wall_seconds": 105.0,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "codex:adversarial-frugal": {
+        "tokens": 877970,
+        "cost": 0.4337,
+        "wall_seconds": 252.5,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "codex:c-structured": {
+        "tokens": 1561661,
+        "cost": 0.691766,
+        "wall_seconds": 449.8,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "codex:caveman": {
+        "tokens": 1097234,
+        "cost": 0.593712,
+        "wall_seconds": 351.8,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      }
+    },
+    "bm-pyapi-fastapi-middleware": {
+      "claude:baseline": {
+        "tokens": 6180,
+        "cost": 0.688962,
+        "wall_seconds": 228.9,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "codex:baseline": {
+        "tokens": 2301452,
+        "cost": 0.965955,
+        "wall_seconds": 583.6,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:adversarial-frugal": {
+        "tokens": 3762,
+        "cost": 0.221871,
+        "wall_seconds": 78.6,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:c-structured": {
+        "tokens": 3239,
+        "cost": 0.18295,
+        "wall_seconds": 70.4,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:caveman": {
+        "tokens": 2662,
+        "cost": 0.146239,
+        "wall_seconds": 49.6,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "codex:adversarial-frugal": {
+        "tokens": 1341180,
+        "cost": 0.618572,
+        "wall_seconds": 451.5,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "codex:c-structured": {
+        "tokens": 1521134,
+        "cost": 0.680807,
+        "wall_seconds": 408.3,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      }
+    },
+    "bm-pyapi-fastapi-openapi": {
+      "claude:baseline": {
+        "tokens": 16832,
+        "cost": 0.56712,
+        "wall_seconds": 169.2,
+        "criteria_pass": 0,
+        "criteria_total": 2
+      },
+      "codex:baseline": {
+        "tokens": 1781487,
+        "cost": 0.863796,
+        "wall_seconds": 392.2,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:adversarial-frugal": {
+        "tokens": 18889,
+        "cost": 0.465764,
+        "wall_seconds": 134.3,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:c-structured": {
+        "tokens": 7187,
+        "cost": 0.437933,
+        "wall_seconds": 216.9,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:caveman": {
+        "tokens": 5533,
+        "cost": 0.516648,
+        "wall_seconds": 200.1,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "codex:adversarial-frugal": {
+        "tokens": 1412344,
+        "cost": 0.662852,
+        "wall_seconds": 275.3,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "codex:c-structured": {
+        "tokens": 1313941,
+        "cost": 0.663956,
+        "wall_seconds": 268.6,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      }
+    },
+    "bm-pyapi-flask-debug-500": {
+      "claude:baseline": {
+        "tokens": 2768,
+        "cost": 0.176238,
+        "wall_seconds": 52.1,
+        "criteria_pass": 1,
+        "criteria_total": 1
+      },
+      "codex:baseline": {
+        "tokens": 2198096,
+        "cost": 1.004916,
+        "wall_seconds": 506.5,
+        "criteria_pass": 1,
+        "criteria_total": 1
+      },
+      "claude:adversarial-frugal": {
+        "tokens": 2952,
+        "cost": 0.202137,
+        "wall_seconds": 68.8,
+        "criteria_pass": 1,
+        "criteria_total": 1
+      },
+      "claude:c-structured": {
+        "tokens": 2334,
+        "cost": 0.17221,
+        "wall_seconds": 63.5,
+        "criteria_pass": 1,
+        "criteria_total": 1
+      },
+      "claude:caveman": {
+        "tokens": 2438,
+        "cost": 0.179996,
+        "wall_seconds": 58.9,
+        "criteria_pass": 1,
+        "criteria_total": 1
+      },
+      "codex:adversarial-frugal": {
+        "tokens": 1297844,
+        "cost": 0.657932,
+        "wall_seconds": 382.9,
+        "criteria_pass": 1,
+        "criteria_total": 1
+      },
+      "codex:c-structured": {
+        "tokens": 1617034,
+        "cost": 0.727789,
+        "wall_seconds": 520.8,
+        "criteria_pass": 1,
+        "criteria_total": 1
+      }
+    },
+    "bm-pyapi-flask-n-plus-one": {
+      "claude:baseline": {
+        "tokens": 1496,
+        "cost": 0.148563,
+        "wall_seconds": 48.5,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "codex:baseline": {
+        "tokens": 688842,
+        "cost": 0.403711,
+        "wall_seconds": 226.9,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:adversarial-frugal": {
+        "tokens": 3147,
+        "cost": 0.203332,
+        "wall_seconds": 68.0,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:c-structured": {
+        "tokens": 6875,
+        "cost": 0.39751,
+        "wall_seconds": 140.3,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:caveman": {
+        "tokens": 2495,
+        "cost": 0.183248,
+        "wall_seconds": 68.9,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "codex:adversarial-frugal": {
+        "tokens": 2770483,
+        "cost": 1.056232,
+        "wall_seconds": 556.9,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "codex:c-structured": {
+        "tokens": 829148,
+        "cost": 0.370878,
+        "wall_seconds": 204.6,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "codex:caveman": {
+        "tokens": 643927,
+        "cost": 0.450736,
+        "wall_seconds": 172.4,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      }
+    },
+    "bm-pyapi-flask-test-integration": {
+      "claude:baseline": {
+        "tokens": 5119,
+        "cost": 0.304475,
+        "wall_seconds": 112.3,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "codex:baseline": {
+        "tokens": 1724362,
+        "cost": 0.882096,
+        "wall_seconds": 456.3,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:adversarial-frugal": {
+        "tokens": 7047,
+        "cost": 0.299198,
+        "wall_seconds": 125.0,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:c-structured": {
+        "tokens": 6576,
+        "cost": 0.235,
+        "wall_seconds": 88.9,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:caveman": {
+        "tokens": 5627,
+        "cost": 0.272895,
+        "wall_seconds": 101.0,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "codex:adversarial-frugal": {
+        "tokens": 1251475,
+        "cost": 0.590683,
+        "wall_seconds": 405.6,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "codex:c-structured": {
+        "tokens": 1208252,
+        "cost": 0.666461,
+        "wall_seconds": 382.2,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      }
+    },
+    "bm-pyapi-httpx-test": {
+      "claude:baseline": {
+        "tokens": 2122,
+        "cost": 0.192578,
+        "wall_seconds": 50.4,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "codex:baseline": {
+        "tokens": 2403292,
+        "cost": 1.003788,
+        "wall_seconds": 503.0,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:adversarial-frugal": {
+        "tokens": 2474,
+        "cost": 0.171447,
+        "wall_seconds": 50.8,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:c-structured": {
+        "tokens": 4057,
+        "cost": 0.263561,
+        "wall_seconds": 83.0,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:caveman": {
+        "tokens": 4750,
+        "cost": 0.166361,
+        "wall_seconds": 46.4,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "codex:adversarial-frugal": {
+        "tokens": 1380709,
+        "cost": 0.693018,
+        "wall_seconds": 330.6,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "codex:c-structured": {
+        "tokens": 2186186,
+        "cost": 0.879961,
+        "wall_seconds": 409.3,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "codex:caveman": {
+        "tokens": 1484077,
+        "cost": 0.705906,
+        "wall_seconds": 355.8,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      }
+    }
+  }
+}
