@@ -180,8 +180,10 @@
     <h2>Results</h2>
 
     <div class="suite-tabs">
-      <button class="suite-tab active" onclick="switchSuite('standard', this)">Standard suite · 15 tasks</button>
-      <button class="suite-tab"        onclick="switchSuite('quick', this)">Quick suite · 8 tasks</button>
+      <button class="suite-tab active" onclick="switchSuite('standard', this)">Standard · 15 tasks</button>
+      <button class="suite-tab"        onclick="switchSuite('quick', this)">Quick · 8 tasks</button>
+      <button class="suite-tab"        onclick="switchSuite('axis', this)">Axis · 8 tasks</button>
+      <button class="suite-tab"        onclick="switchSuite('domain-python-api', this)">Python API · 8 tasks</button>
     </div>
 
     <div id="suite-standard">
@@ -207,6 +209,32 @@
       <table>
         <thead id="thead-quick"></thead>
         <tbody id="tbody-quick"></tbody>
+      </table>
+    </div>
+
+    <div id="suite-axis" style="display:none">
+      <p class="note">8 interaction-pattern tasks: explore, multiturn, diff, testrun, bashheavy, smallio, reasoning, bigoutput. Tests how packages perform across different agent behavior modes. 600s timeout. Claude Sonnet 4.6 (Bedrock) + Codex GPT-5.4 (OpenAI).</p>
+      <div class="summary-row" id="cards-axis"></div>
+      <div class="charts-row">
+        <div class="chart-card"><h4>Pass rate by package</h4><canvas id="chart-passrate-axis"></canvas></div>
+        <div class="chart-card"><h4>Total tokens by package</h4><canvas id="chart-tokens-axis"></canvas></div>
+      </div>
+      <table>
+        <thead id="thead-axis"></thead>
+        <tbody id="tbody-axis"></tbody>
+      </table>
+    </div>
+
+    <div id="suite-domain-python-api" style="display:none">
+      <p class="note">8 Python API development tasks: FastAPI CRUD, Flask debugging, httpx testing, middleware, auth, OpenAPI. Real-world Python web dev scenarios. 600s timeout. Claude Sonnet 4.6 (Bedrock) + Codex GPT-5.4 (OpenAI).</p>
+      <div class="summary-row" id="cards-domain-python-api"></div>
+      <div class="charts-row">
+        <div class="chart-card"><h4>Pass rate by package</h4><canvas id="chart-passrate-domain-python-api"></canvas></div>
+        <div class="chart-card"><h4>Total tokens by package</h4><canvas id="chart-tokens-domain-python-api"></canvas></div>
+      </div>
+      <table>
+        <thead id="thead-domain-python-api"></thead>
+        <tbody id="tbody-domain-python-api"></tbody>
       </table>
     </div>
 
@@ -389,10 +417,17 @@
 <script>
 // ── Label maps ────────────────────────────────────────────────────────────────
 const PKG_LABEL = {
-  'claude:baseline':       'baseline',
-  'claude:personal':       'rubin',
-  'claude:personal-async': 'rubin-async',
-  'claude:personal-lazy':  'rubin-lazy',
+  'claude:baseline':             'baseline (claude)',
+  'codex:baseline':              'baseline (codex)',
+  'claude:personal':             'rubin',
+  'claude:personal-async':       'rubin-async',
+  'claude:personal-lazy':        'rubin-lazy',
+  'claude:adversarial-frugal':   'adversarial-frugal (claude)',
+  'claude:c-structured':         'c-structured (claude)',
+  'claude:caveman':              'caveman (claude)',
+  'codex:adversarial-frugal':    'adversarial-frugal (codex)',
+  'codex:c-structured':          'c-structured (codex)',
+  'codex:caveman':               'caveman (codex)',
 };
 
 const TASK_META = {
@@ -411,10 +446,28 @@ const TASK_META = {
   'bm-seq-001':  { name: 'Multi-step config task',        category: 'sequential', difficulty: 'easy'   },
   'bm-seq-002':  { name: 'Multi-step API task',           category: 'sequential', difficulty: 'medium' },
   'bm-seq-003':  { name: 'Multi-step debug task',         category: 'sequential', difficulty: 'hard'   },
+  // axis suite
+  'bm-axis-explore':    { name: 'Codebase exploration',       category: 'feature',  difficulty: 'medium' },
+  'bm-axis-multiturn':  { name: 'Multi-turn conversation',    category: 'feature',  difficulty: 'medium' },
+  'bm-axis-diff':       { name: 'Diff-heavy changes',         category: 'refactor', difficulty: 'medium' },
+  'bm-axis-testrun':    { name: 'Test execution',             category: 'test',     difficulty: 'medium' },
+  'bm-axis-bashheavy':  { name: 'Bash-heavy workflow',        category: 'feature',  difficulty: 'medium' },
+  'bm-axis-smallio':    { name: 'Small I/O task',             category: 'feature',  difficulty: 'easy'   },
+  'bm-axis-reasoning':  { name: 'Reasoning-heavy task',       category: 'feature',  difficulty: 'hard'   },
+  'bm-axis-bigoutput':  { name: 'Parse full test suite output', category: 'feature', difficulty: 'hard'   },
+  // domain-python-api suite
+  'bm-pyapi-fastapi-crud':           { name: 'FastAPI CRUD endpoints',      category: 'feature',  difficulty: 'medium' },
+  'bm-pyapi-flask-n-plus-one':       { name: 'Flask N+1 query fix',         category: 'bugfix',   difficulty: 'medium' },
+  'bm-pyapi-fastapi-auth':           { name: 'FastAPI auth middleware',      category: 'feature',  difficulty: 'medium' },
+  'bm-pyapi-httpx-test':             { name: 'httpx test coverage',         category: 'test',     difficulty: 'medium' },
+  'bm-pyapi-fastapi-middleware':      { name: 'FastAPI middleware chain',    category: 'feature',  difficulty: 'medium' },
+  'bm-pyapi-flask-debug-500':        { name: 'Flask 500 error debugging',   category: 'bugfix',   difficulty: 'medium' },
+  'bm-pyapi-fastapi-openapi':        { name: 'FastAPI OpenAPI spec',        category: 'feature',  difficulty: 'easy'   },
+  'bm-pyapi-flask-test-integration': { name: 'Flask integration tests',     category: 'test',     difficulty: 'hard'   },
 };
 
 // ── Palette (matches CSS vars, explicit for Chart.js) ────────────────────────
-const COLORS = ['#58a6ff', '#3fb950', '#f0883e', '#bc8cff'];
+const COLORS = ['#58a6ff', '#3fb950', '#f0883e', '#bc8cff', '#f85149', '#d29922', '#79c0ff', '#56d364'];
 const ALPHA  = col => col + '33';
 
 // ── Loaded data cache ─────────────────────────────────────────────────────────
