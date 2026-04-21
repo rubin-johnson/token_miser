@@ -12,7 +12,8 @@ from token_miser.recommend import Recommendation
 
 
 def _bump_patch(version: str) -> str:
-    parts = version.split(".")
+    base = version.split("-")[0]
+    parts = base.split(".")
     if len(parts) == 3:
         parts[2] = str(int(parts[2]) + 1)
         return ".".join(parts)

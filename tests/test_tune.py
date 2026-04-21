@@ -18,7 +18,8 @@ from token_miser.db import (
     store_run,
     update_tune_session,
 )
-from token_miser.tune import _capture_codex_baseline_files
+from token_miser.suite import BenchmarkTask
+from token_miser.tune import _benchmark_task_to_task, _capture_codex_baseline_files
 
 
 @pytest.fixture
@@ -170,3 +171,28 @@ class TestCodexBaselineCapture:
             "AGENTS.md": "Be terse.\n",
             "CLAUDE.md": "@AGENTS.md\n",
         }
+
+
+class TestBenchmarkTaskToTask:
+    def test_setup_commands_are_passed_through(self) -> None:
+        bt = BenchmarkTask(
+            id="test-task",
+            name="Test Task",
+            repo_id="test-repo",
+            starting_commit="abc123",
+            prompt="do something",
+            setup_commands=["pip install -e .", "npm ci"],
+        )
+        task = _benchmark_task_to_task(bt, "/tmp/repo")
+        assert task.setup_commands == ["pip install -e .", "npm ci"]
+
+    def test_empty_setup_commands_default(self) -> None:
+        bt = BenchmarkTask(
+            id="test-task",
+            name="Test Task",
+            repo_id="test-repo",
+            starting_commit="abc123",
+            prompt="do something",
+        )
+        task = _benchmark_task_to_task(bt, "/tmp/repo")
+        assert task.setup_commands == []

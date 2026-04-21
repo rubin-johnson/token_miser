@@ -220,19 +220,37 @@ def test_delta_uses_matching_agent_baseline(conn):
     assert "+25.0%" in result
 
 
-def test_matrix_includes_raw_suite_runs(conn, monkeypatch):
-    monkeypatch.setattr("token_miser.matrix._suite_task_ids", lambda suite: ["bm-axis-explore"])
+def test_suite_isolation(conn, monkeypatch):
+    """Runs linked to a different suite must not appear in the matrix."""
+    monkeypatch.setattr(
+        "token_miser.matrix._suite_task_ids",
+        lambda suite: ["bm-axis-explore"] if suite == "axis" else ["bm-axis-explore"],
+    )
 
-    store_run(
+    # Seed a session for "standard" suite with a shared task_id
+    sid_std = create_tune_session(
+        conn,
+        TuneSession(
+            agent="codex",
+            suite_name="standard",
+            suite_version="0.1.0",
+            baseline_package="vanilla",
+            tuned_package="pkg-a",
+            status="completed",
+        ),
+    )
+    rb_id = store_run(
         conn,
         Run(agent="codex", task_id="bm-axis-explore", package_name="vanilla", input_tokens=300, output_tokens=0),
     )
-    store_run(
-        conn,
-        Run(agent="codex", task_id="bm-axis-explore", package_name="pkg-a", input_tokens=240, output_tokens=0),
-    )
+    link_tune_run(conn, sid_std, rb_id, "baseline")
 
+    # Query "axis" — should not see the "standard" session's runs
+    result = build_matrix("axis", conn)
+    assert "No tune data" in result
+
+    # Now seed a proper "axis" session
+    _seed_agent_session(conn, "codex", "pkg-a", ["bm-axis-explore"], baseline_tokens=400, tuned_tokens=300)
     result = build_matrix("axis", conn)
     assert "codex:baseline" in result
     assert "codex:pkg-a" in result
-    assert "-20.0%" in result

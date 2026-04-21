@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+import re
 import shutil
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
+
+
+def _looks_like_sha(ref: str) -> bool:
+    return bool(re.fullmatch(r"[0-9a-f]{7,40}", ref))
 
 
 @dataclass
@@ -71,14 +76,15 @@ def ensure_repo(spec: RepoSpec, cache_dir: Path, benchmarks_dir: Path | None = N
             )
     else:
         clone_cmd = ["git", "clone"]
-        if spec.shallow:
+        is_sha = bool(spec.commit and spec.commit != "HEAD" and _looks_like_sha(spec.commit))
+        if spec.shallow and not is_sha:
             clone_cmd.extend(["--depth", "1"])
             if spec.commit and spec.commit != "HEAD":
                 clone_cmd.extend(["--branch", spec.commit])
         clone_cmd.extend([spec.url, str(dest)])
         subprocess.run(clone_cmd, check=True, capture_output=True)
 
-        if spec.commit and spec.commit != "HEAD" and not spec.shallow:
+        if spec.commit and spec.commit != "HEAD" and (not spec.shallow or is_sha):
             subprocess.run(
                 ["git", "-C", str(dest), "checkout", spec.commit],
                 check=True,

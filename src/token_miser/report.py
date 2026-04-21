@@ -60,8 +60,16 @@ def analyze(task_id: str, conn: sqlite3.Connection) -> str:
     stats = [_calculate_package_stats(name, pkg_runs) for name, pkg_runs in by_pkg.items()]
     stats.sort(key=lambda s: s.avg_cost)
 
-    # Find baseline (vanilla if present, else cheapest)
-    baseline = next((s for s in stats if s.name.endswith(":vanilla") or s.name == "vanilla"), stats[0])
+    # Find baseline per agent (vanilla if present, else cheapest for that agent)
+    baselines: dict[str, PackageStats] = {}
+    for s in stats:
+        agent = s.name.partition(":")[0]
+        if s.name.endswith(":vanilla") or s.name == "vanilla":
+            baselines[agent] = s
+    for s in stats:
+        agent = s.name.partition(":")[0]
+        if agent not in baselines:
+            baselines[agent] = s
 
     total_runs = sum(s.run_count for s in stats)
     lines = [f"Task: {task_id}  ({total_runs} runs across {len(stats)} packages)\n"]
@@ -72,6 +80,8 @@ def analyze(task_id: str, conn: sqlite3.Connection) -> str:
     lines.append("-" * 90)
 
     for s in stats:
+        agent = s.name.partition(":")[0]
+        baseline = baselines.get(agent, baselines.get("", stats[0]))
         criteria_rate = (s.criteria_pass / s.criteria_total * 100) if s.criteria_total else 0
         if s.name == baseline.name:
             delta_str = "(baseline)"

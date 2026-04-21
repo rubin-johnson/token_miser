@@ -192,14 +192,6 @@ def restore_package(target: Path) -> None:
                     shutil.rmtree(p)
                 else:
                     p.unlink()
-    else:
-        for item in target.iterdir():
-            if item.name == _BACKUP_DIR:
-                continue
-            if item.is_dir():
-                shutil.rmtree(item)
-            else:
-                item.unlink()
 
     for backup_file in backup_dir.rglob("*"):
         if not backup_file.is_file():

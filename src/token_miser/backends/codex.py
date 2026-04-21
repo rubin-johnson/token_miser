@@ -112,10 +112,10 @@ class CodexBackend(BaseBackend):
             elif item_type == "turn.completed":
                 usage_raw = item.get("usage", {})
                 usage = Usage(
-                    input_tokens=usage_raw.get("input_tokens", 0),
-                    output_tokens=usage_raw.get("output_tokens", 0),
-                    cache_read_input_tokens=usage_raw.get("cached_input_tokens", 0),
-                    reasoning_tokens=usage_raw.get("reasoning_tokens", 0),
+                    input_tokens=usage.input_tokens + usage_raw.get("input_tokens", 0),
+                    output_tokens=usage.output_tokens + usage_raw.get("output_tokens", 0),
+                    cache_read_input_tokens=usage.cache_read_input_tokens + usage_raw.get("cached_input_tokens", 0),
+                    reasoning_tokens=usage.reasoning_tokens + usage_raw.get("reasoning_tokens", 0),
                 )
 
         if proc.returncode != 0:

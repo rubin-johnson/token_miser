@@ -90,6 +90,25 @@ class TestRestorePackage:
         assert (target_dir / "CLAUDE.md").read_text() == "# Original\n"
 
 
+    def test_legacy_state_without_placed_paths_preserves_unrelated_files(
+        self, sample_bundle: Path, target_dir: Path
+    ) -> None:
+        """Legacy state files lack placed_paths. Restore must not delete unrelated files."""
+        (target_dir / "CLAUDE.md").write_text("# Original\n")
+        (target_dir / "unrelated.txt").write_text("keep me\n")
+        apply_package(sample_bundle, target_dir)
+
+        # Simulate legacy state by removing placed_paths from the state file
+        state_path = target_dir / ".loadout-state.json"
+        state = json.loads(state_path.read_text())
+        del state["placed_paths"]
+        state_path.write_text(json.dumps(state))
+
+        restore_package(target_dir)
+        assert (target_dir / "unrelated.txt").read_text() == "keep me\n"
+        assert (target_dir / "CLAUDE.md").read_text() == "# Original\n"
+
+
 class TestPackCurrentConfig:
     def test_captures_claude_md(self, tmp_path: Path) -> None:
         source = tmp_path / "source"

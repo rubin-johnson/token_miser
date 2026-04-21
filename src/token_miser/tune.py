@@ -69,6 +69,7 @@ def _benchmark_task_to_task(bt: BenchmarkTask, repo_path: str) -> Task:
         quality_rubric=rubric,
         repo_id=bt.repo_id,
         category=bt.category,
+        setup_commands=bt.setup_commands,
     )
 
 

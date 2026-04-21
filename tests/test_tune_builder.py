@@ -3,7 +3,7 @@
 import yaml
 
 from token_miser.recommend import Recommendation
-from token_miser.tune_builder import build_tuned_package
+from token_miser.tune_builder import _bump_patch, build_tuned_package
 
 
 def _base_bundle(tmp_path):
@@ -42,6 +42,23 @@ def _sample_recs():
             evidence="pass rate < 85%",
         ),
     ]
+
+
+class TestBumpPatch:
+    def test_normal_version(self):
+        assert _bump_patch("0.1.0") == "0.1.1"
+
+    def test_pre_release_version(self):
+        assert _bump_patch("1.0.0-beta") == "1.0.1"
+
+    def test_pre_release_with_rc(self):
+        assert _bump_patch("2.3.4-rc.1") == "2.3.5"
+
+    def test_two_part_version(self):
+        assert _bump_patch("1.0") == "1.0"
+
+    def test_single_part(self):
+        assert _bump_patch("1") == "1"
 
 
 class TestBuildTunedPackage:

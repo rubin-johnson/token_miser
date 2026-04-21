@@ -47,12 +47,13 @@ def _query_matrix_runs(conn: sqlite3.Connection, suite: str) -> list[dict]:
                tr.phase, ts.id AS session_id, ts.agent AS session_agent, ts.tuned_package,
                r.started_at
         FROM runs r
-        LEFT JOIN tune_runs tr ON r.id = tr.run_id
-        LEFT JOIN tune_sessions ts ON tr.session_id = ts.id
+        JOIN tune_runs tr ON r.id = tr.run_id
+        JOIN tune_sessions ts ON tr.session_id = ts.id
         WHERE r.task_id IN ({placeholders})
+          AND ts.suite_name = ?
         ORDER BY r.started_at DESC
     """,
-        task_ids,
+        [*task_ids, suite],
     ).fetchall()
     return [dict(r) for r in rows]
 

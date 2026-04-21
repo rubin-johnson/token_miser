@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from token_miser.repos import RepoSpec, ensure_repo, load_repos_config
+from token_miser.repos import RepoSpec, _looks_like_sha, ensure_repo, load_repos_config
 
 
 @pytest.fixture
@@ -60,6 +60,68 @@ class TestRepoSpec:
         s = specs["flask"]
         assert s.type == "remote"
         assert s.shallow is True
+
+
+class TestLooksLikeSha:
+    def test_full_sha(self) -> None:
+        assert _looks_like_sha("a" * 40) is True
+
+    def test_short_sha(self) -> None:
+        assert _looks_like_sha("3262451") is True
+
+    def test_tag_name(self) -> None:
+        assert _looks_like_sha("3.1.0") is False
+
+    def test_branch_name(self) -> None:
+        assert _looks_like_sha("master") is False
+
+    def test_prefixed_tag(self) -> None:
+        assert _looks_like_sha("v2.34.0") is False
+
+    def test_too_short(self) -> None:
+        assert _looks_like_sha("abc") is False
+
+    def test_uppercase_hex(self) -> None:
+        assert _looks_like_sha("ABCDEF1") is False
+
+
+class TestShallowCloneWithSha:
+    def test_sha_skips_branch_flag(self, tmp_path: Path) -> None:
+        """Shallow clone with SHA should not use --branch (it only accepts tags/branches)."""
+        repo_dir = tmp_path / "source-repo"
+        repo_dir.mkdir()
+        subprocess.run(["git", "init", str(repo_dir)], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "-C", str(repo_dir), "config", "user.email", "test@test.com"],
+            check=True, capture_output=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(repo_dir), "config", "user.name", "Test"],
+            check=True, capture_output=True,
+        )
+        (repo_dir / "main.py").write_text("print('hello')\n")
+        subprocess.run(["git", "-C", str(repo_dir), "add", "."], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "-C", str(repo_dir), "commit", "-m", "initial"],
+            check=True, capture_output=True,
+        )
+        sha = subprocess.run(
+            ["git", "-C", str(repo_dir), "rev-parse", "HEAD"],
+            check=True, capture_output=True, text=True,
+        ).stdout.strip()
+
+        spec = RepoSpec(id="test-sha", type="remote", url=str(repo_dir), commit=sha, shallow=True)
+        cache_dir = tmp_path / "cache"
+        cache_dir.mkdir()
+
+        result = ensure_repo(spec, cache_dir)
+        assert result.is_dir()
+        assert (result / "main.py").exists()
+        checked_out = subprocess.run(
+            ["git", "-C", str(result), "rev-parse", "HEAD"],
+            check=True, capture_output=True, text=True,
+        ).stdout.strip()
+        assert checked_out == sha
 
 
 class TestEnsureRepo:

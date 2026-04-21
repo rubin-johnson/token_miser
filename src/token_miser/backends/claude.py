@@ -10,11 +10,11 @@ from pathlib import Path
 
 from token_miser.backends.base import DEFAULT_TIMEOUT, BaseBackend, ExecutorResult, Usage
 
-# (input_rate, cached_rate, output_rate) per million tokens
-_CLAUDE_PRICE_PER_MILLION: dict[str, tuple[float, float, float]] = {
-    "claude-haiku-4-5": (0.80, 0.08, 4.00),
-    "claude-sonnet-4-6": (3.00, 0.30, 15.00),
-    "claude-opus-4-6": (15.00, 1.50, 75.00),
+# (input_rate, cache_creation_rate, cached_read_rate, output_rate) per million tokens
+_CLAUDE_PRICE_PER_MILLION: dict[str, tuple[float, float, float, float]] = {
+    "claude-haiku-4-5": (0.80, 1.00, 0.08, 4.00),
+    "claude-sonnet-4-6": (3.00, 3.75, 0.30, 15.00),
+    "claude-opus-4-6": (15.00, 18.75, 1.50, 75.00),
 }
 # Alias prefixes → canonical model key
 _CLAUDE_ALIAS: dict[str, str] = {
@@ -73,10 +73,15 @@ class ClaudeBackend(BaseBackend):
         key = _resolve_claude_model_key(model or self.default_model or "")
         if key is None:
             return 0.0
-        input_rate, cached_rate, output_rate = _CLAUDE_PRICE_PER_MILLION[key]
+        input_rate, cache_create_rate, cached_read_rate, output_rate = _CLAUDE_PRICE_PER_MILLION[key]
         cached = min(usage.cache_read_input_tokens, usage.input_tokens)
         uncached = max(usage.input_tokens - cached, 0)
-        total = (uncached * input_rate + cached * cached_rate + usage.output_tokens * output_rate) / 1_000_000
+        total = (
+            uncached * input_rate
+            + cached * cached_read_rate
+            + usage.cache_creation_input_tokens * cache_create_rate
+            + usage.output_tokens * output_rate
+        ) / 1_000_000
         return round(total, 6)
 
     def run(
