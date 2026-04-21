@@ -92,7 +92,7 @@ def _run_single_task(
     task: Task,
     package_path: Path | None,
     backend_name: str,
-    model: str,
+    model: str | None,
     timeout: int,
     conn: sqlite3.Connection,
     backend_env: dict[str, str] | None = None,

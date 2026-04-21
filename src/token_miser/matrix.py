@@ -82,6 +82,7 @@ def _baseline_label_for_package(package_label: str) -> str | None:
 
 
 def build_matrix(suite: str, conn: sqlite3.Connection | None = None) -> str:
+    owns_conn = conn is None
     if conn is None:
         conn = init_db()
 
@@ -205,10 +206,14 @@ def build_matrix(suite: str, conn: sqlite3.Connection | None = None) -> str:
     lines.append(row_cost)
     lines.append(row_rate)
 
-    return "\n".join(lines) + "\n"
+    result = "\n".join(lines) + "\n"
+    if owns_conn:
+        conn.close()
+    return result
 
 
 def export_matrix_json(suite: str, output: Path, conn: sqlite3.Connection | None = None) -> Path:
+    owns_conn = conn is None
     if conn is None:
         conn = init_db()
 
@@ -241,4 +246,6 @@ def export_matrix_json(suite: str, output: Path, conn: sqlite3.Connection | None
     with output.open("w") as f:
         json.dump({"suite": suite, "packages": packages, "tasks": tasks, "matrix": data}, f, indent=2)
         f.write("\n")
+    if owns_conn:
+        conn.close()
     return output
