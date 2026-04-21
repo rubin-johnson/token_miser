@@ -25,71 +25,115 @@
       background: var(--bg);
       color: var(--text);
       line-height: 1.6;
-      padding: 2rem 1rem;
+      padding: 2.5rem 1.5rem;
     }
-    .container { max-width: 1120px; margin: 0 auto; }
+    .container { max-width: 1200px; margin: 0 auto; }
 
     header { margin-bottom: 2.5rem; }
-    header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.4rem; }
+    header h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 0.5rem; }
     header h1 a { color: var(--accent); text-decoration: none; }
     header h1 a:hover { text-decoration: underline; }
-    header p { color: var(--muted); max-width: 700px; font-size: 0.9rem; }
+    header p { color: var(--muted); max-width: 800px; font-size: 1.05rem; line-height: 1.6; }
     .badge {
-      display: inline-block; font-size: 0.7rem; font-weight: 600;
-      padding: 0.15rem 0.5rem; border-radius: 2rem; margin-left: 0.4rem;
+      display: inline-block; font-size: 0.75rem; font-weight: 600;
+      padding: 0.2rem 0.6rem; border-radius: 2rem; margin-left: 0.5rem;
       vertical-align: middle; background: #1f3a5f; color: var(--accent);
     }
 
     nav { display: flex; gap: 1.5rem; margin-bottom: 2.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0; }
     nav a {
-      font-size: 0.85rem; color: var(--muted); text-decoration: none;
+      font-size: 1rem; color: var(--muted); text-decoration: none;
       padding-bottom: 0.6rem; border-bottom: 2px solid transparent; display: block;
     }
     nav a:hover { color: var(--text); }
     nav a.active { color: var(--accent); border-bottom-color: var(--accent); }
 
     section { margin-bottom: 3.5rem; }
-    h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text); }
-    h3 { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 1.75rem 0 0.75rem; }
+    h2 { font-size: 1.4rem; font-weight: 600; margin-bottom: 1.25rem; color: var(--text); }
+    h3 { font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 2rem 0 1rem; }
 
     /* Suite tabs */
-    .suite-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; }
+    .suite-tabs { display: flex; gap: 0.6rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
     .suite-tab {
-      padding: 0.35rem 0.9rem; border-radius: 6px; border: 1px solid var(--border);
-      background: var(--surface); color: var(--muted); cursor: pointer; font-size: 0.82rem;
+      padding: 0.5rem 1.1rem; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--muted); cursor: pointer; font-size: 0.95rem;
       transition: all 0.15s;
     }
     .suite-tab.active { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,0.08); }
 
-    /* Charts */
-    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
-    .chart-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 8px; padding: 1.25rem;
+    /* Agent group header */
+    .agent-group { margin-bottom: 2rem; }
+    .agent-label {
+      font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.75rem;
+      padding-bottom: 0.35rem; border-bottom: 1px solid var(--border);
     }
-    .chart-card h4 { font-size: 0.78rem; color: var(--muted); margin-bottom: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-    .chart-card canvas { max-height: 200px; }
+
+    /* Scorecard strip */
+    .scorecard-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .scorecard {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.25rem 1.4rem;
+      position: relative;
+    }
+    .scorecard .pkg {
+      font-size: 1rem; font-weight: 700; color: var(--accent);
+      margin-bottom: 0.6rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .scorecard .big-stat {
+      font-size: 2.4rem; font-weight: 800; line-height: 1.1;
+    }
+    .scorecard .big-stat.high { color: var(--green); }
+    .scorecard .big-stat.mid  { color: var(--yellow); }
+    .scorecard .big-stat.low  { color: var(--red); }
+    .scorecard .stat-label {
+      font-size: 0.95rem; color: var(--muted); margin-top: 0.15rem; margin-bottom: 0.6rem;
+    }
+    .scorecard .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem 1rem; }
+    .scorecard .metric-label { font-size: 0.8rem; color: var(--muted); }
+    .scorecard .metric-value { font-size: 0.95rem; color: var(--text); font-weight: 600; }
+    .scorecard .delta { font-size: 0.75rem; font-weight: 700; margin-left: 0.3rem; }
+    .scorecard .delta.pos { color: var(--green); }
+    .scorecard .delta.neg { color: var(--red); }
+
+    /* Combined chart */
+    .chart-combined {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem;
+    }
+    .chart-combined h4 {
+      font-size: 1rem; color: var(--muted); margin-bottom: 1rem;
+      font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .chart-combined canvas { max-height: 320px; }
 
     /* Heatmap table */
     .note {
-      font-size: 0.78rem; color: var(--muted);
-      border-left: 3px solid var(--border); padding-left: 0.75rem; margin-bottom: 1rem;
+      font-size: 0.95rem; color: var(--muted);
+      border-left: 3px solid var(--border); padding-left: 0.75rem; margin-bottom: 1.25rem;
+      line-height: 1.6;
     }
-    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
     thead th {
-      text-align: left; padding: 0.5rem 0.6rem;
+      text-align: left; padding: 0.6rem 0.75rem;
       background: var(--surface); border-bottom: 1px solid var(--border);
       color: var(--muted); font-weight: 600; white-space: nowrap;
+      font-size: 0.9rem;
     }
     thead th:not(:first-child) { text-align: center; }
     tbody tr:hover { background: rgba(255,255,255,0.03); }
-    tbody td { padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tbody td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
     tbody td:not(:first-child) { text-align: center; }
-    .task-id { font-family: monospace; font-size: 0.74rem; color: var(--muted); }
-    .task-name { font-size: 0.8rem; }
+    .task-id { font-family: monospace; font-size: 0.85rem; color: var(--muted); }
+    .task-name { font-size: 0.95rem; }
     .tag {
-      display: inline-block; font-size: 0.62rem; padding: 0.08rem 0.35rem;
-      border-radius: 3px; font-weight: 600; margin-left: 0.25rem; vertical-align: middle;
+      display: inline-block; font-size: 0.7rem; padding: 0.1rem 0.4rem;
+      border-radius: 3px; font-weight: 600; margin-left: 0.3rem; vertical-align: middle;
     }
     .tag-feature   { background: rgba(88,166,255,0.15); color: var(--accent); }
     .tag-bugfix    { background: rgba(248,81,73,0.15);  color: var(--red); }
@@ -101,63 +145,46 @@
     .tag-hard   { border: 1px solid #30363d; color: var(--red); }
 
     /* Pass cell coloring */
-    .pass-full    { background: rgba(63,185,80,0.18);  color: var(--green); font-weight: 700; border-radius: 4px; padding: 0.15rem 0.4rem; }
-    .pass-partial { background: rgba(210,153,34,0.18); color: var(--yellow); border-radius: 4px; padding: 0.15rem 0.4rem; }
-    .pass-zero    { background: rgba(248,81,73,0.12);  color: var(--red); border-radius: 4px; padding: 0.15rem 0.4rem; }
-    .tokens-cell  { font-size: 0.72rem; color: var(--muted); margin-top: 0.15rem; }
-
-    /* Summary cards */
-    .summary-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
-    .summary-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 8px; padding: 1rem 1.1rem;
-    }
-    .summary-card .pkg { font-size: 0.82rem; font-weight: 700; color: var(--accent); margin-bottom: 0.5rem; }
-    .summary-card .rate { font-size: 1.4rem; font-weight: 700; }
-    .summary-card .rate.high   { color: var(--green); }
-    .summary-card .rate.mid    { color: var(--yellow); }
-    .summary-card .rate.low    { color: var(--red); }
-    .summary-card .sub { font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; }
-    .summary-card .row { display: flex; justify-content: space-between; font-size: 0.76rem; color: var(--muted); margin-top: 0.3rem; }
-    .summary-card .row span:last-child { color: var(--text); }
-    .delta { font-size: 0.68rem; font-weight: 700; margin-left: 0.3rem; }
-    .delta.pos { color: var(--green); }
-    .delta.neg { color: var(--red); }
+    .pass-full    { background: rgba(63,185,80,0.18);  color: var(--green); font-weight: 700; border-radius: 4px; padding: 0.2rem 0.5rem; }
+    .pass-partial { background: rgba(210,153,34,0.18); color: var(--yellow); border-radius: 4px; padding: 0.2rem 0.5rem; }
+    .pass-zero    { background: rgba(248,81,73,0.12);  color: var(--red); border-radius: 4px; padding: 0.2rem 0.5rem; }
+    .tokens-cell  { font-size: 0.8rem; color: var(--muted); margin-top: 0.15rem; }
+    .cost-cell    { font-size: 0.8rem; color: var(--muted); }
 
     /* Packages grid */
-    .pkg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; }
+    .pkg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0.85rem; }
     .pkg-card {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 8px; padding: 1rem 1.1rem;
+      border-radius: 8px; padding: 1.1rem 1.25rem;
     }
-    .pkg-card h4 { font-family: monospace; font-size: 0.88rem; color: var(--accent); margin-bottom: 0.35rem; }
+    .pkg-card h4 { font-family: monospace; font-size: 1rem; color: var(--accent); margin-bottom: 0.4rem; }
     .pkg-card h4 a { color: inherit; text-decoration: none; }
     .pkg-card h4 a:hover { text-decoration: underline; }
-    .pkg-card p  { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
-    .pkg-card .dim { font-size: 0.67rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--purple); margin-top: 0.4rem; }
-    .pkg-card .tested-badge { font-size: 0.67rem; font-weight: 600; color: var(--green); float: right; margin-top: 0.1rem; }
+    .pkg-card p  { font-size: 0.9rem; color: var(--muted); line-height: 1.5; }
+    .pkg-card .dim { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--purple); margin-top: 0.4rem; }
+    .pkg-card .tested-badge { font-size: 0.75rem; font-weight: 600; color: var(--green); float: right; margin-top: 0.1rem; }
 
     /* Contrib box */
     .contrib-box {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 8px; padding: 1.5rem; max-width: 740px;
+      border-radius: 8px; padding: 1.5rem; max-width: 800px;
     }
-    .contrib-box p  { font-size: 0.83rem; color: var(--muted); margin-bottom: 0.6rem; }
-    .contrib-box ol, .contrib-box ul { padding-left: 1.4rem; font-size: 0.83rem; color: var(--muted); margin-bottom: 0.6rem; }
-    .contrib-box li { margin-bottom: 0.25rem; }
-    .contrib-box code { font-family: monospace; font-size: 0.79rem; background: var(--bg); padding: 0.1rem 0.35rem; border-radius: 3px; color: var(--text); }
+    .contrib-box p  { font-size: 0.95rem; color: var(--muted); margin-bottom: 0.6rem; }
+    .contrib-box ol, .contrib-box ul { padding-left: 1.4rem; font-size: 0.95rem; color: var(--muted); margin-bottom: 0.6rem; }
+    .contrib-box li { margin-bottom: 0.3rem; }
+    .contrib-box code { font-family: monospace; font-size: 0.88rem; background: var(--bg); padding: 0.1rem 0.4rem; border-radius: 3px; color: var(--text); }
     .contrib-box strong { color: var(--text); }
     .contrib-box a { color: var(--accent); text-decoration: none; }
     .contrib-box a:hover { text-decoration: underline; }
 
     footer {
       margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--border);
-      font-size: 0.76rem; color: var(--muted);
+      font-size: 0.9rem; color: var(--muted);
     }
     footer a { color: var(--accent); text-decoration: none; }
 
     @media (max-width: 640px) {
-      .charts-row { grid-template-columns: 1fr; }
+      .scorecard-strip { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -166,7 +193,7 @@
 
   <header>
     <h1><a href="https://github.com/rubin-johnson/token_miser">token_miser</a> — Benchmark Results</h1>
-    <p>End-to-end benchmarks for Claude Code and Codex configuration packages. Every run is a real agent session on a real coding task — no mocks, no cherry-picking. All data collected by <strong>Rubin Johnson</strong> <span class="badge">sole experimenter</span> on Claude Sonnet 4.6 via AWS Bedrock.</p>
+    <p>End-to-end benchmarks for Claude Code and Codex configuration packages. Every run is a real agent session on a real coding task — no mocks, no cherry-picking. All data collected by <strong>Rubin Johnson</strong> <span class="badge">sole experimenter</span></p>
   </header>
 
   <nav>
@@ -180,19 +207,17 @@
     <h2>Results</h2>
 
     <div class="suite-tabs">
-      <button class="suite-tab active" onclick="switchSuite('standard', this)">Standard · 15 tasks</button>
-      <button class="suite-tab"        onclick="switchSuite('quick', this)">Quick · 8 tasks</button>
-      <button class="suite-tab"        onclick="switchSuite('axis', this)">Axis · 8 tasks</button>
-      <button class="suite-tab"        onclick="switchSuite('domain-python-api', this)">Python API · 8 tasks</button>
+      <button class="suite-tab active" onclick="switchSuite('standard', this)">Standard (15 tasks)</button>
+      <button class="suite-tab"        onclick="switchSuite('quick', this)">Quick (8 tasks)</button>
+      <button class="suite-tab"        onclick="switchSuite('axis', this)">Axis (8 tasks)</button>
+      <button class="suite-tab"        onclick="switchSuite('domain-python-api', this)">Python API (8 tasks)</button>
     </div>
 
     <div id="suite-standard">
-      <p class="note">15 tasks across feature, bugfix, refactor, test-writing, and sequential categories. Mix of self-contained fixture repos (tiny-cli, tiny-api) and real open-source repos (Flask 3.1, httpx 0.28). Single run per package — treat as directional signal, not statistically final.</p>
-      <div class="summary-row" id="cards-standard"></div>
-      <div class="charts-row">
-        <div class="chart-card"><h4>Pass rate by package</h4><canvas id="chart-passrate-standard"></canvas></div>
-        <div class="chart-card"><h4>Total tokens by package</h4><canvas id="chart-tokens-standard"></canvas></div>
-      </div>
+      <p class="note">15 tasks across feature, bugfix, refactor, test-writing, and sequential categories. Mix of self-contained fixture repos and real open-source repos (Flask 3.1, httpx 0.28). Single run per package — treat as directional signal, not statistically final.</p>
+      <div id="scorecards-standard"></div>
+      <div class="chart-combined"><h4>Pass Rate vs Cost by Package</h4><canvas id="chart-combined-standard"></canvas></div>
+      <h3>Task Detail</h3>
       <table>
         <thead id="thead-standard"></thead>
         <tbody id="tbody-standard"></tbody>
@@ -201,11 +226,9 @@
 
     <div id="suite-quick" style="display:none">
       <p class="note">8 tasks using self-contained fixture repos only. No network required. Faster iteration for package screening.</p>
-      <div class="summary-row" id="cards-quick"></div>
-      <div class="charts-row">
-        <div class="chart-card"><h4>Pass rate by package</h4><canvas id="chart-passrate-quick"></canvas></div>
-        <div class="chart-card"><h4>Total tokens by package</h4><canvas id="chart-tokens-quick"></canvas></div>
-      </div>
+      <div id="scorecards-quick"></div>
+      <div class="chart-combined"><h4>Pass Rate vs Cost by Package</h4><canvas id="chart-combined-quick"></canvas></div>
+      <h3>Task Detail</h3>
       <table>
         <thead id="thead-quick"></thead>
         <tbody id="tbody-quick"></tbody>
@@ -213,12 +236,10 @@
     </div>
 
     <div id="suite-axis" style="display:none">
-      <p class="note">8 interaction-pattern tasks: explore, multiturn, diff, testrun, bashheavy, smallio, reasoning, bigoutput. Tests how packages perform across different agent behavior modes. 600s timeout. Claude Sonnet 4.6 (Bedrock) + Codex GPT-5.4 (OpenAI).</p>
-      <div class="summary-row" id="cards-axis"></div>
-      <div class="charts-row">
-        <div class="chart-card"><h4>Pass rate by package</h4><canvas id="chart-passrate-axis"></canvas></div>
-        <div class="chart-card"><h4>Total tokens by package</h4><canvas id="chart-tokens-axis"></canvas></div>
-      </div>
+      <p class="note">8 interaction-pattern tasks: explore, multiturn, diff, testrun, bashheavy, smallio, reasoning, bigoutput. Tests how packages perform across different agent behavior modes. 600s timeout per task.</p>
+      <div id="scorecards-axis"></div>
+      <div class="chart-combined"><h4>Pass Rate vs Cost by Package</h4><canvas id="chart-combined-axis"></canvas></div>
+      <h3>Task Detail</h3>
       <table>
         <thead id="thead-axis"></thead>
         <tbody id="tbody-axis"></tbody>
@@ -226,12 +247,10 @@
     </div>
 
     <div id="suite-domain-python-api" style="display:none">
-      <p class="note">8 Python API development tasks: FastAPI CRUD, Flask debugging, httpx testing, middleware, auth, OpenAPI. Real-world Python web dev scenarios. 600s timeout. Claude Sonnet 4.6 (Bedrock) + Codex GPT-5.4 (OpenAI).</p>
-      <div class="summary-row" id="cards-domain-python-api"></div>
-      <div class="charts-row">
-        <div class="chart-card"><h4>Pass rate by package</h4><canvas id="chart-passrate-domain-python-api"></canvas></div>
-        <div class="chart-card"><h4>Total tokens by package</h4><canvas id="chart-tokens-domain-python-api"></canvas></div>
-      </div>
+      <p class="note">8 Python API development tasks: FastAPI CRUD, Flask debugging, httpx testing, middleware, auth, OpenAPI. Real-world Python web dev scenarios. 600s timeout per task.</p>
+      <div id="scorecards-domain-python-api"></div>
+      <div class="chart-combined"><h4>Pass Rate vs Cost by Package</h4><canvas id="chart-combined-domain-python-api"></canvas></div>
+      <h3>Task Detail</h3>
       <table>
         <thead id="thead-domain-python-api"></thead>
         <tbody id="tbody-domain-python-api"></tbody>
@@ -240,11 +259,11 @@
 
     <h3>How to read this</h3>
     <div class="contrib-box">
-      <p><strong>Pass rate</strong> is the fraction of automated success criteria met across all tasks. Each task has 1–3 checks (file exists, command exits zero, output contains a string). This is the primary quality signal.</p>
-      <p><strong>Tokens</strong> is input + output tokens summed across all tasks. Does <em>not</em> include cache hits — cached tokens cost ~10× less and are tracked separately. Lower is cheaper per run.</p>
-      <p><strong>Cost</strong> is actual USD at Bedrock rates, including cache reads. Varies run-to-run based on cache state at execution time.</p>
-      <p><strong>Baseline</strong> is vanilla Claude Code with no CLAUDE.md. Every other package is compared against it.</p>
-      <p class="note" style="margin-bottom:0">Single-run data has meaningful variance. One hard task that fails can swing pass rate ±6pp. Interpret trends, not individual numbers.</p>
+      <p><strong>Tasks passed</strong> means all success criteria for that task were met. Each task has 1-3 automated checks (file exists, command exits zero, output contains a string). This is the primary quality signal.</p>
+      <p><strong>Cost</strong> is actual USD at Bedrock/OpenAI rates, including cache reads. Varies run-to-run based on cache state at execution time.</p>
+      <p><strong>Tokens</strong> is input + output tokens summed across all tasks. Does <em>not</em> include cache hits. Lower is cheaper per run.</p>
+      <p><strong>Baseline</strong> is vanilla agent with no configuration. Every other package is compared against it.</p>
+      <p class="note" style="margin-bottom:0">Single-run data has meaningful variance. One hard task that fails can swing pass rate significantly. Interpret trends, not individual numbers.</p>
     </div>
   </section>
 
@@ -255,24 +274,24 @@
     <h3>Tested in this dataset</h3>
     <div class="pkg-grid">
       <div class="pkg-card">
-        <h4>baseline <span class="tested-badge">✓ tested</span></h4>
+        <h4>baseline <span class="tested-badge">tested</span></h4>
         <p>Vanilla Claude Code — no CLAUDE.md, no configuration. The reference all other packages are measured against.</p>
         <div class="dim">Reference</div>
       </div>
       <div class="pkg-card">
-        <h4><a href="https://github.com/rubin-johnson/rubin">rubin</a> <span class="tested-badge">✓ tested</span></h4>
+        <h4><a href="https://github.com/rubin-johnson/rubin">rubin</a> <span class="tested-badge">tested</span></h4>
         <p>Rubin's full personal config (~270 lines). Model selection, token efficiency, TDD, git workflow, communication style, parallel execution preference.</p>
         <div class="dim">Comprehensive personal</div>
       </div>
       <div class="pkg-card">
-        <h4><a href="https://github.com/rubin-johnson/rubin-async">rubin-async</a> <span class="tested-badge">✓ tested</span></h4>
+        <h4><a href="https://github.com/rubin-johnson/rubin-async">rubin-async</a> <span class="tested-badge">tested</span></h4>
         <p>rubin + async-first: explicit instruction to batch all independent reads, greps, and shell commands before waiting for results.</p>
-        <div class="dim">Combo · Tool batching</div>
+        <div class="dim">Combo: Tool batching</div>
       </div>
       <div class="pkg-card">
-        <h4><a href="https://github.com/rubin-johnson/rubin-lazy">rubin-lazy</a> <span class="tested-badge">✓ tested</span></h4>
+        <h4><a href="https://github.com/rubin-johnson/rubin-lazy">rubin-lazy</a> <span class="tested-badge">tested</span></h4>
         <p>rubin + opportunistic-lazy: never re-read a file already in context, batch edits to the same file, reference by filename+line instead of re-fetching.</p>
-        <div class="dim">Combo · Context reuse</div>
+        <div class="dim">Combo: Context reuse</div>
       </div>
     </div>
 
@@ -316,7 +335,7 @@
       <div class="pkg-card">
         <h4><a href="https://github.com/rubin-johnson/quality-floor">quality-floor</a></h4>
         <p>Correctness over speed. Full file reads, exhaustive test coverage, explicit criterion verification. Inverse calibration baseline.</p>
-        <div class="dim">Inverse · Calibration</div>
+        <div class="dim">Inverse: Calibration</div>
       </div>
       <div class="pkg-card">
         <h4><a href="https://github.com/rubin-johnson/adversarial-frugal">adversarial-frugal</a></h4>
@@ -325,7 +344,7 @@
       </div>
       <div class="pkg-card">
         <h4><a href="https://github.com/rubin-johnson/caveman">caveman</a></h4>
-        <p>Sentence-level constraints: ≤1 sentence between tool calls, no markdown, no articles, no filler openers.</p>
+        <p>Sentence-level constraints: 1 sentence max between tool calls, no markdown, no articles, no filler openers.</p>
         <div class="dim">Verbosity control</div>
       </div>
       <div class="pkg-card">
@@ -345,7 +364,7 @@
       </div>
       <div class="pkg-card">
         <h4><a href="https://github.com/rubin-johnson/piersede">piersede</a></h4>
-        <p>Aggressive context minimization: strict retrieval hierarchy (LSP → grep → line range → full file), subagent delegation, compaction policy.</p>
+        <p>Aggressive context minimization: strict retrieval hierarchy (LSP, grep, line range, full file), subagent delegation, compaction policy.</p>
         <div class="dim">Context minimization</div>
       </div>
       <div class="pkg-card">
@@ -360,7 +379,7 @@
       </div>
       <div class="pkg-card">
         <h4><a href="https://github.com/rubin-johnson/thinking-cap">thinking-cap</a></h4>
-        <p>Limit extended reasoning to 2–3 sentences. No enumeration of possibilities — pick the most likely and act.</p>
+        <p>Limit extended reasoning to 2-3 sentences. No enumeration of possibilities — pick the most likely and act.</p>
         <div class="dim">Reasoning budget</div>
       </div>
       <div class="pkg-card">
@@ -387,7 +406,7 @@
       <ol>
         <li>Open a GitHub issue titled <code>benchmark request: &lt;package-name&gt;</code></li>
         <li>Include your package files (<code>CLAUDE.md</code> / <code>AGENTS.md</code>, optional <code>settings.json</code>)</li>
-        <li>Describe the strategy in 2–3 sentences: what behavior it changes and why it should help</li>
+        <li>Describe the strategy in 2-3 sentences: what behavior it changes and why it should help</li>
         <li>Include reproduction details: which suite, any environment requirements</li>
         <li>If your package is in <a href="https://github.com/rubin-johnson/loadout-packages">loadout-packages</a> already, just link to it</li>
       </ol>
@@ -409,7 +428,7 @@
   </section>
 
   <footer>
-    <p>Data collected on Claude Sonnet 4.6 via AWS Bedrock (us-east-2) &middot; <a href="https://github.com/rubin-johnson/token_miser">github.com/rubin-johnson/token_miser</a> &middot; Last updated <span id="last-updated"></span></p>
+    <p>Data collected on Claude Sonnet 4.6 (Bedrock, us-east-2) + Codex GPT-5.4 (OpenAI) &middot; <a href="https://github.com/rubin-johnson/token_miser">github.com/rubin-johnson/token_miser</a> &middot; Last updated <span id="last-updated"></span></p>
   </footer>
 
 </div>
@@ -417,17 +436,18 @@
 <script>
 // ── Label maps ────────────────────────────────────────────────────────────────
 const PKG_LABEL = {
-  'claude:baseline':             'baseline (claude)',
-  'codex:baseline':              'baseline (codex)',
+  'claude:baseline':             'baseline',
+  'codex:baseline':              'baseline',
   'claude:personal':             'rubin',
   'claude:personal-async':       'rubin-async',
   'claude:personal-lazy':        'rubin-lazy',
-  'claude:adversarial-frugal':   'adversarial-frugal (claude)',
-  'claude:c-structured':         'c-structured (claude)',
-  'claude:caveman':              'caveman (claude)',
-  'codex:adversarial-frugal':    'adversarial-frugal (codex)',
-  'codex:c-structured':          'c-structured (codex)',
-  'codex:caveman':               'caveman (codex)',
+  'claude:adversarial-frugal':   'adversarial-frugal',
+  'claude:c-structured':         'c-structured',
+  'claude:caveman':              'caveman',
+  'claude:rubin-v2':             'rubin-v2',
+  'codex:adversarial-frugal':    'adversarial-frugal',
+  'codex:c-structured':          'c-structured',
+  'codex:caveman':               'caveman',
 };
 
 const TASK_META = {
@@ -446,7 +466,6 @@ const TASK_META = {
   'bm-seq-001':  { name: 'Multi-step config task',        category: 'sequential', difficulty: 'easy'   },
   'bm-seq-002':  { name: 'Multi-step API task',           category: 'sequential', difficulty: 'medium' },
   'bm-seq-003':  { name: 'Multi-step debug task',         category: 'sequential', difficulty: 'hard'   },
-  // axis suite
   'bm-axis-explore':    { name: 'Codebase exploration',       category: 'feature',  difficulty: 'medium' },
   'bm-axis-multiturn':  { name: 'Multi-turn conversation',    category: 'feature',  difficulty: 'medium' },
   'bm-axis-diff':       { name: 'Diff-heavy changes',         category: 'refactor', difficulty: 'medium' },
@@ -455,7 +474,6 @@ const TASK_META = {
   'bm-axis-smallio':    { name: 'Small I/O task',             category: 'feature',  difficulty: 'easy'   },
   'bm-axis-reasoning':  { name: 'Reasoning-heavy task',       category: 'feature',  difficulty: 'hard'   },
   'bm-axis-bigoutput':  { name: 'Parse full test suite output', category: 'feature', difficulty: 'hard'   },
-  // domain-python-api suite
   'bm-pyapi-fastapi-crud':           { name: 'FastAPI CRUD endpoints',      category: 'feature',  difficulty: 'medium' },
   'bm-pyapi-flask-n-plus-one':       { name: 'Flask N+1 query fix',         category: 'bugfix',   difficulty: 'medium' },
   'bm-pyapi-fastapi-auth':           { name: 'FastAPI auth middleware',      category: 'feature',  difficulty: 'medium' },
@@ -466,11 +484,7 @@ const TASK_META = {
   'bm-pyapi-flask-test-integration': { name: 'Flask integration tests',     category: 'test',     difficulty: 'hard'   },
 };
 
-// ── Palette (matches CSS vars, explicit for Chart.js) ────────────────────────
-const COLORS = ['#58a6ff', '#3fb950', '#f0883e', '#bc8cff', '#f85149', '#d29922', '#79c0ff', '#56d364'];
-const ALPHA  = col => col + '33';
-
-// ── Loaded data cache ─────────────────────────────────────────────────────────
+const COLORS = ['#58a6ff', '#3fb950', '#f0883e', '#bc8cff', '#f85149', '#d29922', '#79c0ff', '#56d364', '#ff7b72', '#a5d6ff'];
 const cache = {};
 const chartInstances = {};
 
@@ -481,104 +495,171 @@ async function load(suite) {
   return cache[suite];
 }
 
-// ── Totals helper ─────────────────────────────────────────────────────────────
-function totals(data, pkg) {
-  return data.tasks.reduce((acc, t) => {
-    const c = data.matrix[t]?.[pkg] || {};
-    acc.tokens   += c.tokens         || 0;
-    acc.pass     += c.criteria_pass  || 0;
-    acc.criteria += c.criteria_total || 0;
-    acc.cost     += c.cost           || 0;
-    return acc;
-  }, { tokens: 0, pass: 0, criteria: 0, cost: 0 });
+// ── Compute stats per package ─────────────────────────────────────────────────
+function computeStats(data, pkg) {
+  let tokens = 0, cost = 0, tasksPassed = 0, tasksTotal = 0, wall = 0;
+  data.tasks.forEach(t => {
+    const c = data.matrix[t]?.[pkg];
+    if (!c) return;
+    tasksTotal++;
+    tokens += c.tokens || 0;
+    cost += c.cost || 0;
+    wall += c.wall_seconds || 0;
+    if (c.criteria_total && c.criteria_pass === c.criteria_total) tasksPassed++;
+  });
+  return { tokens, cost, tasksPassed, tasksTotal, wall };
 }
 
-// ── Summary cards ─────────────────────────────────────────────────────────────
-function renderCards(suite, data) {
-  const el = document.getElementById(`cards-${suite}`);
-  el.innerHTML = '';
-  const baseT = totals(data, data.packages[0]);
+// ── Group packages by agent ───────────────────────────────────────────────────
+function groupByAgent(packages) {
+  const groups = {};
+  packages.forEach(pkg => {
+    const [agent] = pkg.split(':');
+    if (!groups[agent]) groups[agent] = [];
+    groups[agent].push(pkg);
+  });
+  return groups;
+}
 
-  data.packages.forEach((pkg, i) => {
-    const t = totals(data, pkg);
-    const pct = t.criteria ? Math.round(t.pass / t.criteria * 100) : 0;
-    const cls = pct >= 40 ? 'high' : pct >= 20 ? 'mid' : 'low';
-    const label = PKG_LABEL[pkg] || pkg;
-    const tDelta = pkg !== data.packages[0] && baseT.tokens
-      ? ((t.tokens - baseT.tokens) / baseT.tokens * 100).toFixed(1)
-      : null;
-    const dCls  = tDelta < 0 ? 'pos' : 'neg';
+// ── Scorecard strips (grouped by agent) ───────────────────────────────────────
+function renderScorecards(suite, data) {
+  const container = document.getElementById(`scorecards-${suite}`);
+  container.innerHTML = '';
+  const groups = groupByAgent(data.packages);
 
-    el.innerHTML += `
-      <div class="summary-card">
-        <div class="pkg">${label}</div>
-        <div class="rate ${cls}">${pct}%</div>
-        <div class="sub">${t.pass}/${t.criteria} criteria passed</div>
-        <div class="row"><span>Tokens</span>
-          <span>${t.tokens.toLocaleString()}${tDelta !== null ? `<span class="delta ${dCls}">${tDelta > 0 ? '+' : ''}${tDelta}%</span>` : ''}</span>
-        </div>
-        <div class="row"><span>Cost</span><span>$${t.cost.toFixed(2)}</span></div>
-      </div>`;
+  Object.entries(groups).forEach(([agent, pkgs]) => {
+    const group = document.createElement('div');
+    group.className = 'agent-group';
+
+    const label = document.createElement('div');
+    label.className = 'agent-label';
+    label.textContent = agent === 'claude' ? 'Claude (Sonnet 4.6, Bedrock)' : 'Codex (GPT-5.4, OpenAI)';
+    group.appendChild(label);
+
+    const strip = document.createElement('div');
+    strip.className = 'scorecard-strip';
+
+    const baselinePkg = pkgs.find(p => p.endsWith(':baseline'));
+    const baseStats = baselinePkg ? computeStats(data, baselinePkg) : null;
+
+    pkgs.forEach((pkg, i) => {
+      const s = computeStats(data, pkg);
+      const pct = s.tasksTotal ? Math.round(s.tasksPassed / s.tasksTotal * 100) : 0;
+      const cls = pct >= 75 ? 'high' : pct >= 40 ? 'mid' : 'low';
+      const displayLabel = PKG_LABEL[pkg] || pkg.split(':')[1] || pkg;
+
+      const costDelta = (baseStats && pkg !== baselinePkg && baseStats.cost)
+        ? ((s.cost - baseStats.cost) / baseStats.cost * 100).toFixed(0)
+        : null;
+      const costDeltaHtml = costDelta !== null
+        ? `<span class="delta ${Number(costDelta) <= 0 ? 'pos' : 'neg'}">${Number(costDelta) > 0 ? '+' : ''}${costDelta}%</span>`
+        : '';
+
+      strip.innerHTML += `
+        <div class="scorecard">
+          <div class="pkg">${displayLabel}</div>
+          <div class="big-stat ${cls}">${s.tasksPassed} of ${s.tasksTotal}</div>
+          <div class="stat-label">tasks passed</div>
+          <div class="metrics">
+            <span class="metric-label">Cost</span>
+            <span class="metric-value">$${s.cost.toFixed(2)} ${costDeltaHtml}</span>
+            <span class="metric-label">Tokens</span>
+            <span class="metric-value">${(s.tokens / 1000).toFixed(0)}k</span>
+            <span class="metric-label">Wall time</span>
+            <span class="metric-value">${s.wall ? (s.wall / 60).toFixed(1) + 'm' : '--'}</span>
+          </div>
+        </div>`;
+    });
+
+    group.appendChild(strip);
+    container.appendChild(group);
   });
 }
 
-// ── Charts ────────────────────────────────────────────────────────────────────
-function renderCharts(suite, data) {
-  const labels = data.packages.map(p => PKG_LABEL[p] || p);
+// ── Combined chart: pass rate bars + cost line ────────────────────────────────
+function renderCombinedChart(suite, data) {
+  const key = `chart-combined-${suite}`;
+  if (chartInstances[key]) chartInstances[key].destroy();
 
-  const passData   = data.packages.map(p => { const t = totals(data, p); return t.criteria ? +(t.pass / t.criteria * 100).toFixed(1) : 0; });
-  const tokenData  = data.packages.map(p => totals(data, p).tokens);
-
-  ['passrate', 'tokens'].forEach(id => {
-    const key = `chart-${id}-${suite}`;
-    if (chartInstances[key]) chartInstances[key].destroy();
+  const labels = data.packages.map(p => {
+    const [agent, name] = p.split(':');
+    const display = PKG_LABEL[p] || name || p;
+    return data.packages.length > 4 ? display : `${display} (${agent})`;
   });
 
-  const chartOpts = (label, values, unit, pct) => ({
+  const passData = data.packages.map(p => {
+    const s = computeStats(data, p);
+    return s.tasksTotal ? +(s.tasksPassed / s.tasksTotal * 100).toFixed(1) : 0;
+  });
+  const costData = data.packages.map(p => computeStats(data, p).cost);
+
+  chartInstances[key] = new Chart(document.getElementById(key), {
     type: 'bar',
     data: {
       labels,
-      datasets: [{
-        label,
-        data: values,
-        backgroundColor: COLORS.map(c => c + '55'),
-        borderColor: COLORS,
-        borderWidth: 1.5,
-        borderRadius: 4,
-      }]
+      datasets: [
+        {
+          label: 'Pass Rate (%)',
+          data: passData,
+          backgroundColor: data.packages.map((_, i) => COLORS[i % COLORS.length] + '66'),
+          borderColor: data.packages.map((_, i) => COLORS[i % COLORS.length]),
+          borderWidth: 1.5,
+          borderRadius: 4,
+          yAxisID: 'y',
+          order: 2,
+        },
+        {
+          label: 'Cost ($)',
+          data: costData,
+          type: 'line',
+          borderColor: '#f0883e',
+          backgroundColor: '#f0883e44',
+          borderWidth: 2.5,
+          pointRadius: 5,
+          pointBackgroundColor: '#f0883e',
+          tension: 0.2,
+          yAxisID: 'y1',
+          order: 1,
+        }
+      ]
     },
     options: {
-      indexAxis: 'y',
       responsive: true,
+      interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { display: false },
+        legend: {
+          display: true,
+          labels: { color: '#8b949e', font: { size: 13 }, usePointStyle: true, pointStyle: 'rectRounded' }
+        },
         tooltip: {
           callbacks: {
-            label: ctx => pct
-              ? ` ${ctx.parsed.x}%`
-              : ` ${ctx.parsed.x.toLocaleString()} ${unit}`
+            label: ctx => ctx.dataset.yAxisID === 'y1'
+              ? ` Cost: $${ctx.parsed.y.toFixed(2)}`
+              : ` Pass: ${ctx.parsed.y}%`
           }
         }
       },
       scales: {
         x: {
-          grid:  { color: '#30363d' },
-          ticks: { color: '#8b949e', font: { size: 11 }, callback: v => pct ? v + '%' : (v/1000).toFixed(0) + 'k' },
-          max: pct ? 100 : undefined,
+          grid: { display: false },
+          ticks: { color: '#e6edf3', font: { size: 12 }, maxRotation: 45 }
         },
-        y: { grid: { display: false }, ticks: { color: '#e6edf3', font: { size: 12 } } }
+        y: {
+          position: 'left',
+          grid: { color: '#30363d' },
+          ticks: { color: '#8b949e', font: { size: 12 }, callback: v => v + '%' },
+          max: 100,
+          title: { display: true, text: 'Pass Rate', color: '#8b949e', font: { size: 12 } }
+        },
+        y1: {
+          position: 'right',
+          grid: { drawOnChartArea: false },
+          ticks: { color: '#f0883e', font: { size: 12 }, callback: v => '$' + v.toFixed(1) },
+          title: { display: true, text: 'Cost (USD)', color: '#f0883e', font: { size: 12 } }
+        }
       }
     }
   });
-
-  chartInstances[`chart-passrate-${suite}`] = new Chart(
-    document.getElementById(`chart-passrate-${suite}`),
-    chartOpts('Pass rate', passData, '%', true)
-  );
-  chartInstances[`chart-tokens-${suite}`] = new Chart(
-    document.getElementById(`chart-tokens-${suite}`),
-    chartOpts('Tokens', tokenData, 'tokens', false)
-  );
 }
 
 // ── Task table ────────────────────────────────────────────────────────────────
@@ -586,8 +667,12 @@ function renderTable(suite, data) {
   const thead = document.getElementById(`thead-${suite}`);
   const tbody = document.getElementById(`tbody-${suite}`);
 
-  thead.innerHTML = '<tr><th>Task</th>' +
-    data.packages.map(p => `<th>${PKG_LABEL[p] || p}</th>`).join('') + '</tr>';
+  const pkgHeaders = data.packages.map(p => {
+    const [agent, name] = p.split(':');
+    const display = PKG_LABEL[p] || name || p;
+    return `<th>${display}<br><span style="font-weight:400;font-size:0.75rem;color:var(--muted)">${agent}</span></th>`;
+  });
+  thead.innerHTML = '<tr><th>Task</th>' + pkgHeaders.join('') + '</tr>';
 
   tbody.innerHTML = '';
   data.tasks.forEach(taskId => {
@@ -595,19 +680,19 @@ function renderTable(suite, data) {
     let row = `<tr><td>
       <div class="task-id">${taskId}</div>
       <div class="task-name">${meta.name || taskId}
-        <span class="tag tag-${meta.category}">${meta.category}</span>
-        <span class="tag tag-${meta.difficulty}">${meta.difficulty}</span>
+        <span class="tag tag-${meta.category}">${meta.category || ''}</span>
+        <span class="tag tag-${meta.difficulty}">${meta.difficulty || ''}</span>
       </div>
     </td>`;
 
     data.packages.forEach(pkg => {
       const c = data.matrix[taskId]?.[pkg];
-      if (!c) { row += '<td>—</td>'; return; }
+      if (!c) { row += '<td style="color:var(--muted)">--</td>'; return; }
       const r = c.criteria_total ? c.criteria_pass / c.criteria_total : 0;
       const cls = r === 1 ? 'pass-full' : r === 0 ? 'pass-zero' : 'pass-partial';
       row += `<td>
         <span class="${cls}">${c.criteria_pass}/${c.criteria_total}</span>
-        <div class="tokens-cell">${c.tokens.toLocaleString()}t</div>
+        <div class="tokens-cell">${c.tokens.toLocaleString()}t &middot; $${c.cost.toFixed(2)}</div>
       </td>`;
     });
 
@@ -626,8 +711,8 @@ async function switchSuite(suite, btn) {
 
 async function renderSuite(suite) {
   const data = await load(suite);
-  renderCards(suite, data);
-  renderCharts(suite, data);
+  renderScorecards(suite, data);
+  renderCombinedChart(suite, data);
   renderTable(suite, data);
 }
 
