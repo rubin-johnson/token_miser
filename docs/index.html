@@ -533,7 +533,10 @@ function renderScorecards(suite, data) {
 
     const label = document.createElement('div');
     label.className = 'agent-label';
-    label.textContent = agent === 'claude' ? 'Claude (Sonnet 4.6, Bedrock)' : 'Codex (GPT-5.4, OpenAI)';
+    const modelSet = new Set(pkgs.map(p => (data.models || {})[p]).filter(Boolean));
+    const modelStr = modelSet.size ? [...modelSet].join(', ') : 'unknown';
+    const AGENT_DISPLAY = { claude: 'Claude Code', codex: 'Codex' };
+    label.textContent = `${AGENT_DISPLAY[agent] || agent} · ${modelStr}`;
     group.appendChild(label);
 
     const strip = document.createElement('div');
@@ -590,6 +593,7 @@ function renderCombinedChart(suite, data) {
   const stats = data.packages.map(p => computeStats(data, p));
   const passData = stats.map(s => s.tasksTotal ? +(s.tasksPassed / s.tasksTotal * 100).toFixed(1) : 0);
   const costData = stats.map(s => s.cost);
+  const wallData = stats.map(s => s.wall);
 
   chartInstances[key] = new Chart(document.getElementById(key), {
     type: 'bar',
@@ -610,7 +614,11 @@ function renderCombinedChart(suite, data) {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: ctx => ` Pass: ${ctx.parsed.y}%  ·  Cost: $${costData[ctx.dataIndex].toFixed(2)}`
+            label: ctx => {
+              const i = ctx.dataIndex;
+              const mins = (wallData[i] / 60).toFixed(1);
+              return ` Pass: ${ctx.parsed.y}%  ·  Cost: $${costData[i].toFixed(2)}  ·  Time: ${mins}m`;
+            }
           }
         }
       },
@@ -628,15 +636,17 @@ function renderCombinedChart(suite, data) {
       }
     },
     plugins: [{
-      id: 'costLabels',
+      id: 'barLabels',
       afterDatasetsDraw(chart) {
         const { ctx } = chart;
         chart.getDatasetMeta(0).data.forEach((bar, i) => {
           ctx.save();
-          ctx.fillStyle = '#f0883e';
-          ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText('$' + costData[i].toFixed(2), bar.x, bar.y - 8);
+          ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
+          ctx.fillStyle = '#f0883e';
+          ctx.fillText('$' + costData[i].toFixed(2), bar.x, bar.y - 20);
+          ctx.fillStyle = '#8b949e';
+          ctx.fillText((wallData[i] / 60).toFixed(1) + 'm', bar.x, bar.y - 6);
           ctx.restore();
         });
       }

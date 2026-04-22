@@ -20,6 +20,16 @@
     "bm-pyapi-flask-test-integration",
     "bm-pyapi-httpx-test"
   ],
+  "models": {
+    "codex:adversarial-frugal": "gpt-5.4",
+    "claude:adversarial-frugal": "sonnet",
+    "codex:c-structured": "gpt-5.4",
+    "claude:c-structured": "sonnet",
+    "codex:caveman": "gpt-5.4",
+    "codex:baseline": "gpt-5.4",
+    "claude:caveman": "sonnet",
+    "claude:baseline": "sonnet"
+  },
   "matrix": {
     "bm-pyapi-fastapi-auth": {
       "claude:baseline": {

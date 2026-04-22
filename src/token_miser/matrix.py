@@ -39,7 +39,7 @@ def _query_matrix_runs(conn: sqlite3.Connection, suite: str) -> list[dict]:
     placeholders = ", ".join("?" for _ in task_ids)
     rows = conn.execute(
         f"""
-        SELECT r.task_id, r.package_name, r.agent,
+        SELECT r.task_id, r.package_name, r.agent, r.model,
                r.input_tokens + r.output_tokens AS tokens,
                r.total_cost_usd AS cost,
                r.wall_seconds AS wall,
@@ -228,6 +228,11 @@ def export_matrix_json(suite: str, output: Path, conn: sqlite3.Connection | None
     non_baseline_labels = sorted(p for p in packages if not p.endswith(":baseline"))
     packages = baseline_labels + non_baseline_labels
 
+    models: dict[str, str] = {}
+    for (tid, pkg), cell in best.items():
+        if cell.get("model") and pkg not in models:
+            models[pkg] = cell["model"]
+
     data: dict[str, dict] = {}
     for tid in tasks:
         data[tid] = {}
@@ -244,7 +249,7 @@ def export_matrix_json(suite: str, output: Path, conn: sqlite3.Connection | None
 
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("w") as f:
-        json.dump({"suite": suite, "packages": packages, "tasks": tasks, "matrix": data}, f, indent=2)
+        json.dump({"suite": suite, "packages": packages, "tasks": tasks, "models": models, "matrix": data}, f, indent=2)
         f.write("\n")
     if owns_conn:
         conn.close()

@@ -24,6 +24,13 @@
     "bm-test-002",
     "bm-test-003"
   ],
+  "models": {
+    "claude:c-structured": "sonnet",
+    "claude:caveman": "sonnet",
+    "claude:rubin-v2": "sonnet",
+    "claude:adversarial-frugal": "sonnet",
+    "claude:baseline": "sonnet"
+  },
   "matrix": {
     "bm-feat-001": {
       "claude:baseline": {

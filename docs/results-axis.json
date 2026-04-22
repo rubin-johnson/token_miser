@@ -21,6 +21,17 @@
     "bm-axis-smallio",
     "bm-axis-testrun"
   ],
+  "models": {
+    "claude:rubin-v2": "sonnet",
+    "claude:baseline": "sonnet",
+    "codex:adversarial-frugal": "gpt-5.4",
+    "claude:adversarial-frugal": "sonnet",
+    "codex:c-structured": "gpt-5.4",
+    "claude:c-structured": "sonnet",
+    "codex:caveman": "gpt-5.4",
+    "codex:baseline": "gpt-5.4",
+    "claude:caveman": "sonnet"
+  },
   "matrix": {
     "bm-axis-bashheavy": {
       "claude:baseline": {
