@@ -216,7 +216,7 @@
     <div id="suite-standard">
       <p class="note">15 tasks across feature, bugfix, refactor, test-writing, and sequential categories. Mix of self-contained fixture repos and real open-source repos (Flask 3.1, httpx 0.28). Single run per package — treat as directional signal, not statistically final.</p>
       <div id="scorecards-standard"></div>
-      <div class="chart-combined"><h4>Pass Rate vs Cost by Package</h4><canvas id="chart-combined-standard"></canvas></div>
+      <div class="chart-combined"><h4>Pass Rate by Package</h4><canvas id="chart-combined-standard"></canvas></div>
       <h3>Task Detail</h3>
       <table>
         <thead id="thead-standard"></thead>
@@ -227,7 +227,7 @@
     <div id="suite-quick" style="display:none">
       <p class="note">8 tasks using self-contained fixture repos only. No network required. Faster iteration for package screening.</p>
       <div id="scorecards-quick"></div>
-      <div class="chart-combined"><h4>Pass Rate vs Cost by Package</h4><canvas id="chart-combined-quick"></canvas></div>
+      <div class="chart-combined"><h4>Pass Rate by Package</h4><canvas id="chart-combined-quick"></canvas></div>
       <h3>Task Detail</h3>
       <table>
         <thead id="thead-quick"></thead>
@@ -238,7 +238,7 @@
     <div id="suite-axis" style="display:none">
       <p class="note">8 interaction-pattern tasks: explore, multiturn, diff, testrun, bashheavy, smallio, reasoning, bigoutput. Tests how packages perform across different agent behavior modes. 600s timeout per task.</p>
       <div id="scorecards-axis"></div>
-      <div class="chart-combined"><h4>Pass Rate vs Cost by Package</h4><canvas id="chart-combined-axis"></canvas></div>
+      <div class="chart-combined"><h4>Pass Rate by Package</h4><canvas id="chart-combined-axis"></canvas></div>
       <h3>Task Detail</h3>
       <table>
         <thead id="thead-axis"></thead>
@@ -249,7 +249,7 @@
     <div id="suite-domain-python-api" style="display:none">
       <p class="note">8 Python API development tasks: FastAPI CRUD, Flask debugging, httpx testing, middleware, auth, OpenAPI. Real-world Python web dev scenarios. 600s timeout per task.</p>
       <div id="scorecards-domain-python-api"></div>
-      <div class="chart-combined"><h4>Pass Rate vs Cost by Package</h4><canvas id="chart-combined-domain-python-api"></canvas></div>
+      <div class="chart-combined"><h4>Pass Rate by Package</h4><canvas id="chart-combined-domain-python-api"></canvas></div>
       <h3>Task Detail</h3>
       <table>
         <thead id="thead-domain-python-api"></thead>
@@ -576,7 +576,7 @@ function renderScorecards(suite, data) {
   });
 }
 
-// ── Combined chart: pass rate bars + cost line ────────────────────────────────
+// ── Chart: pass rate bars with cost labels ────────────────────────────────────
 function renderCombinedChart(suite, data) {
   const key = `chart-combined-${suite}`;
   if (chartInstances[key]) chartInstances[key].destroy();
@@ -587,55 +587,30 @@ function renderCombinedChart(suite, data) {
     return data.packages.length > 4 ? display : `${display} (${agent})`;
   });
 
-  const passData = data.packages.map(p => {
-    const s = computeStats(data, p);
-    return s.tasksTotal ? +(s.tasksPassed / s.tasksTotal * 100).toFixed(1) : 0;
-  });
-  const costData = data.packages.map(p => computeStats(data, p).cost);
+  const stats = data.packages.map(p => computeStats(data, p));
+  const passData = stats.map(s => s.tasksTotal ? +(s.tasksPassed / s.tasksTotal * 100).toFixed(1) : 0);
+  const costData = stats.map(s => s.cost);
 
   chartInstances[key] = new Chart(document.getElementById(key), {
     type: 'bar',
     data: {
       labels,
-      datasets: [
-        {
-          label: 'Pass Rate (%)',
-          data: passData,
-          backgroundColor: data.packages.map((_, i) => COLORS[i % COLORS.length] + '66'),
-          borderColor: data.packages.map((_, i) => COLORS[i % COLORS.length]),
-          borderWidth: 1.5,
-          borderRadius: 4,
-          yAxisID: 'y',
-          order: 2,
-        },
-        {
-          label: 'Cost ($)',
-          data: costData,
-          type: 'line',
-          borderColor: '#f0883e',
-          backgroundColor: '#f0883e44',
-          borderWidth: 2.5,
-          pointRadius: 5,
-          pointBackgroundColor: '#f0883e',
-          tension: 0.2,
-          yAxisID: 'y1',
-          order: 1,
-        }
-      ]
+      datasets: [{
+        label: 'Pass Rate (%)',
+        data: passData,
+        backgroundColor: data.packages.map((_, i) => COLORS[i % COLORS.length] + '66'),
+        borderColor: data.packages.map((_, i) => COLORS[i % COLORS.length]),
+        borderWidth: 1.5,
+        borderRadius: 4,
+      }]
     },
     options: {
       responsive: true,
-      interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: {
-          display: true,
-          labels: { color: '#8b949e', font: { size: 13 }, usePointStyle: true, pointStyle: 'rectRounded' }
-        },
+        legend: { display: false },
         tooltip: {
           callbacks: {
-            label: ctx => ctx.dataset.yAxisID === 'y1'
-              ? ` Cost: $${ctx.parsed.y.toFixed(2)}`
-              : ` Pass: ${ctx.parsed.y}%`
+            label: ctx => ` Pass: ${ctx.parsed.y}%  ·  Cost: $${costData[ctx.dataIndex].toFixed(2)}`
           }
         }
       },
@@ -645,20 +620,27 @@ function renderCombinedChart(suite, data) {
           ticks: { color: '#e6edf3', font: { size: 12 }, maxRotation: 45 }
         },
         y: {
-          position: 'left',
           grid: { color: '#30363d' },
           ticks: { color: '#8b949e', font: { size: 12 }, callback: v => v + '%' },
           max: 100,
           title: { display: true, text: 'Pass Rate', color: '#8b949e', font: { size: 12 } }
-        },
-        y1: {
-          position: 'right',
-          grid: { drawOnChartArea: false },
-          ticks: { color: '#f0883e', font: { size: 12 }, callback: v => '$' + v.toFixed(1) },
-          title: { display: true, text: 'Cost (USD)', color: '#f0883e', font: { size: 12 } }
         }
       }
-    }
+    },
+    plugins: [{
+      id: 'costLabels',
+      afterDatasetsDraw(chart) {
+        const { ctx } = chart;
+        chart.getDatasetMeta(0).data.forEach((bar, i) => {
+          ctx.save();
+          ctx.fillStyle = '#f0883e';
+          ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('$' + costData[i].toFixed(2), bar.x, bar.y - 8);
+          ctx.restore();
+        });
+      }
+    }]
   });
 }
 
