@@ -2,9 +2,10 @@
   "suite": "standard",
   "packages": [
     "claude:baseline",
-    "claude:personal",
-    "claude:personal-async",
-    "claude:personal-lazy"
+    "claude:adversarial-frugal",
+    "claude:c-structured",
+    "claude:caveman",
+    "claude:rubin-v2"
   ],
   "tasks": [
     "bm-feat-001",
@@ -26,450 +27,548 @@
   "matrix": {
     "bm-feat-001": {
       "claude:baseline": {
-        "tokens": 8048,
-        "cost": 0.324435,
-        "wall_seconds": 110.2,
-        "criteria_pass": 0,
+        "tokens": 7964,
+        "cost": 0.539727,
+        "wall_seconds": 161.9,
+        "criteria_pass": 2,
         "criteria_total": 2
       },
-      "claude:personal": {
-        "tokens": 4872,
-        "cost": 0.286916,
-        "wall_seconds": 87.4,
-        "criteria_pass": 1,
+      "claude:adversarial-frugal": {
+        "tokens": 6244,
+        "cost": 0.294685,
+        "wall_seconds": 121.1,
+        "criteria_pass": 2,
         "criteria_total": 2
       },
-      "claude:personal-async": {
-        "tokens": 6310,
-        "cost": 0.304771,
-        "wall_seconds": 87.9,
-        "criteria_pass": 1,
+      "claude:c-structured": {
+        "tokens": 8809,
+        "cost": 0.584216,
+        "wall_seconds": 175.7,
+        "criteria_pass": 2,
         "criteria_total": 2
       },
-      "claude:personal-lazy": {
-        "tokens": 6425,
-        "cost": 0.30958,
-        "wall_seconds": 94.0,
-        "criteria_pass": 1,
+      "claude:caveman": {
+        "tokens": 5608,
+        "cost": 0.300687,
+        "wall_seconds": 92.5,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:rubin-v2": {
+        "tokens": 6812,
+        "cost": 0.395051,
+        "wall_seconds": 148.1,
+        "criteria_pass": 2,
         "criteria_total": 2
       }
     },
     "bm-feat-002": {
       "claude:baseline": {
-        "tokens": 4085,
-        "cost": 0.215853,
-        "wall_seconds": 64.0,
+        "tokens": 8280,
+        "cost": 0.48671,
+        "wall_seconds": 156.4,
+        "criteria_pass": 1,
+        "criteria_total": 1
+      },
+      "claude:adversarial-frugal": {
+        "tokens": 4445,
+        "cost": 0.251081,
+        "wall_seconds": 77.8,
         "criteria_pass": 0,
         "criteria_total": 1
       },
-      "claude:personal": {
-        "tokens": 3381,
-        "cost": 0.175526,
-        "wall_seconds": 56.3,
+      "claude:c-structured": {
+        "tokens": 4314,
+        "cost": 0.236602,
+        "wall_seconds": 66.2,
         "criteria_pass": 0,
         "criteria_total": 1
       },
-      "claude:personal-async": {
-        "tokens": 3004,
-        "cost": 0.157781,
-        "wall_seconds": 50.6,
-        "criteria_pass": 0,
+      "claude:caveman": {
+        "tokens": 4134,
+        "cost": 0.289135,
+        "wall_seconds": 80.8,
+        "criteria_pass": 1,
         "criteria_total": 1
       },
-      "claude:personal-lazy": {
-        "tokens": 3179,
-        "cost": 0.166025,
-        "wall_seconds": 49.0,
-        "criteria_pass": 0,
+      "claude:rubin-v2": {
+        "tokens": 4132,
+        "cost": 0.276373,
+        "wall_seconds": 75.8,
+        "criteria_pass": 1,
         "criteria_total": 1
       }
     },
     "bm-feat-003": {
       "claude:baseline": {
-        "tokens": 3740,
-        "cost": 0.298969,
-        "wall_seconds": 110.9,
+        "tokens": 5318,
+        "cost": 0.337816,
+        "wall_seconds": 106.7,
         "criteria_pass": 0,
         "criteria_total": 1
       },
-      "claude:personal": {
-        "tokens": 4507,
-        "cost": 0.259209,
-        "wall_seconds": 96.0,
+      "claude:adversarial-frugal": {
+        "tokens": 2664,
+        "cost": 0.17526,
+        "wall_seconds": 58.8,
         "criteria_pass": 0,
         "criteria_total": 1
       },
-      "claude:personal-async": {
-        "tokens": 3103,
-        "cost": 0.227135,
-        "wall_seconds": 66.3,
+      "claude:c-structured": {
+        "tokens": 3793,
+        "cost": 0.208176,
+        "wall_seconds": 61.4,
         "criteria_pass": 0,
         "criteria_total": 1
       },
-      "claude:personal-lazy": {
-        "tokens": 4503,
-        "cost": 0.29665,
-        "wall_seconds": 184.4,
-        "criteria_pass": 1,
+      "claude:caveman": {
+        "tokens": 2089,
+        "cost": 0.143985,
+        "wall_seconds": 44.3,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:rubin-v2": {
+        "tokens": 1980,
+        "cost": 0.133288,
+        "wall_seconds": 39.0,
+        "criteria_pass": 0,
         "criteria_total": 1
       }
     },
     "bm-fix-001": {
       "claude:baseline": {
-        "tokens": 2795,
-        "cost": 0.140604,
-        "wall_seconds": 49.8,
+        "tokens": 4545,
+        "cost": 0.35423,
+        "wall_seconds": 104.2,
+        "criteria_pass": 1,
+        "criteria_total": 1
+      },
+      "claude:adversarial-frugal": {
+        "tokens": 3721,
+        "cost": 0.2462,
+        "wall_seconds": 69.8,
         "criteria_pass": 0,
         "criteria_total": 1
       },
-      "claude:personal": {
-        "tokens": 2750,
-        "cost": 0.185884,
-        "wall_seconds": 62.5,
+      "claude:c-structured": {
+        "tokens": 3418,
+        "cost": 0.217933,
+        "wall_seconds": 60.3,
         "criteria_pass": 0,
         "criteria_total": 1
       },
-      "claude:personal-async": {
-        "tokens": 2524,
-        "cost": 0.167627,
-        "wall_seconds": 54.4,
-        "criteria_pass": 0,
+      "claude:caveman": {
+        "tokens": 3796,
+        "cost": 0.244489,
+        "wall_seconds": 72.0,
+        "criteria_pass": 1,
         "criteria_total": 1
       },
-      "claude:personal-lazy": {
-        "tokens": 2430,
-        "cost": 0.150891,
-        "wall_seconds": 51.2,
-        "criteria_pass": 0,
+      "claude:rubin-v2": {
+        "tokens": 3176,
+        "cost": 0.26081,
+        "wall_seconds": 71.5,
+        "criteria_pass": 1,
         "criteria_total": 1
       }
     },
     "bm-fix-002": {
       "claude:baseline": {
-        "tokens": 4956,
-        "cost": 0.227131,
-        "wall_seconds": 72.5,
+        "tokens": 4111,
+        "cost": 0.178121,
+        "wall_seconds": 43.9,
         "criteria_pass": 0,
         "criteria_total": 2
       },
-      "claude:personal": {
-        "tokens": 3506,
-        "cost": 0.187691,
-        "wall_seconds": 54.0,
-        "criteria_pass": 1,
+      "claude:adversarial-frugal": {
+        "tokens": 3745,
+        "cost": 0.212909,
+        "wall_seconds": 97.6,
+        "criteria_pass": 2,
         "criteria_total": 2
       },
-      "claude:personal-async": {
-        "tokens": 2567,
-        "cost": 0.177371,
-        "wall_seconds": 64.9,
-        "criteria_pass": 1,
+      "claude:c-structured": {
+        "tokens": 3808,
+        "cost": 0.186526,
+        "wall_seconds": 59.5,
+        "criteria_pass": 2,
         "criteria_total": 2
       },
-      "claude:personal-lazy": {
-        "tokens": 2893,
-        "cost": 0.183244,
-        "wall_seconds": 51.0,
-        "criteria_pass": 1,
+      "claude:caveman": {
+        "tokens": 2987,
+        "cost": 0.177657,
+        "wall_seconds": 51.4,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:rubin-v2": {
+        "tokens": 2393,
+        "cost": 0.165189,
+        "wall_seconds": 44.9,
+        "criteria_pass": 2,
         "criteria_total": 2
       }
     },
     "bm-fix-003": {
       "claude:baseline": {
-        "tokens": 17727,
-        "cost": 0.689507,
-        "wall_seconds": 184.7,
+        "tokens": 17573,
+        "cost": 1.140426,
+        "wall_seconds": 260.1,
         "criteria_pass": 0,
         "criteria_total": 1
       },
-      "claude:personal": {
-        "tokens": 15452,
-        "cost": 1.141107,
-        "wall_seconds": 238.9,
+      "claude:adversarial-frugal": {
+        "tokens": 8569,
+        "cost": 0.595453,
+        "wall_seconds": 166.7,
         "criteria_pass": 0,
         "criteria_total": 1
       },
-      "claude:personal-async": {
-        "tokens": 14824,
-        "cost": 0.812375,
-        "wall_seconds": 152.0,
+      "claude:c-structured": {
+        "tokens": 21565,
+        "cost": 1.155559,
+        "wall_seconds": 335.6,
         "criteria_pass": 0,
         "criteria_total": 1
       },
-      "claude:personal-lazy": {
-        "tokens": 18511,
-        "cost": 1.317536,
-        "wall_seconds": 255.0,
+      "claude:caveman": {
+        "tokens": 17876,
+        "cost": 0.868766,
+        "wall_seconds": 210.9,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:rubin-v2": {
+        "tokens": 17290,
+        "cost": 0.878216,
+        "wall_seconds": 216.9,
         "criteria_pass": 0,
         "criteria_total": 1
       }
     },
     "bm-refactor-001": {
       "claude:baseline": {
-        "tokens": 3659,
-        "cost": 0.182625,
-        "wall_seconds": 55.2,
+        "tokens": 5252,
+        "cost": 0.452851,
+        "wall_seconds": 257.2,
         "criteria_pass": 2,
         "criteria_total": 3
       },
-      "claude:personal": {
-        "tokens": 3542,
-        "cost": 0.196952,
-        "wall_seconds": 77.4,
-        "criteria_pass": 2,
+      "claude:adversarial-frugal": {
+        "tokens": 4836,
+        "cost": 0.207409,
+        "wall_seconds": 68.0,
+        "criteria_pass": 3,
         "criteria_total": 3
       },
-      "claude:personal-async": {
-        "tokens": 4586,
-        "cost": 0.212359,
-        "wall_seconds": 62.9,
-        "criteria_pass": 2,
+      "claude:c-structured": {
+        "tokens": 4069,
+        "cost": 0.247049,
+        "wall_seconds": 75.4,
+        "criteria_pass": 3,
         "criteria_total": 3
       },
-      "claude:personal-lazy": {
-        "tokens": 4776,
-        "cost": 0.213022,
-        "wall_seconds": 62.6,
-        "criteria_pass": 2,
+      "claude:caveman": {
+        "tokens": 3945,
+        "cost": 0.258402,
+        "wall_seconds": 76.4,
+        "criteria_pass": 3,
+        "criteria_total": 3
+      },
+      "claude:rubin-v2": {
+        "tokens": 4407,
+        "cost": 0.206959,
+        "wall_seconds": 63.0,
+        "criteria_pass": 3,
         "criteria_total": 3
       }
     },
     "bm-refactor-002": {
       "claude:baseline": {
-        "tokens": 3144,
-        "cost": 0.190668,
-        "wall_seconds": 72.5,
+        "tokens": 7213,
+        "cost": 0.722736,
+        "wall_seconds": 196.8,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:adversarial-frugal": {
+        "tokens": 4035,
+        "cost": 0.248977,
+        "wall_seconds": 69.7,
         "criteria_pass": 1,
         "criteria_total": 2
       },
-      "claude:personal": {
-        "tokens": 4080,
-        "cost": 0.205529,
-        "wall_seconds": 84.8,
-        "criteria_pass": 0,
+      "claude:c-structured": {
+        "tokens": 3441,
+        "cost": 0.209271,
+        "wall_seconds": 68.1,
+        "criteria_pass": 1,
         "criteria_total": 2
       },
-      "claude:personal-async": {
-        "tokens": 2675,
-        "cost": 0.175744,
-        "wall_seconds": 51.0,
-        "criteria_pass": 0,
+      "claude:caveman": {
+        "tokens": 3288,
+        "cost": 0.214719,
+        "wall_seconds": 69.8,
+        "criteria_pass": 1,
         "criteria_total": 2
       },
-      "claude:personal-lazy": {
-        "tokens": 2425,
-        "cost": 0.16834,
-        "wall_seconds": 50.5,
-        "criteria_pass": 0,
+      "claude:rubin-v2": {
+        "tokens": 3382,
+        "cost": 0.208621,
+        "wall_seconds": 64.8,
+        "criteria_pass": 1,
         "criteria_total": 2
       }
     },
     "bm-refactor-003": {
       "claude:baseline": {
-        "tokens": 6040,
-        "cost": 0.310837,
-        "wall_seconds": 97.4,
+        "tokens": 12028,
+        "cost": 0.636684,
+        "wall_seconds": 216.6,
         "criteria_pass": 0,
         "criteria_total": 2
       },
-      "claude:personal": {
-        "tokens": 6032,
-        "cost": 0.357265,
-        "wall_seconds": 122.4,
+      "claude:c-structured": {
+        "tokens": 7115,
+        "cost": 0.483135,
+        "wall_seconds": 167.0,
         "criteria_pass": 1,
         "criteria_total": 2
       },
-      "claude:personal-async": {
-        "tokens": 6371,
-        "cost": 0.361816,
-        "wall_seconds": 108.4,
+      "claude:caveman": {
+        "tokens": 7481,
+        "cost": 0.502452,
+        "wall_seconds": 160.9,
         "criteria_pass": 1,
         "criteria_total": 2
       },
-      "claude:personal-lazy": {
-        "tokens": 7202,
-        "cost": 0.359409,
-        "wall_seconds": 107.4,
+      "claude:rubin-v2": {
+        "tokens": 6615,
+        "cost": 0.435873,
+        "wall_seconds": 152.0,
         "criteria_pass": 1,
         "criteria_total": 2
       }
     },
     "bm-seq-001": {
       "claude:baseline": {
-        "tokens": 6076,
-        "cost": 0.385359,
-        "wall_seconds": 114.4,
+        "tokens": 6489,
+        "cost": 0.511903,
+        "wall_seconds": 188.7,
         "criteria_pass": 0,
         "criteria_total": 2
       },
-      "claude:personal": {
-        "tokens": 4718,
-        "cost": 0.307105,
-        "wall_seconds": 95.1,
+      "claude:adversarial-frugal": {
+        "tokens": 4797,
+        "cost": 0.259676,
+        "wall_seconds": 87.1,
         "criteria_pass": 2,
         "criteria_total": 2
       },
-      "claude:personal-async": {
-        "tokens": 4588,
-        "cost": 0.27465,
-        "wall_seconds": 96.0,
-        "criteria_pass": 1,
+      "claude:c-structured": {
+        "tokens": 5227,
+        "cost": 0.294195,
+        "wall_seconds": 87.5,
+        "criteria_pass": 2,
         "criteria_total": 2
       },
-      "claude:personal-lazy": {
-        "tokens": 2427,
-        "cost": 0.164392,
-        "wall_seconds": 41.0,
-        "criteria_pass": 1,
+      "claude:caveman": {
+        "tokens": 9592,
+        "cost": 0.536581,
+        "wall_seconds": 168.6,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:rubin-v2": {
+        "tokens": 6728,
+        "cost": 0.278357,
+        "wall_seconds": 97.3,
+        "criteria_pass": 2,
         "criteria_total": 2
       }
     },
     "bm-seq-002": {
       "claude:baseline": {
-        "tokens": 8733,
-        "cost": 0.476102,
-        "wall_seconds": 154.5,
-        "criteria_pass": 0,
-        "criteria_total": 2
-      },
-      "claude:personal": {
-        "tokens": 8110,
-        "cost": 0.444678,
-        "wall_seconds": 266.7,
+        "tokens": 18118,
+        "cost": 1.821391,
+        "wall_seconds": 749.9,
         "criteria_pass": 1,
         "criteria_total": 2
       },
-      "claude:personal-async": {
-        "tokens": 7799,
-        "cost": 0.426554,
-        "wall_seconds": 126.9,
-        "criteria_pass": 1,
+      "claude:adversarial-frugal": {
+        "tokens": 14603,
+        "cost": 0.684011,
+        "wall_seconds": 238.3,
+        "criteria_pass": 2,
         "criteria_total": 2
       },
-      "claude:personal-lazy": {
-        "tokens": 6963,
-        "cost": 0.418924,
-        "wall_seconds": 128.5,
-        "criteria_pass": 1,
+      "claude:c-structured": {
+        "tokens": 9876,
+        "cost": 0.55441,
+        "wall_seconds": 166.9,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:caveman": {
+        "tokens": 14091,
+        "cost": 0.748739,
+        "wall_seconds": 219.7,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:rubin-v2": {
+        "tokens": 12227,
+        "cost": 0.71521,
+        "wall_seconds": 228.1,
+        "criteria_pass": 2,
         "criteria_total": 2
       }
     },
     "bm-seq-003": {
       "claude:baseline": {
-        "tokens": 6502,
-        "cost": 0.424076,
-        "wall_seconds": 134.7,
+        "tokens": 10135,
+        "cost": 0.869341,
+        "wall_seconds": 316.7,
         "criteria_pass": 0,
         "criteria_total": 1
       },
-      "claude:personal": {
-        "tokens": 4535,
-        "cost": 0.316682,
-        "wall_seconds": 125.3,
+      "claude:adversarial-frugal": {
+        "tokens": 5493,
+        "cost": 0.412413,
+        "wall_seconds": 126.8,
+        "criteria_pass": 1,
+        "criteria_total": 1
+      },
+      "claude:c-structured": {
+        "tokens": 5174,
+        "cost": 0.388773,
+        "wall_seconds": 118.8,
         "criteria_pass": 0,
         "criteria_total": 1
       },
-      "claude:personal-async": {
-        "tokens": 7182,
-        "cost": 0.477419,
-        "wall_seconds": 144.7,
+      "claude:caveman": {
+        "tokens": 7268,
+        "cost": 0.491146,
+        "wall_seconds": 151.5,
         "criteria_pass": 0,
         "criteria_total": 1
       },
-      "claude:personal-lazy": {
-        "tokens": 5922,
-        "cost": 0.348475,
-        "wall_seconds": 105.1,
-        "criteria_pass": 0,
+      "claude:rubin-v2": {
+        "tokens": 7240,
+        "cost": 0.552757,
+        "wall_seconds": 161.1,
+        "criteria_pass": 1,
         "criteria_total": 1
       }
     },
     "bm-test-001": {
       "claude:baseline": {
-        "tokens": 3346,
-        "cost": 0.229732,
-        "wall_seconds": 110.3,
-        "criteria_pass": 0,
-        "criteria_total": 2
-      },
-      "claude:personal": {
-        "tokens": 4913,
-        "cost": 0.266696,
-        "wall_seconds": 99.5,
+        "tokens": 2582,
+        "cost": 0.15014,
+        "wall_seconds": 43.4,
         "criteria_pass": 1,
         "criteria_total": 2
       },
-      "claude:personal-async": {
-        "tokens": 3222,
-        "cost": 0.162679,
-        "wall_seconds": 50.4,
-        "criteria_pass": 0,
+      "claude:adversarial-frugal": {
+        "tokens": 3121,
+        "cost": 0.230924,
+        "wall_seconds": 65.1,
+        "criteria_pass": 1,
         "criteria_total": 2
       },
-      "claude:personal-lazy": {
-        "tokens": 3138,
-        "cost": 0.201653,
-        "wall_seconds": 61.3,
-        "criteria_pass": 0,
+      "claude:c-structured": {
+        "tokens": 3418,
+        "cost": 0.181696,
+        "wall_seconds": 54.7,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:caveman": {
+        "tokens": 3106,
+        "cost": 0.147901,
+        "wall_seconds": 46.4,
+        "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:rubin-v2": {
+        "tokens": 3477,
+        "cost": 0.189039,
+        "wall_seconds": 58.4,
+        "criteria_pass": 1,
         "criteria_total": 2
       }
     },
     "bm-test-002": {
       "claude:baseline": {
-        "tokens": 2549,
-        "cost": 0.15805,
-        "wall_seconds": 47.8,
-        "criteria_pass": 0,
-        "criteria_total": 2
-      },
-      "claude:personal": {
-        "tokens": 3796,
-        "cost": 0.216599,
-        "wall_seconds": 70.7,
+        "tokens": 6971,
+        "cost": 0.427028,
+        "wall_seconds": 138.3,
         "criteria_pass": 1,
         "criteria_total": 2
       },
-      "claude:personal-async": {
-        "tokens": 3166,
-        "cost": 0.175248,
-        "wall_seconds": 51.5,
+      "claude:adversarial-frugal": {
+        "tokens": 3953,
+        "cost": 0.28238,
+        "wall_seconds": 79.2,
         "criteria_pass": 1,
         "criteria_total": 2
       },
-      "claude:personal-lazy": {
-        "tokens": 2264,
-        "cost": 0.155784,
-        "wall_seconds": 43.2,
+      "claude:c-structured": {
+        "tokens": 5505,
+        "cost": 0.332056,
+        "wall_seconds": 98.9,
         "criteria_pass": 1,
+        "criteria_total": 2
+      },
+      "claude:caveman": {
+        "tokens": 3782,
+        "cost": 0.274486,
+        "wall_seconds": 77.3,
+        "criteria_pass": 2,
+        "criteria_total": 2
+      },
+      "claude:rubin-v2": {
+        "tokens": 4047,
+        "cost": 0.332668,
+        "wall_seconds": 105.3,
+        "criteria_pass": 2,
         "criteria_total": 2
       }
     },
     "bm-test-003": {
       "claude:baseline": {
-        "tokens": 4557,
-        "cost": 0.331368,
-        "wall_seconds": 103.9,
+        "tokens": 6115,
+        "cost": 0.248711,
+        "wall_seconds": 77.6,
         "criteria_pass": 0,
         "criteria_total": 1
       },
-      "claude:personal": {
-        "tokens": 5061,
-        "cost": 0.195244,
-        "wall_seconds": 58.3,
+      "claude:adversarial-frugal": {
+        "tokens": 4716,
+        "cost": 0.204632,
+        "wall_seconds": 57.6,
         "criteria_pass": 0,
         "criteria_total": 1
       },
-      "claude:personal-async": {
-        "tokens": 4431,
-        "cost": 0.301449,
-        "wall_seconds": 95.7,
+      "claude:c-structured": {
+        "tokens": 2139,
+        "cost": 0.144549,
+        "wall_seconds": 43.7,
         "criteria_pass": 0,
         "criteria_total": 1
       },
-      "claude:personal-lazy": {
-        "tokens": 3715,
-        "cost": 0.266821,
-        "wall_seconds": 70.0,
+      "claude:caveman": {
+        "tokens": 5148,
+        "cost": 0.190257,
+        "wall_seconds": 61.1,
+        "criteria_pass": 0,
+        "criteria_total": 1
+      },
+      "claude:rubin-v2": {
+        "tokens": 3664,
+        "cost": 0.148004,
+        "wall_seconds": 41.0,
         "criteria_pass": 0,
         "criteria_total": 1
       }
